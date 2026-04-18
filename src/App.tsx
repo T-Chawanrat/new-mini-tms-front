@@ -20,6 +20,8 @@ import BillImportVGT from "./pages/BillImportVGT";
 import PrintLabel from "./pages/PrintLabel";
 import BillReport from "./pages/BillReport";
 import ProtectedRoute from "./context/ProtectedRoute";
+import ManageVehicles from "./pages/ManageVehicles";
+import ManageUsers from "./pages/ManageUsers";
 
 const RoleRedirect = () => {
   const { user } = useAuth();
@@ -115,13 +117,14 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/manage/vehicles" element={<ManageVehicles />} />
+              <Route path="/manage/users" element={<ManageUsers />} />
             </Route>
 
             {/* Auth Layout */}
             <Route path="/signin" element={<SignIn />} />
 
             {/* ✅ เอา "/" ออก ไม่งั้นจะชนกับ redirect */}
-            {/* <Route path="/" element={<SignIn />} /> */}
 
             {/* Fallback Route */}
             <Route path="*" element={<NotFound />} />

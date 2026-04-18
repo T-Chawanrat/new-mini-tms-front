@@ -1,414 +1,6 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import {
-  LogOut,
-  
-  
-  
-  
-  
-  
-  
-  File,
-} from "lucide-react";
+import { LogOut, File } from "lucide-react";
 import { ChevronDownIcon, GridIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "../context/AuthContext";
@@ -434,7 +26,7 @@ const navItems: NavItem[] = [
         name: "import Excel",
         path: "/import",
         icon: <File size={20} />,
-        roles: [1, 2, 5, 7], 
+        roles: [1, 2, 5, 7],
       },
       {
         name: "import VGT",
@@ -446,7 +38,7 @@ const navItems: NavItem[] = [
         name: "import ADV",
         path: "/importadv",
         icon: <File size={20} />,
-        roles: [1, 2, 5, 7], 
+        roles: [1, 2, 5, 7],
       },
       {
         name: "คีย์บิล",
@@ -472,14 +64,24 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 4],
       },
-      
-      
-      
-      
-      
+
       {
         name: "report",
         path: "/report",
+        icon: <File size={20} />,
+        roles: [1, 3, 4, 5, 7],
+      },
+
+      {
+        name: "manage users",
+        path: "/manage/users",
+        icon: <File size={20} />,
+        roles: [1, 3, 4, 5, 7],
+      },
+
+      {
+        name: "manage vehicles",
+        path: "/manage/vehicles",
         icon: <File size={20} />,
         roles: [1, 3, 4, 5, 7],
       },
@@ -502,13 +104,13 @@ const AppSidebar: React.FC = () => {
     index: number;
   } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {}
+    {},
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,
-    [location.pathname]
+    [location.pathname],
   );
 
   useEffect(() => {

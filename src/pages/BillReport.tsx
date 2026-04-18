@@ -221,8 +221,6 @@ export default function BillReport() {
     );
   };
 
-  console.log("date:", searchCreatedDate);
-
   const openImageModal = (r: BillReportRow) => {
     const signUrl = r.bill_sign ? `${BASE_URL}/${r.bill_sign}` : null;
 

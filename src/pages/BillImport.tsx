@@ -10,7 +10,7 @@ type ImportRow = {
   NO_BILL: string;
   REFERENCE: string;
   SEND_DATE: string;
-  CUSTOMER_NAME: string;
+  SHIPPER_CODE: string;
   RECIPIENT_CODE: string;
   RECIPIENT_NAME: string;
   RECIPIENT_TEL: string;
@@ -124,7 +124,7 @@ export default function BillImport() {
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message ||
-            "เกิดข้อผิดพลาดในการบันทึกข้อมูลลงฐานข้อมูล"
+            "เกิดข้อผิดพลาดในการบันทึกข้อมูลลงฐานข้อมูล",
         );
       } else if (err instanceof Error) {
         setError(err.message);
@@ -349,14 +349,14 @@ export default function BillImport() {
                       {row.SEND_DATE && excelDateToJSDate(Number(row.SEND_DATE))
                         ? format(
                             excelDateToJSDate(Number(row.SEND_DATE))!,
-                            "dd/MM/yyyy"
+                            "dd/MM/yyyy",
                           )
                         : "-"}
                     </td>
 
-                    {/* CUSTOMER_NAME */}
+                    {/* SHIPPER_CODE */}
                     <td className="px-2 py-1.5 border-b border-slate-200  truncate">
-                      {row.CUSTOMER_NAME || "-"}
+                      {row.SHIPPER_CODE || "-"}
                     </td>
 
                     {/* RECIPIENT_CODE */}
