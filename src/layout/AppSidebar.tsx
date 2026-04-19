@@ -85,6 +85,30 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 3, 4, 5, 7],
       },
+      {
+        name: "manage customers",
+        path: "/manage/customers",
+        icon: <File size={20} />,
+        roles: [1, 3, 4, 5, 7],
+      },
+      {
+        name: "import std",
+        path: "/std",
+        icon: <File size={20} />,
+        roles: [1, 3, 4, 5, 7],
+      },
+      {
+        name: "import vgt",
+        path: "/vgt",
+        icon: <File size={20} />,
+        roles: [1, 3, 4, 5, 7],
+      },
+      {
+        name: "import adv",
+        path: "/adv",
+        icon: <File size={20} />,
+        roles: [1, 3, 4, 5, 7],
+      },
     ],
   },
 ];

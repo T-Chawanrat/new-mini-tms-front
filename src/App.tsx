@@ -22,12 +22,16 @@ import BillReport from "./pages/BillReport";
 import ProtectedRoute from "./context/ProtectedRoute";
 import ManageVehicles from "./pages/ManageVehicles";
 import ManageUsers from "./pages/ManageUsers";
+import ManageCustomers from "./pages/ManageCustomer";
+import ImportSTD from "./pages/ImportSTD";
+import ImportVGT from "./pages/ImportVGT";
+import ImportADV from "./pages/ImportADV";
 
 const RoleRedirect = () => {
   const { user } = useAuth();
   const roleId = Number(user?.role_id);
 
-  if ([1, 2, 5, 7].includes(roleId)) return <Navigate to="/import" replace />;
+  if ([1, 2, 5, 6, 7, 8, 9, 10].includes(roleId)) return <Navigate to="/import" replace />;
   if (roleId === 3) return <Navigate to="/warehouse-scan" replace />;
   if (roleId === 4) return <Navigate to="/dc-scan" replace />;
 
@@ -56,7 +60,7 @@ export default function App() {
               <Route
                 path="/import"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 2, 5, 7]}>
+                  <ProtectedRoute allowedRoles={[1, 2, 5, 7, 9, 10]}>
                     <BillImport />
                   </ProtectedRoute>
                 }
@@ -112,13 +116,19 @@ export default function App() {
               <Route
                 path="/report"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 3, 4, 5, 7]}>
+                  <ProtectedRoute
+                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  >
                     <BillReport />
                   </ProtectedRoute>
                 }
               />
               <Route path="/manage/vehicles" element={<ManageVehicles />} />
               <Route path="/manage/users" element={<ManageUsers />} />
+              <Route path="/manage/customers" element={<ManageCustomers />} />
+              <Route path="/std" element={<ImportSTD />} />
+              <Route path="/vgt" element={<ImportVGT />} />
+              <Route path="/adv" element={<ImportADV />} />
             </Route>
 
             {/* Auth Layout */}

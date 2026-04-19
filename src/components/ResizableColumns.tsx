@@ -35,28 +35,50 @@ const ResizableColumns: React.FC<ResizableColumnsProps> = ({
   }, [pageKey, setPageKey]);
 
   const handleMouseDown = (index: number, event: React.MouseEvent) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    const startX = event.clientX;
-    const startWidth = columnWidths[index] ?? 120; // ⭐ กัน undefined ให้มีค่าเริ่มต้น
-    const min = minWidths[index] ?? 50;
+  const startX = event.clientX;
+  const startWidth = columnWidths[index] ?? 120;
+  const min = minWidths[index] ?? 50;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+  let currentWidth = startWidth;
+
+  const thList = document.querySelectorAll("th");
+  const targetTh = thList[index] as HTMLElement;
+
+  let frame: number | null = null;
+
+  const handleMouseMove = (moveEvent: MouseEvent) => {
+    if (frame) return;
+
+    frame = requestAnimationFrame(() => {
       const deltaX = moveEvent.clientX - startX;
       const newWidth = Math.max(startWidth + deltaX, min);
-      setColumnWidths((prevWidths) =>
-        prevWidths.map((width, i) => (i === index ? newWidth : width))
-      );
-    };
 
-    const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
+      currentWidth = newWidth;
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+      if (targetTh) {
+        targetTh.style.width = `${newWidth}px`;
+      }
+
+      frame = null;
+    });
   };
+
+  const handleMouseUp = () => {
+    setColumnWidths((prevWidths) =>
+      prevWidths.map((width, i) =>
+        i === index ? currentWidth : width
+      )
+    );
+
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  };
+
+  document.addEventListener("mousemove", handleMouseMove);
+  document.addEventListener("mouseup", handleMouseUp);
+};
 
   const handleTouchStart = (index: number, event: React.TouchEvent) => {
     const startX = event.touches[0].clientX;

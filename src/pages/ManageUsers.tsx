@@ -3,7 +3,7 @@ import AxiosInstance from "../utils/AxiosInstance";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "../context/AuthContext";
-import { TrashIcon } from "lucide-react";
+import { TrashIcon, X } from "lucide-react";
 
 export default function ManageUsers() {
   const [rows, setRows] = useState<any[]>([]);
@@ -15,7 +15,7 @@ export default function ManageUsers() {
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<any>(null);
 
   const [selectedZones, setSelectedZones] = useState<number[]>([]);
 
@@ -56,6 +56,8 @@ export default function ManageUsers() {
     }
   };
 
+  console.log(user.role_id, " role นะ");
+
   // =====================
   // FETCH DROPDOWN
   // =====================
@@ -65,7 +67,7 @@ export default function ManageUsers() {
       AxiosInstance.get("/warehouses", { headers: { role_id: user?.role_id } }),
     ]);
 
-    const employeeRoles = [3, 4, 5, 6, 7, 8, 9];
+    const employeeRoles = [3, 4, 5, 6, 7, 8, 9, 10];
     setRoles(r.data.filter((x: any) => employeeRoles.includes(x.id)));
     setWarehouses(w.data);
 
@@ -115,7 +117,7 @@ export default function ManageUsers() {
       }
 
       // 🔥 warehouse (สำคัญ)
-      if (![3, 4, 6, 9].includes(role)) {
+      if (![3, 4, 6, 9, 10].includes(role)) {
         if (!form.warehouse_id) {
           setError("กรุณาเลือก warehouse");
           return;
@@ -145,7 +147,7 @@ export default function ManageUsers() {
         zones: selectedZones,
       } as any;
 
-      if ([3, 4, 9].includes(role)) {
+      if ([3, 4, 9, 10].includes(role)) {
         payload.warehouse_id = null;
       } else if (role === 6) {
         payload.warehouse_id = 15;
@@ -182,12 +184,27 @@ export default function ManageUsers() {
   const handleDelete = async () => {
     if (!confirmDelete) return;
 
-    await AxiosInstance.delete(`/manage/users/${confirmDelete}`, {
+    await AxiosInstance.delete(`/manage/users/${confirmDelete.id}`, {
       headers: { role_id: user?.role_id },
     });
 
     setConfirmDelete(null);
     fetchData();
+  };
+
+  const handleHardDelete = async () => {
+    if (!confirmDelete) return;
+
+    try {
+      await AxiosInstance.delete(`/manage/users/${confirmDelete.id}/hard`, {
+        headers: { role_id: user?.role_id },
+      });
+
+      setConfirmDelete(null);
+      fetchData();
+    } catch (err) {
+      alert(err?.response?.data?.message || "hard delete failed");
+    }
   };
 
   return (
@@ -258,7 +275,7 @@ export default function ManageUsers() {
               <th className="text-center py-4">เลขที่ใบขับขี่</th>{" "}
               <th className="text-center py-4">ใบขับขี่หมดอายุ</th>{" "}
               <th className="text-center py-4">สถานะ</th>
-                  <th className="w-24"></th>
+              <th className="text-left w-24">จัดการ</th>
             </tr>
           </thead>
 
@@ -328,18 +345,31 @@ export default function ManageUsers() {
                     )}
                   </td>
 
-                  <td className="text-right pr-4 py-4">
+                  <div className="flex gap-2 px-4 py-4">
+                    {/* soft */}
                     <button
-                      onClick={() => setConfirmDelete(r.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg 
-             bg-red-50 text-red-600 
-             hover:bg-red-100 
-             border border-red-200 
-             transition-all"
+                      onClick={() => setConfirmDelete({ id: r.id })}
+                      className="w-8 h-8 flex items-center justify-center
+      rounded-lg bg-red-50 text-red-600 border border-red-200 
+      hover:bg-red-100"
                     >
-                      <TrashIcon size={14} />
+                      <X size={14} />
                     </button>
-                  </td>
+
+                    {/* hard */}
+                    {[1, 10].includes(user?.role_id) && (
+                      <button
+                        onClick={() =>
+                          setConfirmDelete({ id: r.id, type: "hard" })
+                        }
+                        className="w-8 h-8 flex items-center justify-center
+        rounded-lg bg-red-300 text-red-600 border border-red-200 
+        hover:bg-red-100"
+                      >
+                        <TrashIcon size={14} />
+                      </button>
+                    )}
+                  </div>
                 </tr>
               ))
             )}
@@ -413,7 +443,7 @@ export default function ManageUsers() {
                 ))}
               </select>
 
-              {![3, 4, 6, 9].includes(Number(form.role_id)) && (
+              {![3, 4, 6, 9, 10].includes(Number(form.role_id)) && (
                 <select
                   className="input-modern"
                   value={form.warehouse_id}
@@ -512,20 +542,27 @@ export default function ManageUsers() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center w-[320px]">
             <h3 className="text-lg font-semibold text-slate-800 mb-2">
-              ยืนยันการลบ
+              {confirmDelete?.type === "hard" ? "ยืนยันการลบ" : "ปิดการใช้งาน"}
             </h3>
 
             <p className="text-sm text-slate-500 mb-4">
-              คุณแน่ใจหรือไม่ว่าจะลบผู้ใช้นี้
+              {confirmDelete?.type === "hard"
+                ? "ลบผู้ใช้งานรายนี้?"
+                : "ปิดการใช้งานผู้ใช้งานรายนี้?"}
             </p>
 
             <div className="flex justify-center gap-3">
               <button
-                onClick={handleDelete}
+                onClick={() =>
+                  confirmDelete?.type === "hard"
+                    ? handleHardDelete()
+                    : handleDelete()
+                }
                 className="px-4 py-2 rounded-xl bg-red-500 text-white"
               >
-                ลบ
+                ยืนยัน
               </button>
+
               <button
                 onClick={() => setConfirmDelete(null)}
                 className="px-4 py-2 rounded-xl bg-gray-100"

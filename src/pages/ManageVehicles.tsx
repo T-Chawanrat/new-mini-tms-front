@@ -267,6 +267,7 @@ export default function AdminVehicles() {
               <th className="text-left py-4">น้ำหนักบรรทุก (kg)</th>
               <th className="text-left py-4">สังกัด</th>
               <th className="text-center py-4">สถานะ</th>
+              <th className="text-center py-4">จัดการ</th>
             </tr>
           </thead>
 
@@ -541,11 +542,11 @@ export default function AdminVehicles() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center w-[320px]">
             <h3 className="text-lg font-semibold text-slate-800 mb-2">
-              ยืนยันการลบ
+          ยืนยันการลบ
             </h3>
 
             <p className="text-sm text-slate-500 mb-4">
-              คุณแน่ใจหรือไม่ว่าจะลบรถคันนี้
+              ลบรถคันนี้?
             </p>
 
             <div className="flex justify-center gap-3">
@@ -553,7 +554,7 @@ export default function AdminVehicles() {
                 onClick={handleDelete}
                 className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600"
               >
-                ลบ
+              ยืนยัน
               </button>
 
               <button
