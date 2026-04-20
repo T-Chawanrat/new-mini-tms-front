@@ -26,21 +26,24 @@ export default function SignInForm() {
     }
 
     try {
-      const response = await AxiosInstance.post(
-        "/login", 
-        { username, password }
-      );
+      const response = await AxiosInstance.post("/login", {
+        username,
+        password,
+      });
       console.log("📨 Response:", response.data);
 
       const data = response.data;
-      
-      
+
       if (data.user) {
         setIsLoggedIn(true);
         setUser(data.user);
 
+        localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("isLoggedIn", "true");
+
+        AxiosInstance.defaults.headers.common["Authorization"] =
+          `Bearer ${data.token}`;
 
         navigate("/", { replace: true });
       } else {
@@ -49,8 +52,8 @@ export default function SignInForm() {
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         setLoginError(
-          error.response?.data?.message || 
-          "An error occurred. Please try again."
+          error.response?.data?.message ||
+            "An error occurred. Please try again.",
         );
       } else {
         setLoginError("An unknown error occurred.");
@@ -67,7 +70,9 @@ export default function SignInForm() {
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
               Sign In
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Enter your username and password to sign in!</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Enter your username and password to sign in!
+            </p>
           </div>
           <form onSubmit={handleSignIn}>
             <div className="space-y-6">
@@ -104,7 +109,9 @@ export default function SignInForm() {
                   </span>
                 </div>
               </div>
-              {loginError && <div className="text-red-500 text-sm">{loginError}</div>}
+              {loginError && (
+                <div className="text-red-500 text-sm">{loginError}</div>
+              )}
               <div>
                 <Button className="w-full" size="sm">
                   Sign in

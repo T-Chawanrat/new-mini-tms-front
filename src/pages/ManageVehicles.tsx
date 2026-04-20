@@ -79,7 +79,6 @@ export default function AdminVehicles() {
           usage_type: filterUsage || undefined,
           status: filterStatus || undefined,
         },
-        headers: { role_id: user?.role_id },
       });
 
       setRows(res.data);
@@ -117,9 +116,7 @@ export default function AdminVehicles() {
         return setError("capacity ต้องเป็นตัวเลข");
       }
 
-      await AxiosInstance.post("/manage/vehicles", form, {
-        headers: { role_id: user?.role_id },
-      });
+      await AxiosInstance.post("/manage/vehicles", form, {});
 
       setShowModal(false);
       setForm({
@@ -143,13 +140,7 @@ export default function AdminVehicles() {
     if (!selected) return;
 
     try {
-      await AxiosInstance.patch(
-        `/manage/vehicles/${selected.id}`,
-        { status },
-        {
-          headers: { role_id: user?.role_id },
-        },
-      );
+      await AxiosInstance.patch(`/manage/vehicles/${selected.id}`, { status });
       setStatusModal(false);
       setSelected(null);
       fetchData();
@@ -254,33 +245,38 @@ export default function AdminVehicles() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
+        <table className="min-w-[1000px] w-full text-sm">
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="py-4 text-center w-12">#</th>
               <th className="text-left py-4">ทะเบียน</th>
               <th className="text-left py-4">ยี่ห้อ</th>
-              <th className="text-left py-4">รุ่น</th>
-              <th className="text-left py-4">ประเภท</th>
-              <th className="text-left py-4">การใช้งาน</th>
-              <th className="text-left py-4">น้ำหนักบรรทุก (kg)</th>
-              <th className="text-left py-4">สังกัด</th>
+
+              {/* ซ่อนมือถือ */}
+              <th className="text-left py-4 hidden md:table-cell">รุ่น</th>
+              <th className="text-left py-4 hidden md:table-cell">ประเภท</th>
+              <th className="text-left py-4 hidden lg:table-cell">การใช้งาน</th>
+              <th className="text-left py-4 hidden lg:table-cell">
+                น้ำหนัก (kg)
+              </th>
+              <th className="text-left py-4 hidden lg:table-cell">สังกัด</th>
+
               <th className="text-center py-4">สถานะ</th>
-              <th className="text-center py-4">จัดการ</th>
+              <th className="text-center py-4 w-24">จัดการ</th>
             </tr>
           </thead>
 
           <tbody className="text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-slate-400">
+                <td colSpan={10} className="text-center py-10 text-slate-400">
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-slate-400">
+                <td colSpan={10} className="text-center py-10 text-slate-400">
                   ไม่มีข้อมูล
                 </td>
               </tr>
@@ -290,53 +286,83 @@ export default function AdminVehicles() {
                   key={r.id}
                   className="border-t hover:bg-slate-50 transition"
                 >
-                  <td className="text-center text-slate-400 py-4">{i + 1}</td>
-                  <td className="font-medium py-4">{r.license_plate}</td>
-                  <td className="py-4">{getLabel(BRANDS, r.brand)}</td>
-                  <td className="py-4">{r.model || "-"}</td>
-                  <td className="py-4">
+                  <td className="text-center text-slate-400 py-2.5">{i + 1}</td>
+
+                  {/* ทะเบียน */}
+                  <td className="font-medium py-2.5">{r.license_plate}</td>
+
+                  {/* ยี่ห้อ + mobile info */}
+                  <td className="py-2.5">
+                    <div className="leading-tight">
+                      <div>{getLabel(BRANDS, r.brand)}</div>
+
+                      {/* mobile แสดง type + usage */}
+                      <div className="text-xs text-slate-400 md:hidden">
+                        {getLabel(VEHICLE_TYPES, r.vehicle_type)} /{" "}
+                        {getLabel(USAGE_TYPES, r.usage_type)}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* รุ่น */}
+                  <td className="py-2.5 hidden md:table-cell">
+                    {r.model || "-"}
+                  </td>
+
+                  {/* ประเภท */}
+                  <td className="py-2.5 hidden md:table-cell">
                     {getLabel(VEHICLE_TYPES, r.vehicle_type)}
                   </td>
-                  <td className="py-4">
+
+                  {/* การใช้งาน */}
+                  <td className="py-2.5 hidden lg:table-cell">
                     {getLabel(USAGE_TYPES, r.usage_type)}
                   </td>
-                  <td className="text-slate-500 py-4">
+
+                  {/* น้ำหนัก */}
+                  <td className="text-slate-500 py-2.5 hidden lg:table-cell">
                     {r.capacity_kg || "-"}
                   </td>
-                  <td className="text-slate-500 py-4">
+
+                  {/* warehouse */}
+                  <td className="text-slate-500 py-2.5 hidden lg:table-cell">
                     {r.warehouse_name || "-"}
                   </td>
-                  <td className="text-center py-4">
+
+                  {/* status */}
+                  <td className="text-center py-2.5">
                     <div
                       onClick={() => openStatusModal(r.id, r.status)}
                       className="cursor-pointer inline-block"
                     >
                       {r.status === "ACTIVE" ? (
-                        <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">
                           Active
                         </span>
                       ) : r.status === "MAINTENANCE" ? (
-                        <span className="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600 font-medium">
+                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600 font-medium">
                           Maintenance
                         </span>
                       ) : (
-                        <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">
+                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">
                           Inactive
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="py-4 flex items-center justify-center">
-                    <button
-                      onClick={() => setConfirmDelete(r.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg 
-             bg-red-50 text-red-600 
-             hover:bg-red-100 
-             border border-red-200 
-             transition-all"
-                    >
-                      <TrashIcon size={14} />
-                    </button>
+
+                  {/* action */}
+                  <td className="py-2.5">
+                    <div className="flex justify-center">
+                      <button
+                        onClick={() => setConfirmDelete(r.id)}
+                        className="w-8 h-8 flex items-center justify-center
+                  rounded-lg bg-red-300 text-red-600 border border-red-200 
+                  hover:bg-red-200"
+                      >
+                        <TrashIcon size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -542,19 +568,17 @@ export default function AdminVehicles() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center w-[320px]">
             <h3 className="text-lg font-semibold text-slate-800 mb-2">
-          ยืนยันการลบ
+              ยืนยันการลบ
             </h3>
 
-            <p className="text-sm text-slate-500 mb-4">
-              ลบรถคันนี้?
-            </p>
+            <p className="text-sm text-slate-500 mb-4">ลบรถคันนี้?</p>
 
             <div className="flex justify-center gap-3">
               <button
                 onClick={handleDelete}
                 className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600"
               >
-              ยืนยัน
+                ยืนยัน
               </button>
 
               <button

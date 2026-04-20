@@ -47,7 +47,6 @@ export default function ManageUsers() {
           role_id: filterRole || undefined,
           search: search || undefined,
         },
-        headers: { role_id: user?.role_id },
       });
 
       setRows(res.data);
@@ -157,9 +156,7 @@ export default function ManageUsers() {
           : null;
       }
 
-      await AxiosInstance.post("/manage/users", payload, {
-        headers: { role_id: user?.role_id },
-      });
+      await AxiosInstance.post("/manage/users", payload, {});
 
       // success
       setShowModal(false);
@@ -184,9 +181,7 @@ export default function ManageUsers() {
   const handleDelete = async () => {
     if (!confirmDelete) return;
 
-    await AxiosInstance.delete(`/manage/users/${confirmDelete.id}`, {
-      headers: { role_id: user?.role_id },
-    });
+    await AxiosInstance.delete(`/manage/users/${confirmDelete.id}`, {});
 
     setConfirmDelete(null);
     fetchData();
@@ -196,9 +191,7 @@ export default function ManageUsers() {
     if (!confirmDelete) return;
 
     try {
-      await AxiosInstance.delete(`/manage/users/${confirmDelete.id}/hard`, {
-        headers: { role_id: user?.role_id },
-      });
+      await AxiosInstance.delete(`/manage/users/${confirmDelete.id}/hard`, {});
 
       setConfirmDelete(null);
       fetchData();
@@ -262,18 +255,25 @@ export default function ManageUsers() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
+        <table className="min-w-[900px] w-full text-sm">
           {/* HEADER */}
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="py-4 text-center w-12">#</th>
               <th className="text-left py-4">Username</th>
               <th className="text-left py-4">ชื่อ - นามสกุล</th>
-              <th className="text-left py-4">ตำแหน่ง</th>
-              <th className="text-left py-4">สังกัด</th>
-              <th className="text-center py-4">เลขที่ใบขับขี่</th>{" "}
-              <th className="text-center py-4">ใบขับขี่หมดอายุ</th>{" "}
+
+              {/* ซ่อนในมือถือ */}
+              <th className="text-left py-4 hidden md:table-cell">ตำแหน่ง</th>
+              <th className="text-left py-4 hidden lg:table-cell">สังกัด</th>
+              <th className="text-center py-4 hidden lg:table-cell">
+                เลขที่ใบขับขี่
+              </th>
+              <th className="text-center py-4 hidden lg:table-cell">
+                ใบขับขี่หมดอายุ
+              </th>
+
               <th className="text-center py-4">สถานะ</th>
               <th className="text-left w-24">จัดการ</th>
             </tr>
@@ -283,13 +283,13 @@ export default function ManageUsers() {
           <tbody className="text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-slate-400">
+                <td colSpan={9} className="text-center py-10 text-slate-400">
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-slate-400">
+                <td colSpan={9} className="text-center py-10 text-slate-400">
                   ไม่มีข้อมูล
                 </td>
               </tr>
@@ -299,30 +299,43 @@ export default function ManageUsers() {
                   key={r.id}
                   className="border-t hover:bg-slate-50 transition"
                 >
-                  <td className="text-center text-slate-400 py-4">{i + 1}</td>
+                  <td className="text-center text-slate-400 py-2.5">{i + 1}</td>
 
-                  <td className="font-medium py-4">{r.username}</td>
+                  {/* USERNAME */}
+                  <td className="font-medium py-2.5">{r.username}</td>
 
-                  <td className="py-4">
+                  {/* NAME */}
+                  <td className="py-2.5">
                     <div className="leading-tight">
                       <div>
                         {r.first_name} {r.last_name}
                       </div>
+
+                      {/* mobile แสดง role ใต้ชื่อ */}
+                      <div className="text-xs text-slate-400 md:hidden">
+                        {r.role_name}
+                      </div>
                     </div>
                   </td>
 
-                  <td className="py-4">
+                  {/* ROLE */}
+                  <td className="py-2.5 hidden md:table-cell">
                     <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">
                       {r.role_name}
                     </span>
                   </td>
 
-                  <td className="text-slate-500 py-4">
+                  {/* WAREHOUSE */}
+                  <td className="text-slate-500 py-2.5 hidden lg:table-cell">
                     {r.warehouse_name || "-"}
                   </td>
 
-                  <td className="text-slate-500 py-4">{r.license_no || "-"}</td>
-                  <td className="text-slate-500 py-4">
+                  {/* LICENSE */}
+                  <td className="text-slate-500 py-2.5 hidden lg:table-cell">
+                    {r.license_no || "-"}
+                  </td>
+
+                  <td className="text-slate-500 py-2.5 hidden lg:table-cell">
                     {r.license_expire
                       ? new Date(r.license_expire).toLocaleDateString("th-TH", {
                           year: "numeric",
@@ -332,44 +345,45 @@ export default function ManageUsers() {
                       : "-"}
                   </td>
 
-                  {/* ✅ is_active */}
-                  <td className="text-center py-4">
+                  {/* STATUS */}
+                  <td className="text-center py-2.5">
                     {r.is_active ? (
-                      <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">
+                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">
                         Active
                       </span>
                     ) : (
-                      <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">
+                      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">
                         Inactive
                       </span>
                     )}
                   </td>
 
-                  <div className="flex gap-2 px-4 py-4">
-                    {/* soft */}
-                    <button
-                      onClick={() => setConfirmDelete({ id: r.id })}
-                      className="w-8 h-8 flex items-center justify-center
-      rounded-lg bg-red-50 text-red-600 border border-red-200 
-      hover:bg-red-100"
-                    >
-                      <X size={14} />
-                    </button>
-
-                    {/* hard */}
-                    {[1, 10].includes(user?.role_id) && (
+                  {/* ACTION */}
+                  <td className="py-2.5">
+                    <div className="flex gap-2">
                       <button
-                        onClick={() =>
-                          setConfirmDelete({ id: r.id, type: "hard" })
-                        }
+                        onClick={() => setConfirmDelete({ id: r.id })}
                         className="w-8 h-8 flex items-center justify-center
-        rounded-lg bg-red-300 text-red-600 border border-red-200 
-        hover:bg-red-100"
+                  rounded-lg bg-red-50 text-red-600 border border-red-200 
+                  hover:bg-red-100"
                       >
-                        <TrashIcon size={14} />
+                        <X size={14} />
                       </button>
-                    )}
-                  </div>
+
+                      {[1, 10].includes(user?.role_id) && (
+                        <button
+                          onClick={() =>
+                            setConfirmDelete({ id: r.id, type: "hard" })
+                          }
+                          className="w-8 h-8 flex items-center justify-center
+                    rounded-lg bg-red-300 text-red-600 border border-red-200 
+                    hover:bg-red-200"
+                        >
+                          <TrashIcon size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))
             )}

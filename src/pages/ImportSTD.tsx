@@ -6,6 +6,7 @@ import ResizableColumns from "../components/ResizableColumns";
 import { format } from "date-fns";
 import { useAuth } from "../context/AuthContext";
 import AxiosInstance from "../utils/AxiosInstance";
+import { DownloadIcon } from "lucide-react";
 
 type ImportRow = {
   NO_BILL: string;
@@ -44,7 +45,7 @@ const headers = [
 export default function ImportSTD() {
   const [fileName, setFileName] = useState<string>("");
   const [rows, setRows] = useState<ImportRow[]>([]);
-  const [visibleCount, setVisibleCount] = useState<number>(300);
+  const [visibleCount, setVisibleCount] = useState<number>(250);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export default function ImportSTD() {
     setError(null);
     setSuccess(null);
     setRows([]);
-    setVisibleCount(300);
+    setVisibleCount(250);
 
     if (!file) return;
     setFileName(file.name);
@@ -189,7 +190,9 @@ export default function ImportSTD() {
 
         <td
           className={
-            duplicates[row.SERIAL_NO] > 1 ? "text-red-600 font-semibold" : ""
+            duplicates[row.SERIAL_NO] > 1
+              ? "text-red-600 font-semibold border-b"
+              : " border-b"
           }
         >
           {row.SERIAL_NO}
@@ -264,11 +267,19 @@ export default function ImportSTD() {
                 <span className="text-blue-700 font-medium">เลือกไฟล์</span>
                 <input
                   type="file"
-                  accept=".xlsx,.xls"
+                  accept=".xlsx,.xls,.csv"
                   onChange={handleFileChange}
                   className="hidden"
                 />
               </label>
+
+              <a
+                href="/templates/import-std.xlsx"
+                download
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100"
+              >
+                <DownloadIcon className="w-4 h-4 text-blue-700" /> Template
+              </a>
 
               {fileName ? (
                 <span className="inline-flex items-center max-w-[260px] rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700 truncate">
@@ -282,7 +293,7 @@ export default function ImportSTD() {
             </div>
 
             <span className="mt-1 text-[11px] text-slate-500">
-              รองรับไฟล์ .xlsx, .xls เท่านั้น
+              รองรับไฟล์ .xlsx, .xls, .csv เท่านั้น
             </span>
           </div>
 
@@ -354,7 +365,7 @@ export default function ImportSTD() {
           {visibleCount < rows.length && (
             <div className="p-3 text-center">
               <button
-                onClick={() => setVisibleCount((prev) => prev + 300)}
+                onClick={() => setVisibleCount((prev) => prev + 250)}
                 className="px-4 py-1.5 bg-blue-500 text-white rounded"
               >
                 โหลดเพิ่ม

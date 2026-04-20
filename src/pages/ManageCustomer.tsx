@@ -40,7 +40,6 @@ export default function ManageCustomers() {
 
       const res = await AxiosInstance.get("/manage/customers", {
         params: { search: search || undefined },
-        headers: { role_id: user?.role_id },
       });
 
       setRows(res.data);
@@ -61,9 +60,7 @@ export default function ManageCustomers() {
   // CREATE
   // =====================
   const handleCreate = async () => {
-    await AxiosInstance.post("/manage/customers", form, {
-      headers: { role_id: user?.role_id },
-    });
+    await AxiosInstance.post("/manage/customers", form, {});
 
     setShowModal(false);
     setForm({
@@ -77,13 +74,10 @@ export default function ManageCustomers() {
 
     fetchData();
   };
-
   const handleDelete = async () => {
     if (!confirmDelete) return;
 
-    await AxiosInstance.delete(`/manage/customers/${confirmDelete}`, {
-      headers: { role_id: user?.role_id },
-    });
+    await AxiosInstance.delete(`/manage/customers/${confirmDelete.id}`);
 
     setConfirmDelete(null);
     fetchData();
@@ -93,16 +87,10 @@ export default function ManageCustomers() {
     if (!selectedCustomer) return;
 
     try {
-      await AxiosInstance.post(
-        "/manage/customer-users",
-        {
-          ...userForm,
-          customer_id: selectedCustomer.id,
-        },
-        {
-          headers: { role_id: user?.role_id },
-        },
-      );
+      await AxiosInstance.post("/manage/customer-users", {
+        ...userForm,
+        customer_id: selectedCustomer.id,
+      });
 
       setShowUserModal(false);
       setUserForm({
@@ -120,9 +108,7 @@ export default function ManageCustomers() {
     if (!confirmDelete) return;
 
     try {
-      await AxiosInstance.delete(`/manage/customers/${confirmDelete.id}/hard`, {
-        headers: { role_id: user?.role_id },
-      });
+      await AxiosInstance.delete(`/manage/customers/${confirmDelete.id}/hard`);
 
       setConfirmDelete(null);
       fetchData();
@@ -168,59 +154,94 @@ export default function ManageCustomers() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
+        <table className="min-w-[900px] w-full text-sm">
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="py-4 text-center w-12">#</th>
               <th className="text-left py-4">Code</th>
               <th className="text-left py-4">Name</th>
-              <th className="text-left py-4">Tax ID</th>
-              <th className="text-left py-4">Address</th>
-              <th className="text-left py-4">Contact</th>
-              <th className="text-left py-4">Tel</th>
+
+              {/* ซ่อนมือถือ */}
+              <th className="text-left py-4 hidden md:table-cell">Tax ID</th>
+              <th className="text-left py-4 hidden lg:table-cell">Address</th>
+              <th className="text-left py-4 hidden lg:table-cell">Contact</th>
+              <th className="text-left py-4 hidden lg:table-cell">Tel</th>
+
               <th className="text-center py-4">Status</th>
-              <th className="text-center w-12">จัดการ</th>
+              <th className="text-center w-24">จัดการ</th>
             </tr>
           </thead>
 
           <tbody className="text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-slate-400">
+                <td colSpan={9} className="text-center py-10 text-slate-400">
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-slate-400">
+                <td colSpan={9} className="text-center py-10 text-slate-400">
                   ไม่มีข้อมูล
                 </td>
               </tr>
             ) : (
               rows.map((r, i) => (
                 <tr key={r.id} className="border-t hover:bg-slate-50">
-                  <td className="text-center text-slate-400 py-4">{i + 1}</td>
+                  <td className="text-center text-slate-400 py-3">{i + 1}</td>
 
-                  <td className="py-4 font-medium">{r.code}</td>
-                  <td className="py-4">{r.name}</td>
-                  <td className="py-4">{r.tax_id || "-"}</td>
-                  <td className="py-4">{r.address || "-"}</td>
-                  <td className="py-4">{r.contact_name || "-"}</td>
-                  <td className="py-4">{r.contact_tel || "-"}</td>
-                  <td className="text-center py-4">
+                  {/* CODE */}
+                  <td className="py-3 font-medium">{r.code}</td>
+
+                  {/* NAME + MOBILE INFO */}
+                  <td className="py-3">
+                    <div className="leading-tight">
+                      <div>{r.name}</div>
+
+                      {/* mobile แสดง contact */}
+                      <div className="text-xs text-slate-400 md:hidden">
+                        {r.contact_name || "-"} / {r.contact_tel || "-"}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* TAX */}
+                  <td className="py-3 hidden md:table-cell">
+                    {r.tax_id || "-"}
+                  </td>
+
+                  {/* ADDRESS */}
+                  <td className="py-3 hidden lg:table-cell">
+                    {r.address || "-"}
+                  </td>
+
+                  {/* CONTACT */}
+                  <td className="py-3 hidden lg:table-cell">
+                    {r.contact_name || "-"}
+                  </td>
+
+                  {/* TEL */}
+                  <td className="py-3 hidden lg:table-cell">
+                    {r.contact_tel || "-"}
+                  </td>
+
+                  {/* STATUS */}
+                  <td className="text-center py-3">
                     {r.is_active ? (
-                      <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">
+                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">
                         Active
                       </span>
                     ) : (
-                      <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">
+                      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">
                         Inactive
                       </span>
                     )}
                   </td>
-                  <td className="text-right py-4 px-4">
-                    <div className="flex gap-2 justify-end">
+
+                  {/* ACTION */}
+                  <td className="py-3 px-3">
+                    <div className="flex gap-2 justify-center">
                       {[1, 10].includes(user?.role_id) && (
                         <button
                           onClick={() => {
@@ -228,7 +249,7 @@ export default function ManageCustomers() {
                             setShowUserModal(true);
                           }}
                           className="px-2 text-xs rounded-lg 
-                   bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+                    bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
                         >
                           + User
                         </button>
@@ -236,11 +257,9 @@ export default function ManageCustomers() {
 
                       <button
                         onClick={() => setConfirmDelete({ id: r.id })}
-                        className="
-      w-8 h-8 flex items-center justify-center
-      rounded-lg bg-red-50 text-red-600 border border-red-200 
-      hover:bg-red-100
-    "
+                        className="w-8 h-8 flex items-center justify-center
+                  rounded-lg bg-red-50 text-red-600 border border-red-200 
+                  hover:bg-red-100"
                       >
                         <X size={14} />
                       </button>
@@ -250,10 +269,9 @@ export default function ManageCustomers() {
                           onClick={() =>
                             setConfirmDelete({ id: r.id, type: "hard" })
                           }
-                          className="
-                          px-2 text-xs rounded-lg
-                        bg-red-300 text-red-600 border border-red-200 
-                        hover:bg-red-100"
+                          className="w-8 h-8 flex items-center justify-center
+                    rounded-lg bg-red-300 text-red-600 border border-red-200 
+                    hover:bg-red-200"
                         >
                           <TrashIcon size={14} />
                         </button>
