@@ -8,9 +8,8 @@ import AxiosInstance from "../utils/AxiosInstance";
 
 type BillRow = {
   id: number;
-  NO_BILL: string;
-  SERIAL_NO: string;
-  CUSTOMER_NAME: string;
+  serial_no: string;
+  recipient_name: string;
   warehouse_name: string;
 };
 
@@ -41,10 +40,7 @@ export default function BillScanWarehouse() {
       setLoading(true);
       setError(null);
 
-      const res = await AxiosInstance.get(
-        "/bills-warehouse",
-        {}
-      );
+      const res = await AxiosInstance.get("/scan/warehouse", {});
       const data: BillRow[] = res.data.data || [];
       setPendingRows(data);
     } catch (err) {
@@ -70,11 +66,11 @@ export default function BillScanWarehouse() {
     setError(null);
     setInfo(null);
 
-    const index = pendingRows.findIndex((row) => row.SERIAL_NO === serial);
+    const index = pendingRows.findIndex((row) => row.serial_no === serial);
 
     if (index === -1) {
       const alreadyIndex = scannedRows.findIndex(
-        (row) => row.SERIAL_NO === serial
+        (row) => row.serial_no === serial,
       );
 
       if (alreadyIndex !== -1) {
@@ -110,9 +106,9 @@ export default function BillScanWarehouse() {
     setInfo(null);
 
     try {
-      const serials = scannedRows.map((r) => r.SERIAL_NO);
+      const serials = scannedRows.map((r) => r.serial_no);
 
-      await AxiosInstance.post("/bills-warehouse/accept", {
+      await AxiosInstance.post("/scan/warehouse/verify", {
         serials,
         accept_flag: "Y",
       });
@@ -134,17 +130,17 @@ export default function BillScanWarehouse() {
   const customerOptions = Array.from(
     new Set(
       [...pendingRows, ...scannedRows]
-        .map((r) => r.CUSTOMER_NAME)
-        .filter((v) => !!v)
-    )
+        .map((r) => r.recipient_name)
+        .filter((v) => !!v),
+    ),
   );
 
   const warehouseOptions = Array.from(
     new Set(
       [...pendingRows, ...scannedRows]
         .map((r) => r.warehouse_name)
-        .filter((v) => !!v)
-    )
+        .filter((v) => !!v),
+    ),
   );
 
   const normalize = (s: string | null | undefined) =>
@@ -156,7 +152,7 @@ export default function BillScanWarehouse() {
   const filteredPendingRows = pendingRows.filter((row) => {
     const customerMatch =
       !customerFilterNorm ||
-      normalize(row.CUSTOMER_NAME).includes(customerFilterNorm);
+      normalize(row.recipient_name).includes(customerFilterNorm);
 
     const warehouseMatch =
       !warehouseFilterNorm ||
@@ -168,7 +164,7 @@ export default function BillScanWarehouse() {
   const filteredScannedRows = scannedRows.filter((row) => {
     const customerMatch =
       !customerFilterNorm ||
-      normalize(row.CUSTOMER_NAME).includes(customerFilterNorm);
+      normalize(row.recipient_name).includes(customerFilterNorm);
 
     const warehouseMatch =
       !warehouseFilterNorm ||
@@ -374,7 +370,7 @@ export default function BillScanWarehouse() {
                       </td>
                       <td className="px-2 py-1.5 border-b border-slate-200">
                         <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2 py-[1px] text-lg font-mono font-semibold text-red-600">
-                          {row.SERIAL_NO}
+                          {row.serial_no}
                         </span>
                       </td>
                       {/* <td className="px-2 py-1.5 border-b border-slate-200">
@@ -383,7 +379,7 @@ export default function BillScanWarehouse() {
                         </span>
                       </td> */}
                       <td className="px-2 py-1.5 border-b border-slate-200  truncate">
-                        {row.CUSTOMER_NAME || "-"}
+                        {row.recipient_name || "-"}
                       </td>
                       <td className="px-2 py-1.5 border-b border-slate-200  truncate">
                         {row.warehouse_name || "-"}
@@ -448,11 +444,11 @@ export default function BillScanWarehouse() {
                       </td>
                       <td className="px-2 py-1.5 border-b border-slate-200">
                         <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-[1px] text-lg font-mono font-semibold text-emerald-700">
-                          {row.SERIAL_NO}
+                          {row.serial_no}
                         </span>
                       </td>
                       <td className="px-2 py-1.5 border-b border-slate-200 truncate">
-                        {row.CUSTOMER_NAME || "-"}
+                        {row.recipient_name || "-"}
                       </td>
                       <td className="px-2 py-1.5 border-b border-slate-200  truncate">
                         {row.warehouse_name || "-"}

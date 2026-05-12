@@ -24,14 +24,17 @@ import ManageVehicles from "./pages/ManageVehicles";
 import ManageUsers from "./pages/ManageUsers";
 import ManageCustomers from "./pages/ManageCustomer";
 import ImportSTD from "./pages/ImportSTD";
-import ImportVGT from "./pages/ImportVGT";
-import ImportADV from "./pages/ImportADV";
+import ManageShippers from "./pages/ManageShippers";
+import ManageRecipients from "./pages/ManageRecipients";
+// import ImportVGT from "./pages/ImportVGT";
+// import ImportADV from "./pages/ImportADV";
 
 const RoleRedirect = () => {
   const { user } = useAuth();
   const roleId = Number(user?.role_id);
 
-  if ([1, 2, 5, 6, 7, 8, 9, 10].includes(roleId)) return <Navigate to="/import" replace />;
+  if ([1, 2, 5, 6, 7, 8, 9, 10].includes(roleId))
+    return <Navigate to="/import" replace />;
   if (roleId === 3) return <Navigate to="/warehouse-scan" replace />;
   if (roleId === 4) return <Navigate to="/dc-scan" replace />;
 
@@ -60,7 +63,9 @@ export default function App() {
               <Route
                 path="/import"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 2, 5, 7, 9, 10]}>
+                  <ProtectedRoute
+                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  >
                     <BillImport />
                   </ProtectedRoute>
                 }
@@ -68,7 +73,9 @@ export default function App() {
               <Route
                 path="/importvgt"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 2, 5, 7]}>
+                  <ProtectedRoute
+                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  >
                     <BillImportVGT />
                   </ProtectedRoute>
                 }
@@ -76,7 +83,9 @@ export default function App() {
               <Route
                 path="/importadv"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 2, 5, 7]}>
+                  <ProtectedRoute
+                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  >
                     <BillImportADV />
                   </ProtectedRoute>
                 }
@@ -84,7 +93,9 @@ export default function App() {
               <Route
                 path="/input"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 2, 5, 7]}>
+                  <ProtectedRoute
+                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  >
                     <BillManual />
                   </ProtectedRoute>
                 }
@@ -92,7 +103,9 @@ export default function App() {
               <Route
                 path="/warehouse-scan"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 3]}>
+                  <ProtectedRoute
+                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  >
                     <BillScanWarehouse />
                   </ProtectedRoute>
                 }
@@ -100,7 +113,9 @@ export default function App() {
               <Route
                 path="/dc-scan"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 4]}>
+                  <ProtectedRoute
+                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  >
                     <BillScanDc />
                   </ProtectedRoute>
                 }
@@ -108,7 +123,9 @@ export default function App() {
               <Route
                 path="/labels"
                 element={
-                  <ProtectedRoute allowedRoles={[1, 2, 5, 7]}>
+                  <ProtectedRoute
+                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  >
                     <PrintLabel />
                   </ProtectedRoute>
                 }
@@ -127,14 +144,14 @@ export default function App() {
               <Route path="/manage/users" element={<ManageUsers />} />
               <Route path="/manage/customers" element={<ManageCustomers />} />
               <Route path="/std" element={<ImportSTD />} />
-              <Route path="/vgt" element={<ImportVGT />} />
-              <Route path="/adv" element={<ImportADV />} />
+              <Route path="/manage/shippers" element={<ManageShippers />} />
+              <Route path="/manage/recipients" element={<ManageRecipients />} />
+              {/* <Route path="/vgt" element={<ImportVGT />} />
+              <Route path="/adv" element={<ImportADV />} /> */}
             </Route>
 
             {/* Auth Layout */}
             <Route path="/signin" element={<SignIn />} />
-
-            {/* ✅ เอา "/" ออก ไม่งั้นจะชนกับ redirect */}
 
             {/* Fallback Route */}
             <Route path="*" element={<NotFound />} />

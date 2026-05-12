@@ -14,6 +14,7 @@ type ImportRow = {
   SEND_DATE: string | number;
   SHIPPER_CODE: string;
   RECIPIENT_CODE: string;
+
   RECIPIENT_NAME: string;
   RECIPIENT_TEL: string;
   RECIPIENT_ADDRESS: string;
@@ -21,6 +22,16 @@ type ImportRow = {
   RECIPIENT_DISTRICT: string;
   RECIPIENT_PROVINCE: string;
   RECIPIENT_ZIPCODE: string;
+
+  PACKAGE_CODE?: string;
+  WEIGHT?: number;
+  WIDTH?: number;
+  HEIGHT?: number;
+  LENGTH?: number;
+  Q?: number;
+
+  subdistrict_id?: number;
+
   SERIAL_NO: string;
 };
 
@@ -31,7 +42,7 @@ const headers = [
   "SERIAL_NO",
   "REFERENCE",
   "SEND_DATE",
-  "CUSTOMER_NAME",
+  "SHIPPER_CODE",
   "RECIPIENT_CODE",
   "RECIPIENT_NAME",
   "RECIPIENT_TEL",
@@ -40,6 +51,13 @@ const headers = [
   "RECIPIENT_DISTRICT",
   "RECIPIENT_PROVINCE",
   "RECIPIENT_ZIPCODE",
+
+  "PACKAGE_CODE",
+  "WEIGHT",
+  "WIDTH",
+  "HEIGHT",
+  "LENGTH",
+  "Q",
 ];
 
 export default function ImportSTD() {
@@ -51,7 +69,6 @@ export default function ImportSTD() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [duplicates, setDuplicates] = useState<Record<string, number>>({});
-
   const { user } = useAuth();
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -81,10 +98,26 @@ export default function ImportSTD() {
 
         const json: ImportRow[] = XLSX.utils.sheet_to_json(worksheet, {
           defval: "",
+          raw: false,
         }) as ImportRow[];
 
-        setRows(json);
-        setDuplicates(findDuplicates(json));
+        const cleaned = json.filter((r) => r.SERIAL_NO && r.SERIAL_NO !== "");
+
+        // 🔥 ใส่ตรงนี้
+        const telErrors: Record<number, boolean> = {};
+
+        cleaned.forEach((r, i) => {
+          if (isInvalidTel(r.RECIPIENT_TEL)) {
+            telErrors[i] = true;
+          }
+        });
+
+        // 👇 ของเดิม
+        setRows(cleaned);
+        setDuplicates(findDuplicates(cleaned));
+
+        setRows(cleaned);
+        setDuplicates(findDuplicates(cleaned));
       } catch (err) {
         console.error(err);
         setError("ไฟล์ไม่ถูกต้องหรืออ่านไม่สำเร็จ");
@@ -148,6 +181,17 @@ export default function ImportSTD() {
     return count;
   };
 
+  const isInvalidTel = (tel: string) => {
+    if (!tel) return false;
+
+    const clean = tel.replace(/\D/g, "");
+
+    return !(
+      clean.startsWith("0") &&
+      (clean.length === 9 || clean.length === 10)
+    );
+  };
+
   const handleDeleteRow = (index: number) => {
     setRows((prev) => {
       const next = prev.filter((_, i) => i !== index);
@@ -157,14 +201,32 @@ export default function ImportSTD() {
   };
 
   const excelDateToJSDate = (value: string | number): Date | null => {
-    const num = Number(value);
-    if (!value || isNaN(num)) return null;
-    return new Date((num - 25569) * 86400 * 1000);
+    if (!value) return null;
+
+    // ✅ Excel serial
+    if (!isNaN(Number(value))) {
+      return new Date((Number(value) - 25569) * 86400 * 1000);
+    }
+
+    // ✅ dd/mm/yyyy
+    if (typeof value === "string" && value.includes("/")) {
+      const [d, m, y] = value.split("/");
+      const date = new Date(`${y}-${m}-${d}`);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    // fallback
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
   };
 
   const visibleRows = useMemo(() => {
     return rows.slice(0, visibleCount);
   }, [rows, visibleCount]);
+
+  const hasDuplicate = Object.values(duplicates).some((c) => c > 1);
+  const hasInvalidTel = rows.some((r) => isInvalidTel(r.RECIPIENT_TEL));
+  const isInvalidData = hasDuplicate || hasInvalidTel;
 
   const Row = React.memo(({ row, idx }: any) => {
     return (
@@ -191,7 +253,7 @@ export default function ImportSTD() {
         <td
           className={
             duplicates[row.SERIAL_NO] > 1
-              ? "text-red-600 font-semibold border-b"
+              ? "bg-red-100 text-red-700 font-semibold"
               : " border-b"
           }
         >
@@ -209,12 +271,26 @@ export default function ImportSTD() {
         <td className="px-2 py-1.5 border-b">{row.SHIPPER_CODE}</td>
         <td className="px-2 py-1.5 border-b">{row.RECIPIENT_CODE}</td>
         <td className="px-2 py-1.5 border-b">{row.RECIPIENT_NAME}</td>
-        <td className="px-2 py-1.5 border-b">{row.RECIPIENT_TEL}</td>
+        <td
+          className={`px-2 py-1.5 border-b ${
+            isInvalidTel(row.RECIPIENT_TEL)
+              ? "bg-red-100 text-red-700 font-semibold"
+              : ""
+          }`}
+        >
+          {row.RECIPIENT_TEL}
+        </td>
         <td className="px-2 py-1.5 border-b">{row.RECIPIENT_ADDRESS}</td>
         <td className="px-2 py-1.5 border-b">{row.RECIPIENT_SUBDISTRICT}</td>
         <td className="px-2 py-1.5 border-b">{row.RECIPIENT_DISTRICT}</td>
         <td className="px-2 py-1.5 border-b">{row.RECIPIENT_PROVINCE}</td>
         <td className="px-2 py-1.5 border-b">{row.RECIPIENT_ZIPCODE}</td>
+        <td className="px-2 py-1.5 border-b">{row.PACKAGE_CODE}</td>
+        <td className="px-2 py-1.5 border-b">{row.WEIGHT}</td>
+        <td className="px-2 py-1.5 border-b">{row.WIDTH}</td>
+        <td className="px-2 py-1.5 border-b">{row.HEIGHT}</td>
+        <td className="px-2 py-1.5 border-b">{row.LENGTH}</td>
+        <td className="px-2 py-1.5 border-b">{row.Q}</td>
       </tr>
     );
   });
@@ -310,14 +386,19 @@ export default function ImportSTD() {
                     มี SERIAL_NO ซ้ำในไฟล์
                   </span>
                 )}
+                {hasInvalidTel && (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-red-50 text-red-700 border border-red-200 px-2 py-[1px]">
+                    พบเบอร์โทรไม่ถูกต้อง
+                  </span>
+                )}
               </span>
             )}
 
             <button
               onClick={handleSave}
-              disabled={!rows.length || saving}
+              disabled={!rows.length || saving || isInvalidData}
               className={`px-4 py-1.5 rounded-full font-medium transition ${
-                !rows.length || saving
+                !rows.length || saving || isInvalidData
                   ? "bg-slate-200 text-slate-500 cursor-not-allowed"
                   : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"
               }`}

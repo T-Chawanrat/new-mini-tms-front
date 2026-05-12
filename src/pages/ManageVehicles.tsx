@@ -10,7 +10,6 @@ export default function AdminVehicles() {
 
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("");
-  const [filterUsage, setFilterUsage] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState("");
   const [statusModal, setStatusModal] = useState(false);
@@ -26,7 +25,6 @@ export default function AdminVehicles() {
     brand: "",
     model: "",
     vehicle_type: "",
-    usage_type: "",
     capacity_kg: "",
     warehouse_id: "",
     status: "ACTIVE",
@@ -40,12 +38,6 @@ export default function AdminVehicles() {
     { value: "4W", label: "รถ 4 ล้อ" },
     { value: "TRUCK_6W", label: "รถ 6 ล้อ" },
     { value: "TRUCK_10W", label: "รถ 10 ล้อ" },
-  ];
-
-  const USAGE_TYPES = [
-    { value: "LINEHAUL", label: "รถขนย้าย" },
-    { value: "DELIVERY", label: "รถกระจาย" },
-    { value: "PICKUP", label: "รับพัสดุ" },
   ];
 
   const STATUS = [
@@ -76,7 +68,6 @@ export default function AdminVehicles() {
         params: {
           search: search || undefined,
           vehicle_type: filterType || undefined,
-          usage_type: filterUsage || undefined,
           status: filterStatus || undefined,
         },
       });
@@ -108,7 +99,6 @@ export default function AdminVehicles() {
       if (!form.brand) return setError("กรุณากรอกยี่ห้อรถ");
       if (!form.model) return setError("กรุณากรอกรุ่นรถ");
       if (!form.vehicle_type) return setError("กรุณาเลือกประเภทรถ");
-      if (!form.usage_type) return setError("กรุณาเลือกประเภทการใช้งาน");
       if (!form.status) return setError("กรุณาเลือกสถานะ");
       if (!form.warehouse_id) return setError("กรุณาเลือก warehouse");
       if (!form.capacity_kg) return setError("กรุณากรอกน้ำหนัก (kg)");
@@ -124,7 +114,6 @@ export default function AdminVehicles() {
         brand: "",
         model: "",
         vehicle_type: "",
-        usage_type: "",
         capacity_kg: "",
         warehouse_id: "",
         status: "ACTIVE",
@@ -212,19 +201,6 @@ export default function AdminVehicles() {
         </select>
 
         <select
-          value={filterUsage}
-          onChange={(e) => setFilterUsage(e.target.value)}
-          className="input-modern w-[180px]"
-        >
-          <option value="">การใช้งาน</option>
-          {USAGE_TYPES.map((x) => (
-            <option key={x.value} value={x.value}>
-              {x.label}
-            </option>
-          ))}
-        </select>
-
-        <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
           className="input-modern w-[180px]"
@@ -256,7 +232,6 @@ export default function AdminVehicles() {
               {/* ซ่อนมือถือ */}
               <th className="text-left py-4 hidden md:table-cell">รุ่น</th>
               <th className="text-left py-4 hidden md:table-cell">ประเภท</th>
-              <th className="text-left py-4 hidden lg:table-cell">การใช้งาน</th>
               <th className="text-left py-4 hidden lg:table-cell">
                 น้ำหนัก (kg)
               </th>
@@ -270,13 +245,13 @@ export default function AdminVehicles() {
           <tbody className="text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10 text-slate-400">
+                <td colSpan={9} className="text-center py-10 text-slate-400">
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10 text-slate-400">
+                <td colSpan={9} className="text-center py-10 text-slate-400">
                   ไม่มีข้อมูล
                 </td>
               </tr>
@@ -299,7 +274,6 @@ export default function AdminVehicles() {
                       {/* mobile แสดง type + usage */}
                       <div className="text-xs text-slate-400 md:hidden">
                         {getLabel(VEHICLE_TYPES, r.vehicle_type)} /{" "}
-                        {getLabel(USAGE_TYPES, r.usage_type)}
                       </div>
                     </div>
                   </td>
@@ -312,11 +286,6 @@ export default function AdminVehicles() {
                   {/* ประเภท */}
                   <td className="py-2.5 hidden md:table-cell">
                     {getLabel(VEHICLE_TYPES, r.vehicle_type)}
-                  </td>
-
-                  {/* การใช้งาน */}
-                  <td className="py-2.5 hidden lg:table-cell">
-                    {getLabel(USAGE_TYPES, r.usage_type)}
                   </td>
 
                   {/* น้ำหนัก */}
@@ -440,19 +409,6 @@ export default function AdminVehicles() {
 
               <select
                 className="input-modern"
-                value={form.usage_type}
-                onChange={(e) => handleChange("usage_type", e.target.value)}
-              >
-                <option value="">การใช้งาน</option>
-                {USAGE_TYPES.map((x) => (
-                  <option key={x.value} value={x.value}>
-                    {x.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="input-modern"
                 value={form.status}
                 onChange={(e) => handleChange("status", e.target.value)}
               >
@@ -503,66 +459,62 @@ export default function AdminVehicles() {
         </div>
       )}
 
-      {statusModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]">
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">
-              เปลี่ยนสถานะ
-            </h3>
+{statusModal && (
+  <div
+    className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+    onClick={() => {
+      setStatusModal(false);
+      setSelected(null);
+    }}
+  >
+    <div
+      className="bg-white p-6 rounded-2xl shadow-xl w-[300px]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h3 className="text-lg font-semibold mb-4 text-slate-800">
+        เปลี่ยนสถานะ
+      </h3>
 
-            <div className="flex flex-col gap-3">
-              <button
-                disabled={selected?.current === "ACTIVE"}
-                onClick={() => changeStatus("ACTIVE")}
-                className={`px-4 py-2 rounded-lg 
-    ${
-      selected?.current === "ACTIVE"
-        ? "bg-green-50 text-green-300 cursor-not-allowed"
-        : "bg-green-100 text-green-600 hover:bg-green-200"
-    }`}
-              >
-                Active
-              </button>
+      <div className="flex flex-col gap-3">
+        <button
+          disabled={selected?.current === "ACTIVE"}
+          onClick={() => changeStatus("ACTIVE")}
+          className={`px-4 py-2 rounded-lg ${
+            selected?.current === "ACTIVE"
+              ? "bg-green-50 text-green-300 cursor-not-allowed"
+              : "bg-green-100 text-green-600 hover:bg-green-200"
+          }`}
+        >
+          Active
+        </button>
 
-              <button
-                disabled={selected?.current === "MAINTENANCE"}
-                onClick={() => changeStatus("MAINTENANCE")}
-                className={`px-4 py-2 rounded-lg 
-    ${
-      selected?.current === "MAINTENANCE"
-        ? "bg-yellow-50 text-yellow-300 cursor-not-allowed"
-        : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
-    }`}
-              >
-                Maintenance
-              </button>
+        <button
+          disabled={selected?.current === "MAINTENANCE"}
+          onClick={() => changeStatus("MAINTENANCE")}
+          className={`px-4 py-2 rounded-lg ${
+            selected?.current === "MAINTENANCE"
+              ? "bg-yellow-50 text-yellow-300 cursor-not-allowed"
+              : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+          }`}
+        >
+          Maintenance
+        </button>
 
-              <button
-                disabled={selected?.current === "INACTIVE"}
-                onClick={() => changeStatus("INACTIVE")}
-                className={`px-4 py-2 rounded-lg 
-    ${
-      selected?.current === "INACTIVE"
-        ? "bg-red-50 text-red-300 cursor-not-allowed"
-        : "bg-red-100 text-red-500 hover:bg-red-200"
-    }`}
-              >
-                Inactive
-              </button>
-            </div>
-
-            <button
-              onClick={() => {
-                setStatusModal(false);
-                setSelected(null);
-              }}
-              className="mt-4 w-full px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
-            >
-              ยกเลิก
-            </button>
-          </div>
-        </div>
-      )}
+        <button
+          disabled={selected?.current === "INACTIVE"}
+          onClick={() => changeStatus("INACTIVE")}
+          className={`px-4 py-2 rounded-lg ${
+            selected?.current === "INACTIVE"
+              ? "bg-red-50 text-red-300 cursor-not-allowed"
+              : "bg-red-100 text-red-500 hover:bg-red-200"
+          }`}
+        >
+          Inactive
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

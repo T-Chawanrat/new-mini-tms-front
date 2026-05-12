@@ -3,26 +3,33 @@ import AxiosInstance from "../utils/AxiosInstance";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "../context/AuthContext";
-import { TrashIcon, X } from "lucide-react";
+import { TrashIcon, Pencil } from "lucide-react";
 
 export default function ManageUsers() {
   const [rows, setRows] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
-
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
   const [confirmDelete, setConfirmDelete] = useState<any>(null);
-
+  const [statusModal, setStatusModal] = useState(false);
+  const [selected, setSelected] = useState<any>(null);
   const [selectedZones, setSelectedZones] = useState<number[]>([]);
-
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [error, setError] = useState("");
+  const [editModal, setEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
   const { user } = useAuth();
+
+  const [editForm, setEditForm] = useState({
+    first_name: "",
+    last_name: "",
+    license_no: "",
+    license_expire: "",
+  });
 
   const [form, setForm] = useState({
     username: "",
@@ -54,8 +61,6 @@ export default function ManageUsers() {
       setLoading(false);
     }
   };
-
-  console.log(user.role_id, " role นะ");
 
   // =====================
   // FETCH DROPDOWN
@@ -178,13 +183,72 @@ export default function ManageUsers() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirmDelete) return;
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
 
-    await AxiosInstance.delete(`/manage/users/${confirmDelete.id}`, {});
+    if (!editForm.first_name || !editForm.last_name) {
+      alert("กรุณากรอกชื่อ และนามสกุล");
+      return;
+    }
 
-    setConfirmDelete(null);
-    fetchData();
+    try {
+      await AxiosInstance.put(`/manage/users/${editingUser.id}`, {
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
+        license_no: editForm.license_no || null,
+        license_expire: editForm.license_expire || null,
+      });
+
+      setEditModal(false);
+      setEditingUser(null);
+      setEditForm({
+        first_name: "",
+        last_name: "",
+        license_no: "",
+        license_expire: "",
+      });
+
+      fetchData();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "update user failed");
+    }
+  };
+
+  const changeStatus = async (status: "ACTIVE" | "INACTIVE") => {
+    if (!selected) return;
+
+    const is_active = status === "ACTIVE" ? 1 : 0;
+
+    try {
+      await AxiosInstance.put(`/manage/users/${selected.id}`, {
+        is_active,
+      });
+
+      setStatusModal(false);
+      setSelected(null);
+      fetchData();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "change status failed");
+    }
+  };
+
+  const openEdit = (row: any) => {
+    setEditingUser(row);
+
+    setEditForm({
+      first_name: row.first_name || "",
+      last_name: row.last_name || "",
+      license_no: row.license_no || "",
+      license_expire: row.license_expire
+        ? new Date(row.license_expire).toISOString().split("T")[0]
+        : "",
+    });
+
+    setEditModal(true);
+  };
+
+  const handleEditChange = (k: string, v: any) => {
+    setEditForm((prev) => ({ ...prev, [k]: v }));
   };
 
   const handleHardDelete = async () => {
@@ -347,37 +411,46 @@ export default function ManageUsers() {
 
                   {/* STATUS */}
                   <td className="text-center py-2.5">
-                    {r.is_active ? (
-                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">
-                        Inactive
-                      </span>
-                    )}
+                    <button
+                      onClick={() => {
+                        setSelected({
+                          id: r.id,
+                          username: r.username,
+                          current: r.is_active ? "ACTIVE" : "INACTIVE",
+                        });
+                        setStatusModal(true);
+                      }}
+                      className={`px-2 py-1 text-xs rounded-full font-medium transition
+      ${
+        r.is_active
+          ? "bg-green-100 text-green-600 hover:bg-green-200"
+          : "bg-red-100 text-red-500 hover:bg-red-200"
+      }`}
+                    >
+                      {r.is_active ? "Active" : "Inactive"}
+                    </button>
                   </td>
 
                   {/* ACTION */}
                   <td className="py-2.5">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setConfirmDelete({ id: r.id })}
+                        onClick={() => openEdit(r)}
                         className="w-8 h-8 flex items-center justify-center
-                  rounded-lg bg-red-50 text-red-600 border border-red-200 
-                  hover:bg-red-100"
+      rounded-lg bg-blue-50 text-blue-600 border border-blue-200 
+      hover:bg-blue-100"
                       >
-                        <X size={14} />
+                        <Pencil size={14} />
                       </button>
 
-                      {[1, 10].includes(user?.role_id) && (
+                      {[1, 10, 11].includes(Number(user?.role_id)) && (
                         <button
                           onClick={() =>
                             setConfirmDelete({ id: r.id, type: "hard" })
                           }
                           className="w-8 h-8 flex items-center justify-center
-                    rounded-lg bg-red-300 text-red-600 border border-red-200 
-                    hover:bg-red-200"
+        rounded-lg bg-red-300 text-red-600 border border-red-200 
+        hover:bg-red-200"
                         >
                           <TrashIcon size={14} />
                         </button>
@@ -551,27 +624,139 @@ export default function ManageUsers() {
         </div>
       )}
 
+      {editModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[460px] animate-scaleIn">
+            <h3 className="text-lg font-semibold text-slate-800 mb-1">
+              แก้ไขผู้ใช้
+            </h3>
+
+            <p className="text-sm text-slate-500 mb-5">
+              {editingUser?.username || "-"}
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                className="input-modern"
+                placeholder="ชื่อ"
+                value={editForm.first_name}
+                onChange={(e) => handleEditChange("first_name", e.target.value)}
+              />
+
+              <input
+                className="input-modern"
+                placeholder="นามสกุล"
+                value={editForm.last_name}
+                onChange={(e) => handleEditChange("last_name", e.target.value)}
+              />
+
+              <input
+                className="input-modern"
+                placeholder="เลขใบขับขี่"
+                value={editForm.license_no}
+                onChange={(e) => handleEditChange("license_no", e.target.value)}
+              />
+
+              <DatePicker
+                selected={
+                  editForm.license_expire
+                    ? new Date(editForm.license_expire)
+                    : null
+                }
+                onChange={(date: Date | null) =>
+                  handleEditChange(
+                    "license_expire",
+                    date ? date.toISOString().split("T")[0] : "",
+                  )
+                }
+                className="input-modern w-full"
+                placeholderText="วันหมดอายุใบขับขี่"
+                dateFormat="yyyy-MM-dd"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setEditModal(false);
+                  setEditingUser(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200"
+              >
+                ยกเลิก
+              </button>
+
+              <button
+                onClick={handleUpdateUser}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow"
+              >
+                บันทึก
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {statusModal && (
+        <div
+          onClick={() => {
+            setStatusModal(false);
+            setSelected(null);
+          }}
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white p-6 rounded-2xl shadow-xl w-[300px]"
+          >
+            <h3 className="text-lg font-semibold mb-1 text-slate-800">สถานะ</h3>
+
+            <div className="flex flex-col gap-3">
+              <button
+                disabled={selected?.current === "ACTIVE"}
+                onClick={() => changeStatus("ACTIVE")}
+                className={`px-4 py-2 rounded-lg 
+            ${
+              selected?.current === "ACTIVE"
+                ? "bg-green-50 text-green-300 cursor-not-allowed"
+                : "bg-green-100 text-green-600 hover:bg-green-200"
+            }`}
+              >
+                Active
+              </button>
+
+              <button
+                disabled={selected?.current === "INACTIVE"}
+                onClick={() => changeStatus("INACTIVE")}
+                className={`px-4 py-2 rounded-lg 
+            ${
+              selected?.current === "INACTIVE"
+                ? "bg-red-50 text-red-300 cursor-not-allowed"
+                : "bg-red-100 text-red-500 hover:bg-red-200"
+            }`}
+              >
+                Inactive
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CONFIRM */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl shadow-xl text-center w-[320px]">
             <h3 className="text-lg font-semibold text-slate-800 mb-2">
-              {confirmDelete?.type === "hard" ? "ยืนยันการลบ" : "ปิดการใช้งาน"}
+              ยืนยันการลบ
             </h3>
 
             <p className="text-sm text-slate-500 mb-4">
-              {confirmDelete?.type === "hard"
-                ? "ลบผู้ใช้งานรายนี้?"
-                : "ปิดการใช้งานผู้ใช้งานรายนี้?"}
+              ลบผู้ใช้งานรายนี้ถาวร?
             </p>
 
             <div className="flex justify-center gap-3">
               <button
-                onClick={() =>
-                  confirmDelete?.type === "hard"
-                    ? handleHardDelete()
-                    : handleDelete()
-                }
+                onClick={handleHardDelete}
                 className="px-4 py-2 rounded-xl bg-red-500 text-white"
               >
                 ยืนยัน
