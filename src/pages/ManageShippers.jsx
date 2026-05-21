@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
-import AddressDropdown from "../components/AddressDropdown";
-import { X, Pencil } from "lucide-react";
+import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
+import { Pencil } from "lucide-react";
 
 export default function ManageShippers() {
   const { user } = useAuth();
@@ -18,13 +18,10 @@ export default function ManageShippers() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [statusModal, setStatusModal] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null);
-
-  const [addressOptions, setAddressOptions] = useState([]);
-  const [loadingAddress, setLoadingAddress] = useState(false);
-  const [activeField, setActiveField] = useState("");
 
   const emptyForm = {
     shipper_code: "",
@@ -47,9 +44,7 @@ export default function ManageShippers() {
 
   const [form, setForm] = useState(emptyForm);
 
-  const selectedCustomer = customers.find(
-    (c) => String(c.id) === String(customerId),
-  );
+  const selectedCustomer = customers.find((c) => String(c.id) === String(customerId));
 
   const handleChange = (key, value) => {
     setForm((prev) => ({
@@ -61,8 +56,35 @@ export default function ManageShippers() {
   const resetForm = () => {
     setForm(emptyForm);
     setEditing(null);
-    setAddressOptions([]);
-    setActiveField("");
+  };
+
+  const clearAddress = () => {
+    setForm((prev) => ({
+      ...prev,
+      subdistrict_id: "",
+      district_id: "",
+      province_id: "",
+      subdistrict_name: "",
+      district_name: "",
+      province_name: "",
+      zip_code: "",
+    }));
+  };
+
+  const handleSelectAddress = (row) => {
+    setForm((prev) => ({
+      ...prev,
+
+      subdistrict_id: row.subdistrict_id || "",
+      district_id: row.district_id || "",
+      province_id: row.province_id || "",
+
+      subdistrict_name: row.subdistrict_name || "",
+      district_name: row.district_name || "",
+      province_name: row.province_name || "",
+
+      zip_code: row.zip_code || "",
+    }));
   };
 
   const fetchCustomers = async () => {
@@ -85,14 +107,11 @@ export default function ManageShippers() {
     try {
       setLoading(true);
 
-      const res = await AxiosInstance.get(
-        `/manage/customers/${customerId}/shippers`,
-        {
-          params: {
-            search: search || undefined,
-          },
+      const res = await AxiosInstance.get(`/manage/customers/${customerId}/shippers`, {
+        params: {
+          search: search || undefined,
         },
-      );
+      });
 
       setRows(res.data || []);
     } catch (err) {
@@ -100,62 +119,6 @@ export default function ManageShippers() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAddressInputChange = async (field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-
-      // ถ้าพิมพ์ใหม่ ให้ล้าง id เดิม เพื่อบังคับเลือกจาก dropdown ใหม่
-      subdistrict_id: "",
-      district_id: "",
-      province_id: "",
-
-      // ถ้า field ที่พิมพ์ไม่ใช่ zip_code ค่อยล้าง zip_code
-      ...(field !== "zip_code" ? { zip_code: "" } : {}),
-    }));
-
-    const keyword = value.trim();
-
-    if (!keyword || keyword.length < 2) {
-      setAddressOptions([]);
-      return;
-    }
-
-    try {
-      setLoadingAddress(true);
-
-      const res = await AxiosInstance.get("/address-search", {
-        params: { keyword },
-      });
-
-      setAddressOptions(res.data.data || []);
-    } catch (err) {
-      console.error("Error fetching address search:", err);
-      setAddressOptions([]);
-    } finally {
-      setLoadingAddress(false);
-    }
-  };
-
-  const handleSelectAddress = (row) => {
-    setForm((prev) => ({
-      ...prev,
-
-      subdistrict_id: row.subdistrict_id || "",
-      district_id: row.district_id || "",
-      province_id: row.province_id || "",
-
-      subdistrict_name: row.subdistrict_name || "",
-      district_name: row.district_name || "",
-      province_name: row.province_name || "",
-
-      zip_code: row.zip_code || "",
-    }));
-
-    setAddressOptions([]);
-    setActiveField("");
   };
 
   useEffect(() => {
@@ -247,15 +210,9 @@ export default function ManageShippers() {
 
     try {
       if (editing) {
-        await AxiosInstance.patch(
-          `/manage/customers/${customerId}/shippers/${editing.shipper_id}`,
-          payload,
-        );
+        await AxiosInstance.patch(`/manage/customers/${customerId}/shippers/${editing.shipper_id}`, payload);
       } else {
-        await AxiosInstance.post(
-          `/manage/customers/${customerId}/shippers`,
-          payload,
-        );
+        await AxiosInstance.post(`/manage/customers/${customerId}/shippers`, payload);
       }
 
       setShowModal(false);
@@ -266,18 +223,28 @@ export default function ManageShippers() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirmDelete || !customerId) return;
+  const openStatusModal = (row) => {
+    setSelectedStatus({
+      shipper_id: row.shipper_id,
+      current: row.is_deleted === "N" ? "ACTIVE" : "INACTIVE",
+    });
+
+    setStatusModal(true);
+  };
+
+  const changeStatus = async (status) => {
+    if (!selectedStatus || !customerId) return;
 
     try {
-      await AxiosInstance.delete(
-        `/manage/customers/${customerId}/shippers/${confirmDelete.shipper_id}`,
-      );
+      await AxiosInstance.patch(`/manage/customers/${customerId}/shippers/${selectedStatus.shipper_id}/status`, {
+        is_deleted: status === "ACTIVE" ? "N" : "Y",
+      });
 
-      setConfirmDelete(null);
+      setStatusModal(false);
+      setSelectedStatus(null);
       fetchData();
     } catch (err) {
-      alert(err?.response?.data?.message || "delete shipper failed");
+      alert(err?.response?.data?.message || "update status failed");
     }
   };
 
@@ -285,9 +252,7 @@ export default function ManageShippers() {
     <div className="w-full min-h-screen px-1 py-4 bg-slate-50">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">
-            Shipper Management
-          </h2>
+          <h2 className="text-2xl font-semibold text-slate-800">Shipper Management</h2>
 
           <p className="text-sm text-slate-500">
             {isCustomer ? (
@@ -295,32 +260,20 @@ export default function ManageShippers() {
             ) : (
               <>
                 จัดการผู้ส่งของลูกค้า
-                {selectedCustomer ? (
-                  <span className="font-medium text-slate-700">
-                    {" "}
-                    {selectedCustomer.name}
-                  </span>
-                ) : null}
+                {selectedCustomer ? <span className="font-medium text-slate-700"> {selectedCustomer.name}</span> : null}
               </>
             )}
           </p>
         </div>
 
-        <button
-          onClick={openCreate}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition"
-        >
+        <button onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
           + เพิ่มผู้ส่ง
         </button>
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-5 flex gap-3 flex-wrap">
         {canSelectCustomer && (
-          <select
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="input-modern w-[280px]"
-          >
+          <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-modern w-auto">
             <option value="">เลือก Customer</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
@@ -340,10 +293,7 @@ export default function ManageShippers() {
           }}
         />
 
-        <button
-          onClick={fetchData}
-          className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-        >
+        <button onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
           ค้นหา
         </button>
       </div>
@@ -353,11 +303,14 @@ export default function ManageShippers() {
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="py-4 text-center w-12">#</th>
-              <th className="text-left py-4">Code</th>
-              <th className="text-left py-4">Name</th>
+              <th className="text-left py-4">Shipper Code</th>
+              <th className="text-left py-4">Shipper Name</th>
               <th className="text-left py-4 hidden md:table-cell">Tel</th>
               <th className="text-left py-4 hidden lg:table-cell">Address</th>
-              <th className="text-left py-4 hidden lg:table-cell">Zip</th>
+              <th className="text-left py-4 hidden lg:table-cell">Subdistrict</th>
+              <th className="text-left py-4 hidden lg:table-cell">District</th>
+              <th className="text-left py-4 hidden lg:table-cell">Province</th>
+              <th className="text-left py-4 hidden lg:table-cell">Zipcode</th>
               <th className="text-center py-4">Status</th>
               <th className="text-center w-28">จัดการ</th>
             </tr>
@@ -394,24 +347,28 @@ export default function ManageShippers() {
 
                   <td className="py-3 hidden md:table-cell">{r.tel || "-"}</td>
 
-                  <td className="py-3 hidden lg:table-cell max-w-[320px] truncate">
-                    {r.address || "-"}
-                  </td>
+                  <td className="py-3 hidden lg:table-cell max-w-[320px] truncate">{r.address || "-"}</td>
 
-                  <td className="py-3 hidden lg:table-cell">
-                    {r.zip_code || "-"}
-                  </td>
+                  <td className="py-3 hidden lg:table-cell">{r.subdistrict_name || "-"}</td>
+
+                  <td className="py-3 hidden lg:table-cell">{r.district_name || "-"}</td>
+
+                  <td className="py-3 hidden lg:table-cell">{r.province_name || "-"}</td>
+
+                  <td className="py-3 hidden lg:table-cell">{r.zip_code || "-"}</td>
 
                   <td className="text-center py-3">
-                    {r.is_deleted === "N" ? (
-                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">
-                        Deleted
-                      </span>
-                    )}
+                    <button type="button" onClick={() => openStatusModal(r)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
+                      {r.is_deleted === "N" ? (
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">
+                          Inactive
+                        </span>
+                      )}
+                    </button>
                   </td>
 
                   <td className="py-3 px-3">
@@ -421,13 +378,6 @@ export default function ManageShippers() {
                         className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
                       >
                         <Pencil size={14} />
-                      </button>
-
-                      <button
-                        onClick={() => setConfirmDelete(r)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-                      >
-                        <X size={14} />
                       </button>
                     </div>
                   </td>
@@ -439,11 +389,18 @@ export default function ManageShippers() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn">
-            <h3 className="text-lg font-semibold text-slate-800 mb-5">
-              {editing ? "แก้ไขผู้ส่ง" : "เพิ่มผู้ส่ง"}
-            </h3>
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => {
+            setShowModal(false);
+            resetForm();
+          }}
+        >
+          <div
+            className="bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไขผู้ส่ง" : "เพิ่มผู้ส่ง"}</h3>
 
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -457,11 +414,8 @@ export default function ManageShippers() {
                 <select
                   className="input-modern w-full"
                   value={form.shipper_type_id}
-                  onChange={(e) =>
-                    handleChange("shipper_type_id", e.target.value)
-                  }
+                  onChange={(e) => handleChange("shipper_type_id", e.target.value)}
                 >
-                  <option value="">เลือกประเภทผู้ส่ง</option>
                   <option value="1">บุคคลธรรมดา</option>
                   <option value="2">นิติบุคคล</option>
                 </select>
@@ -481,114 +435,22 @@ export default function ManageShippers() {
                 onChange={(e) => handleChange("address", e.target.value)}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="relative">
-                  <input
-                    className="input-modern w-full"
-                    placeholder="ตำบล"
-                    value={form.subdistrict_name}
-                    onChange={(e) =>
-                      handleAddressInputChange(
-                        "subdistrict_name",
-                        e.target.value,
-                      )
-                    }
-                    onFocus={() => setActiveField("subdistrict_name")}
-                  />
+              <div>
+                <label className="block text-xs font-medium mb-1 text-slate-600">ค้นหาพื้นที่</label>
 
-                  {activeField === "subdistrict_name" &&
-                    addressOptions.length > 0 && (
-                      <AddressDropdown
-                        addressOptions={addressOptions}
-                        loading={loadingAddress}
-                        onSelect={handleSelectAddress}
-                      />
-                    )}
-                </div>
-
-                <div className="relative">
-                  <input
-                    className="input-modern w-full"
-                    placeholder="อำเภอ"
-                    value={form.district_name}
-                    onChange={(e) =>
-                      handleAddressInputChange("district_name", e.target.value)
-                    }
-                    onFocus={() => setActiveField("district_name")}
-                  />
-
-                  {activeField === "district_name" &&
-                    addressOptions.length > 0 && (
-                      <AddressDropdown
-                        addressOptions={addressOptions}
-                        loading={loadingAddress}
-                        onSelect={handleSelectAddress}
-                      />
-                    )}
-                </div>
-
-                <div className="relative">
-                  <input
-                    className="input-modern w-full"
-                    placeholder="จังหวัด"
-                    value={form.province_name}
-                    onChange={(e) =>
-                      handleAddressInputChange("province_name", e.target.value)
-                    }
-                    onFocus={() => setActiveField("province_name")}
-                  />
-
-                  {activeField === "province_name" &&
-                    addressOptions.length > 0 && (
-                      <AddressDropdown
-                        addressOptions={addressOptions}
-                        loading={loadingAddress}
-                        onSelect={handleSelectAddress}
-                      />
-                    )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="relative">
-                  <input
-                    className="input-modern w-full"
-                    placeholder="Zip Code"
-                    value={form.zip_code}
-                    onChange={(e) =>
-                      handleAddressInputChange("zip_code", e.target.value)
-                    }
-                    onFocus={() => setActiveField("zip_code")}
-                  />
-
-                  {activeField === "zip_code" && addressOptions.length > 0 && (
-                    <AddressDropdown
-                      addressOptions={addressOptions}
-                      loading={loadingAddress}
-                      onSelect={handleSelectAddress}
-                    />
-                  )}
-                </div>
-
-                <input
-                  className="input-modern w-full"
-                  placeholder="Tel"
-                  value={form.tel}
-                  onChange={(e) => handleChange("tel", e.target.value)}
-                />
-
-                <input
-                  className="input-modern w-full"
-                  placeholder="Fax"
-                  value={form.fax}
-                  onChange={(e) => handleChange("fax", e.target.value)}
+                <AddressSearchDropdown
+                  value={form.subdistrict_name ? `${form.subdistrict_name} • ${form.district_name} • ${form.province_name} • ${form.zip_code}` : ""}
+                  onChange={() => {
+                    clearAddress();
+                  }}
+                  onSelect={handleSelectAddress}
                 />
               </div>
 
-              <div className="text-xs text-slate-400">
-                subdistrict_id: {form.subdistrict_id || "-"} / district_id:{" "}
-                {form.district_id || "-"} / province_id:{" "}
-                {form.province_id || "-"}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input className="input-modern w-full" placeholder="Tel" value={form.tel} onChange={(e) => handleChange("tel", e.target.value)} />
+
+                <input className="input-modern w-full" placeholder="Fax" value={form.fax} onChange={(e) => handleChange("fax", e.target.value)} />
               </div>
             </div>
 
@@ -603,10 +465,7 @@ export default function ManageShippers() {
                 ยกเลิก
               </button>
 
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-              >
+              <button onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                 บันทึก
               </button>
             </div>
@@ -614,30 +473,38 @@ export default function ManageShippers() {
         </div>
       )}
 
-      {confirmDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl text-center w-[340px]">
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">
-              ลบผู้ส่ง
-            </h3>
+      {statusModal && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onClick={() => {
+            setStatusModal(false);
+            setSelectedStatus(null);
+          }}
+        >
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
 
-            <p className="text-sm text-slate-500 mb-4">
-              ลบผู้ส่ง {confirmDelete.shipper_name} ?
-            </p>
-
-            <div className="flex justify-center gap-3">
+            <div className="flex flex-col gap-3">
               <button
-                onClick={handleDelete}
-                className="px-4 py-2 rounded-xl text-white bg-red-500"
+                disabled={selectedStatus?.current === "ACTIVE"}
+                onClick={() => changeStatus("ACTIVE")}
+                className={`px-4 py-2 rounded-lg ${
+                  selectedStatus?.current === "ACTIVE"
+                    ? "bg-green-50 text-green-300 cursor-not-allowed"
+                    : "bg-green-100 text-green-600 hover:bg-green-200"
+                }`}
               >
-                ยืนยัน
+                Active
               </button>
 
               <button
-                onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 rounded-xl bg-gray-100"
+                disabled={selectedStatus?.current === "INACTIVE"}
+                onClick={() => changeStatus("INACTIVE")}
+                className={`px-4 py-2 rounded-lg ${
+                  selectedStatus?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
+                }`}
               >
-                ยกเลิก
+                Inactive
               </button>
             </div>
           </div>

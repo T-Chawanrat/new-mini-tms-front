@@ -3,35 +3,49 @@ import { ChevronDownIcon } from "lucide-react";
 import AxiosInstance from "../../utils/AxiosInstance";
 
 export interface Warehouse {
-  warehouse_id: number;
-  warehouse_name: string;
-  warehouse_code: string | null;
+  id: number;
+  name: string;
 }
 
 interface WarehouseDropdownProps {
-  onChange: (warehouseId: number | null) => void;
+  value?: string;
+  onChange: (warehouse: Warehouse | null, inputText?: string) => void;
   className?: string;
 }
 
-const WarehouseDropdown: React.FC<WarehouseDropdownProps> = ({ onChange }) => {
+const WarehouseDropdown: React.FC<WarehouseDropdownProps> = ({
+  value,
+  onChange,
+  className = "",
+}) => {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>(value || "");
   const [filteredWarehouses, setFilteredWarehouses] = useState<Warehouse[]>([]);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<number | null>(
-    null,
+    null
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSearchTerm(value || "");
+  }, [value]);
 
   useEffect(() => {
     const fetchWarehouses = async () => {
       try {
-        const response = await AxiosInstance.get("/select-warehouse");
-        const data = response.data.data || [];
+        const response = await AxiosInstance.get("/warehouses");
+
+        // backend ใหม่ส่ง array ตรง ๆ: [{ id, name }]
+        const data: Warehouse[] = response.data || [];
+
         setWarehouses(data);
         setFilteredWarehouses(data);
       } catch (error) {
         console.error("Error fetching warehouses:", error);
+        setWarehouses([]);
+        setFilteredWarehouses([]);
       }
     };
 
@@ -41,10 +55,9 @@ const WarehouseDropdown: React.FC<WarehouseDropdownProps> = ({ onChange }) => {
   useEffect(() => {
     if (searchTerm) {
       const results = warehouses.filter((warehouse) =>
-        warehouse.warehouse_name
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()),
+        warehouse.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
+
       setFilteredWarehouses(results);
     } else {
       setFilteredWarehouses(warehouses);
@@ -61,88 +74,103 @@ const WarehouseDropdown: React.FC<WarehouseDropdownProps> = ({ onChange }) => {
 
         if (!searchTerm && selectedWarehouseId) {
           const selectedWarehouse = warehouses.find(
-            (warehouse) => warehouse.warehouse_id === selectedWarehouseId,
+            (warehouse) => warehouse.id === selectedWarehouseId
           );
+
           if (selectedWarehouse) {
-            setSearchTerm(selectedWarehouse.warehouse_name);
+            setSearchTerm(selectedWarehouse.name);
           }
         }
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [searchTerm, selectedWarehouseId, warehouses]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
+    const inputValue = e.target.value;
+
+    setSearchTerm(inputValue);
+    setSelectedWarehouseId(null);
     setIsDropdownOpen(true);
 
-    if (value === "") {
-      setSelectedWarehouseId(null);
-      onChange(null);
+    if (inputValue === "") {
+      onChange(null, "");
+      return;
     }
+
+    onChange(null, inputValue);
   };
 
-  const handleSelectChange = (warehouseId: number, warehouseName: string) => {
-    setSelectedWarehouseId(warehouseId);
-    setSearchTerm(warehouseName);
+  const handleSelectChange = (warehouse: Warehouse) => {
+    setSelectedWarehouseId(warehouse.id);
+    setSearchTerm(warehouse.name);
     setIsDropdownOpen(false);
-    onChange(warehouseId);
+
+    onChange(warehouse, warehouse.name);
   };
 
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
+
     if (!isDropdownOpen) {
-      setSearchTerm("");
+      setFilteredWarehouses(warehouses);
     }
   };
 
   return (
-    <div className="relative max-w-xs lg:w-48" ref={dropdownRef}>
-      <div className="flex items-center border border-gray-300 rounded-lg px-3 py-1 h-9">
+    <div className={`relative w-full ${className}`} ref={dropdownRef}>
+      <div
+        className="flex items-center w-full border border-slate-300 rounded-lg px-2.5 py-1.5
+        text-sm cursor-text bg-white shadow-inner
+        focus-within:ring-1 focus-within:ring-blue-400 focus-within:border-blue-400"
+        onClick={() => setIsDropdownOpen(true)}
+      >
         <input
           type="text"
           placeholder="ค้นหาคลังสินค้า"
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={() => setIsDropdownOpen(true)}
-          className="flex-grow focus:outline-none"
+          className="flex-grow bg-transparent focus:outline-none text-xs sm:text-sm placeholder-slate-400"
         />
+
         <button
           type="button"
           onClick={toggleDropdown}
-          className=" focus:outline-none"
+          className="focus:outline-none"
         >
-          <ChevronDownIcon className="h-5 text-gray-500 -ml-5" />
+          <ChevronDownIcon className="h-4 w-4 text-slate-400 ml-1" />
         </button>
       </div>
+
       {isDropdownOpen && (
-        <ul className="absolute z-99 bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-y-auto w-full">
+        <ul
+          className="absolute z-20 bg-white border border-slate-200 rounded-xl mt-1 w-full
+          max-h-52 overflow-y-auto shadow-lg text-xs sm:text-sm"
+        >
           {filteredWarehouses.length > 0 ? (
             filteredWarehouses.map((warehouse) => (
               <li
-                key={warehouse.warehouse_id}
-                className={`px-3 py-2 cursor-pointer hover:bg-gray-200 ${
-                  warehouse.warehouse_id === selectedWarehouseId
-                    ? "bg-gray-100"
-                    : ""
+                key={warehouse.id}
+                className={`px-3 py-1.5 cursor-pointer truncate hover:bg-blue-50 ${
+                  warehouse.id === selectedWarehouseId
+                    ? "bg-blue-50 text-blue-700 font-medium"
+                    : "text-slate-700"
                 }`}
-                onClick={() =>
-                  handleSelectChange(
-                    warehouse.warehouse_id,
-                    warehouse.warehouse_name,
-                  )
-                }
+                onClick={() => handleSelectChange(warehouse)}
               >
-                {warehouse.warehouse_name}
+                {warehouse.name}
               </li>
             ))
           ) : (
-            <li className="px-3 py-2 text-gray-500">ไม่พบข้อมูล</li>
+            <li className="px-3 py-2 text-slate-400 text-xs sm:text-sm">
+              ไม่พบข้อมูล
+            </li>
           )}
         </ul>
       )}

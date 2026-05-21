@@ -57,9 +57,7 @@ export default function LabelPage() {
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id];
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
       if (next.length > 0) {
         setError(null);
       }
@@ -145,11 +143,7 @@ export default function LabelPage() {
 
   const headers = [
     <div className="px-2 flex items-center justify-center" key="select-all">
-      <input
-        type="checkbox"
-        checked={bills.length > 0 && selectedIds.length === bills.length}
-        onChange={toggleSelectAll}
-      />
+      <input type="checkbox" checked={bills.length > 0 && selectedIds.length === bills.length} onChange={toggleSelectAll} />
     </div>,
     "ลำดับ",
     "SERIAL_NO",
@@ -186,25 +180,18 @@ export default function LabelPage() {
     }
   };
 
-  const customerOptions = Array.from(
-    new Set(reprintAllRows.map((r) => r.CUSTOMER_NAME).filter(Boolean))
-  );
+  const customerOptions = Array.from(new Set(reprintAllRows.map((r) => r.CUSTOMER_NAME).filter(Boolean)));
 
-  const warehouseOptions = Array.from(
-    new Set(reprintAllRows.map((r) => r.warehouse_name).filter(Boolean))
-  );
+  const warehouseOptions = Array.from(new Set(reprintAllRows.map((r) => r.warehouse_name).filter(Boolean)));
 
   useEffect(() => {
     if (!showReprint) return;
 
     (async () => {
       try {
-        const res = await AxiosInstance.get(
-          "/reprint-labels",
-          {
-            params: { user_id: user?.user_id },
-          }
-        );
+        const res = await AxiosInstance.get("/reprint-labels", {
+          params: { user_id: user?.user_id },
+        });
         if (res.data?.success) {
           setReprintAllRows(res.data.data || []);
           setReprintRows(res.data.data || []);
@@ -221,9 +208,7 @@ export default function LabelPage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div className="flex flex-col gap-1">
           <h2 className="text-2xl font-bold tracking-tight text-slate-800">
-            {step === "bills"
-              ? "รายการบิลสำหรับสร้าง Label"
-              : "พิมพ์สติ๊กเกอร์ (Labels)"}
+            {step === "bills" ? "รายการบิลสำหรับสร้าง Label" : "พิมพ์สติ๊กเกอร์ (Labels)"}
           </h2>
           {/* <p className=" text-slate-500">
             เลือกรายการบิลที่ต้องการ แล้วสร้าง / พิมพ์สติ๊กเกอร์จัดส่ง
@@ -232,12 +217,8 @@ export default function LabelPage() {
 
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <div className="flex flex-col items-end text-slate-600">
-            <span className="text-[11px] uppercase tracking-wide text-slate-500">
-              ผู้ใช้งาน
-            </span>
-            <span className="font-medium">
-              {user?.first_name || user?.username || "-"}
-            </span>
+            <span className="text-[11px] uppercase tracking-wide text-slate-500">ผู้ใช้งาน</span>
+            <span className="font-medium">{user?.first_name || user?.username || "-"}</span>
           </div>
 
           {step === "bills" ? (
@@ -246,11 +227,7 @@ export default function LabelPage() {
                 onClick={handleCreateLabels}
                 disabled={!bills.length}
                 className={`px-4 py-1.5 rounded-full font-medium transition
-      ${
-        !bills.length
-          ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-          : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-      }`}
+      ${!bills.length ? "bg-slate-200 text-slate-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"}`}
               >
                 สร้าง Label
               </button>
@@ -295,11 +272,7 @@ export default function LabelPage() {
                 onClick={handlePrint}
                 disabled={!labels.length}
                 className={`px-4 py-1.5 rounded-full  font-medium transition
-                  ${
-                    !labels.length
-                      ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-                      : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"
-                  }`}
+                  ${!labels.length ? "bg-slate-200 text-slate-500 cursor-not-allowed" : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"}`}
               >
                 พิมพ์
               </button>
@@ -310,25 +283,15 @@ export default function LabelPage() {
 
       {/* Error (ซ่อนตอน print ไม่จำเป็น เพราะอยู่ header block อยู่แล้ว) */}
       {error && step === "bills" && (
-        <div className="mb-3  text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg print:hidden">
-          {error}
-        </div>
+        <div className="mb-3  text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg print:hidden">{error}</div>
       )}
 
       {/* STEP 1: ตารางเลือกบิล */}
       {step === "bills" && (
         <>
-          {loadingBills && (
-            <div className="text-center text-sm text-slate-500">
-              กำลังโหลดรายการบิล...
-            </div>
-          )}
+          {loadingBills && <div className="text-center text-sm text-slate-500">กำลังโหลดรายการบิล...</div>}
 
-          {!loadingBills && !bills.length && !error && (
-            <div className="text-center text-sm text-slate-500">
-              ยังไม่มีบิลสำหรับสร้าง Label
-            </div>
-          )}
+          {!loadingBills && !bills.length && !error && <div className="text-center text-sm text-slate-500">ยังไม่มีบิลสำหรับสร้าง Label</div>}
 
           {bills.length > 0 && (
             <div className="border border-slate-200 rounded-xl bg-white shadow-sm print:shadow-none">
@@ -345,19 +308,10 @@ export default function LabelPage() {
                   />
                   <tbody>
                     {bills.map((b, idx) => (
-                      <tr
-                        key={b.id}
-                        className={`transition ${
-                          idx % 2 === 0 ? "bg-white" : "bg-slate-50"
-                        } hover:bg-blue-100/70`}
-                      >
+                      <tr key={b.id} className={`transition ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-blue-100/70`}>
                         {/* Checkbox */}
                         <td className="px-2 py-1.5 border-b border-slate-200 text-center align-middle">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.includes(b.id)}
-                            onChange={() => toggleSelect(b.id)}
-                          />
+                          <input type="checkbox" checked={selectedIds.includes(b.id)} onChange={() => toggleSelect(b.id)} />
                         </td>
 
                         {/* ลำดับ */}
@@ -366,37 +320,25 @@ export default function LabelPage() {
                         </td>
 
                         {/* SERIAL_NO */}
-                        <td className="px-3 py-1.5 border-b border-slate-200  truncate font-mono">
-                          {b.SERIAL_NO || "-"}
-                        </td>
+                        <td className="px-3 py-1.5 border-b border-slate-200  truncate font-mono">{b.SERIAL_NO || "-"}</td>
 
                         {/* REFERENCE */}
-                        <td className="px-3 py-1.5 border-b border-slate-200  truncate">
-                          {b.REFERENCE || "-"}
-                        </td>
+                        <td className="px-3 py-1.5 border-b border-slate-200  truncate">{b.REFERENCE || "-"}</td>
 
                         {/* CUSTOMER_NAME */}
-                        <td className="px-3 py-1.5 border-b border-slate-200  truncate">
-                          {b.CUSTOMER_NAME || "-"}
-                        </td>
+                        <td className="px-3 py-1.5 border-b border-slate-200  truncate">{b.CUSTOMER_NAME || "-"}</td>
 
                         {/* RECIPIENT_ADDRESS (รวมชื่อ + ที่อยู่) */}
                         <td className="px-3 py-1.5 border-b border-slate-200 truncate max-w-[320px]">
                           {b.RECIPIENT_ADDRESS
-                            ? `${b.RECIPIENT_NAME || ""} ${
-                                b.RECIPIENT_ADDRESS
-                              } ต.${b.RECIPIENT_SUBDISTRICT} อ.${
+                            ? `${b.RECIPIENT_NAME || ""} ${b.RECIPIENT_ADDRESS} ต.${b.RECIPIENT_SUBDISTRICT} อ.${
                                 b.RECIPIENT_DISTRICT
-                              } จ.${b.RECIPIENT_PROVINCE} ${
-                                b.RECIPIENT_ZIPCODE
-                              }`
+                              } จ.${b.RECIPIENT_PROVINCE} ${b.RECIPIENT_ZIPCODE}`
                             : "-"}
                         </td>
 
                         {/* warehouse_name */}
-                        <td className="px-3 py-1.5 border-b border-slate-200  truncate">
-                          {b.warehouse_name || "-"}
-                        </td>
+                        <td className="px-3 py-1.5 border-b border-slate-200  truncate">{b.warehouse_name || "-"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -409,10 +351,7 @@ export default function LabelPage() {
 
       {/* STEP 2: Preview Labels + Print */}
       {step === "labels" && (
-        <div
-          id="label-print-area"
-          className="flex flex-wrap gap-4 print:gap-0 print:m-0"
-        >
+        <div id="label-print-area" className="flex flex-wrap gap-4 print:gap-0 print:m-0">
           {labels.map((row) => (
             <div
               key={row.id}
@@ -433,33 +372,22 @@ export default function LabelPage() {
               <div className="flex flex-col gap-1 items-center text-center">
                 {row.barcode_url && (
                   <div className="flex flex-col items-center">
-                    <img
-                      className=""
-                      src={row.barcode_url}
-                      alt={`BARCODE_${row.SERIAL_NO}`}
-                      style={{ maxWidth: "80%", maxHeight: "1.5cm" }}
-                    />
-                    <div className="text-[15px] tracking-widest font-bold">
-                      {row.SERIAL_NO}
-                    </div>
+                    <img className="" src={row.barcode_url} alt={`BARCODE_${row.SERIAL_NO}`} style={{ maxWidth: "80%", maxHeight: "1.5cm" }} />
+                    <div className="text-[15px] tracking-widest font-bold">{row.SERIAL_NO}</div>
                   </div>
                 )}
               </div>
 
               {/* Address */}
               <div className="text-[10.5px] font-bold leading-snug mt-1">
-                <div className="font-extrabold">
-                  ผู้รับ: {row.RECIPIENT_NAME || "-"}
-                </div>
+                <div className="font-extrabold">ผู้รับ: {row.RECIPIENT_NAME || "-"}</div>
                 <div>
                   ที่อยู่: {row.RECIPIENT_ADDRESS || "-"}
                   ต.{row.RECIPIENT_SUBDISTRICT || "-"} อ.
                   {row.RECIPIENT_DISTRICT || "-"} จ.
                   {row.RECIPIENT_PROVINCE || "-"} {row.RECIPIENT_ZIPCODE || ""}
                 </div>
-                <div className="text-[13px]">
-                  ปลายทาง: {row.warehouse_name || "-"}
-                </div>
+                <div className="text-[13px]">ปลายทาง: {row.warehouse_name || "-"}</div>
               </div>
 
               {/* QR + extra info */}
@@ -467,8 +395,7 @@ export default function LabelPage() {
                 <div className="text-[11px] font-bold">
                   <div>Ref: {row.REFERENCE || "-"}</div>
                   <div>
-                    วันที่: {new Date().toLocaleDateString("th-TH")}{" "}
-                    &nbsp;&nbsp; เวลา:{" "}
+                    วันที่: {new Date().toLocaleDateString("th-TH")} &nbsp;&nbsp; เวลา:{" "}
                     {new Date().toLocaleTimeString("th-TH", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -482,13 +409,7 @@ export default function LabelPage() {
                   </div>
                 </div>
 
-                {row.qr_url && (
-                  <img
-                    src={row.qr_url}
-                    alt={`QR_${row.SERIAL_NO}`}
-                    style={{ width: "2.7cm", height: "2.7cm" }}
-                  />
-                )}
+                {row.qr_url && <img src={row.qr_url} alt={`QR_${row.SERIAL_NO}`} style={{ width: "2.7cm", height: "2.7cm" }} />}
               </div>
             </div>
           ))}
@@ -500,9 +421,7 @@ export default function LabelPage() {
           <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg border border-slate-200">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-              <div className="font-bold text-slate-800">
-                พิมพ์ซ้ำ (ค้นหา/กรอง)
-              </div>
+              <div className="font-bold text-slate-800">พิมพ์ซ้ำ (ค้นหา/กรอง)</div>
               <button
                 onClick={() => setShowReprint(false)}
                 className="px-3 py-1.5 rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
@@ -512,25 +431,18 @@ export default function LabelPage() {
             </div>
 
             {/* Filters */}
-            <div
-              className="px-4 py-3 grid gap-2 text-sm whitespace-nowrap items-center"
-              style={{ gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}
-            >
+            <div className="px-4 py-3 grid gap-2 text-sm whitespace-nowrap items-center" style={{ gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
               <input
                 className="h-8 border border-slate-300 rounded-lg px-3 py-2 shadow-inner focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
                 placeholder="ค้นหา SERIAL_NO"
                 value={filters.serial}
-                onChange={(e) =>
-                  setFilters((p) => ({ ...p, serial: e.target.value }))
-                }
+                onChange={(e) => setFilters((p) => ({ ...p, serial: e.target.value }))}
               />
               <input
                 className="h-8 border border-slate-300 rounded-lg px-3 py-2 shadow-inner focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
                 placeholder="ค้นหา REFERENCE"
                 value={filters.reference}
-                onChange={(e) =>
-                  setFilters((p) => ({ ...p, reference: e.target.value }))
-                }
+                onChange={(e) => setFilters((p) => ({ ...p, reference: e.target.value }))}
               />
 
               {/* <div className="min-w-0 w-full">
@@ -549,18 +461,14 @@ export default function LabelPage() {
 
               <FilterDropdown
                 value={filters.customer_name}
-                onChange={(v: string) =>
-                  setFilters((p) => ({ ...p, customer_name: v }))
-                }
+                onChange={(v: string) => setFilters((p) => ({ ...p, customer_name: v }))}
                 options={customerOptions}
                 placeholder="ค้นหาลูกค้า"
               />
 
               <FilterDropdown
                 value={filters.warehouse_name}
-                onChange={(v: string) =>
-                  setFilters((p) => ({ ...p, warehouse_name: v }))
-                }
+                onChange={(v: string) => setFilters((p) => ({ ...p, warehouse_name: v }))}
                 options={warehouseOptions}
                 placeholder="ค้นหา DC"
               />
@@ -568,17 +476,12 @@ export default function LabelPage() {
 
             {/* Actions */}
             <div className="px-4 pb-3 flex items-center gap-2">
-              <button
-                onClick={fetchReprint}
-                className="px-4 py-1.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-              >
+              <button onClick={fetchReprint} className="px-4 py-1.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-sm">
                 ค้นหา
               </button>
               <button
                 onClick={() => {
-                  const picked = reprintRows.filter((r) =>
-                    reprintSelectedIds.includes(r.id)
-                  );
+                  const picked = reprintRows.filter((r) => reprintSelectedIds.includes(r.id));
                   setLabels(picked);
                   setStep("labels");
                   setShowReprint(false);
@@ -601,9 +504,7 @@ export default function LabelPage() {
                 <div className="relative max-h-[55vh] overflow-auto border border-slate-200 rounded-xl">
                   {reprintLoading && (
                     <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
-                      <div className="text-sm text-slate-500">
-                        กำลังค้นหา...
-                      </div>
+                      <div className="text-sm text-slate-500">กำลังค้นหา...</div>
                     </div>
                   )}
 
@@ -613,68 +514,39 @@ export default function LabelPage() {
                         <th className="p-2 border-b border-slate-200 text-center">
                           <input
                             type="checkbox"
-                            checked={
-                              reprintRows.length > 0 &&
-                              reprintSelectedIds.length === reprintRows.length
-                            }
+                            checked={reprintRows.length > 0 && reprintSelectedIds.length === reprintRows.length}
                             onChange={toggleSelectAllReprint}
                           />
                         </th>
 
-                        <th className="p-2 border-b border-slate-200">
-                          SERIAL_NO
-                        </th>
-                        <th className="p-2 border-b border-slate-200">
-                          REFERENCE
-                        </th>
-                        <th className="p-2 border-b border-slate-200">
-                          CUSTOMER_NAME
-                        </th>
-                        <th className="p-2 border-b border-slate-200">
-                          warehouse_name
-                        </th>
+                        <th className="p-2 border-b border-slate-200">SERIAL_NO</th>
+                        <th className="p-2 border-b border-slate-200">REFERENCE</th>
+                        <th className="p-2 border-b border-slate-200">CUSTOMER_NAME</th>
+                        <th className="p-2 border-b border-slate-200">warehouse_name</th>
                       </tr>
                     </thead>
                     <tbody>
                       {reprintRows.map((r, i) => (
-                        <tr
-                          key={r.id}
-                          className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}
-                        >
+                        <tr key={r.id} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                           <td className="p-2 border-b border-slate-200 text-center">
                             <input
                               type="checkbox"
                               checked={reprintSelectedIds.includes(r.id)}
                               onChange={() =>
-                                setReprintSelectedIds((prev) =>
-                                  prev.includes(r.id)
-                                    ? prev.filter((x) => x !== r.id)
-                                    : [...prev, r.id]
-                                )
+                                setReprintSelectedIds((prev) => (prev.includes(r.id) ? prev.filter((x) => x !== r.id) : [...prev, r.id]))
                               }
                             />
                           </td>
-                          <td className="p-2 border-b border-slate-200 font-mono">
-                            {r.SERIAL_NO || "-"}
-                          </td>
-                          <td className="p-2 border-b border-slate-200">
-                            {r.REFERENCE || "-"}
-                          </td>
-                          <td className="p-2 border-b border-slate-200">
-                            {r.CUSTOMER_NAME || "-"}
-                          </td>
-                          <td className="p-2 border-b border-slate-200">
-                            {r.warehouse_name || "-"}
-                          </td>
+                          <td className="p-2 border-b border-slate-200 font-mono">{r.SERIAL_NO || "-"}</td>
+                          <td className="p-2 border-b border-slate-200">{r.REFERENCE || "-"}</td>
+                          <td className="p-2 border-b border-slate-200">{r.CUSTOMER_NAME || "-"}</td>
+                          <td className="p-2 border-b border-slate-200">{r.warehouse_name || "-"}</td>
                         </tr>
                       ))}
 
                       {!reprintRows.length && !reprintLoading && (
                         <tr>
-                          <td
-                            colSpan={5}
-                            className="p-4 text-center text-slate-500"
-                          >
+                          <td colSpan={5} className="p-4 text-center text-slate-500">
                             ไม่พบข้อมูล
                           </td>
                         </tr>

@@ -22,30 +22,30 @@ const navItems: NavItem[] = [
     icon: <GridIcon />,
     name: "Menu",
     subItems: [
-      {
-        name: "import Excel",
-        path: "/import",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
-      {
-        name: "import VGT",
-        path: "/importvgt",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
-      {
-        name: "import ADV",
-        path: "/importadv",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
-      {
-        name: "คีย์บิล",
-        path: "/input",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
+      // {
+      //   name: "import Excel",
+      //   path: "/import",
+      //   icon: <File size={20} />,
+      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      // },
+      // {
+      //   name: "import VGT",
+      //   path: "/importvgt",
+      //   icon: <File size={20} />,
+      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      // },
+      // {
+      //   name: "import ADV",
+      //   path: "/importadv",
+      //   icon: <File size={20} />,
+      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      // },
+      // {
+      //   name: "คีย์บิล",
+      //   path: "/input",
+      //   icon: <File size={20} />,
+      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      // },
       {
         name: "Label",
         path: "/labels",
@@ -71,17 +71,21 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
-
       {
-        name: "manage users",
-        path: "/manage/users",
+        name: "import std",
+        path: "/std",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
-
       {
-        name: "manage vehicles",
-        path: "/manage/vehicles",
+        name: "import manual",
+        path: "/manual",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      },
+      {
+        name: "manage users",
+        path: "/manage/users",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
@@ -92,30 +96,18 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
       {
-        name: "import std",
-        path: "/std",
+        name: "manage vehicles",
+        path: "/manage/vehicles",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
-      // {
-      //   name: "import vgt",
-      //   path: "/vgt",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-      // {
-      //   name: "import adv",
-      //   path: "/adv",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-            {
+      {
         name: "manage shippers",
         path: "/manage/shippers",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
-            {
+      {
         name: "manage recipients",
         path: "/manage/recipients",
         icon: <File size={20} />,

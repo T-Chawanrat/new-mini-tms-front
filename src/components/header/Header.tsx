@@ -4,9 +4,8 @@ import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
 import { Link } from "react-router";
 
-
 interface HeaderProps {
-  onClick?: () => void; 
+  onClick?: () => void;
   onToggle: () => void;
 }
 const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {

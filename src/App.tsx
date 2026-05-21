@@ -12,7 +12,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ColumnWidthsProvider } from "./context/ColumnWidths";
 import "react-datepicker/dist/react-datepicker.css";
 import BillImport from "./pages/BillImport";
-import BillManual from "./pages/BillManual";
+// import BillManual from "./pages/ImportManual";
 import BillScanWarehouse from "./pages/BillScanWarehouse";
 import BillScanDc from "./pages/BillScanDc";
 import BillImportADV from "./pages/BillImportADV";
@@ -26,6 +26,7 @@ import ManageCustomers from "./pages/ManageCustomer";
 import ImportSTD from "./pages/ImportSTD";
 import ManageShippers from "./pages/ManageShippers";
 import ManageRecipients from "./pages/ManageRecipients";
+import ImportManual from "./pages/ImportManual";
 // import ImportVGT from "./pages/ImportVGT";
 // import ImportADV from "./pages/ImportADV";
 
@@ -90,7 +91,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
+              {/* <Route
                 path="/input"
                 element={
                   <ProtectedRoute
@@ -99,7 +100,7 @@ export default function App() {
                     <BillManual />
                   </ProtectedRoute>
                 }
-              />
+              /> */}
               <Route
                 path="/warehouse-scan"
                 element={
@@ -144,6 +145,7 @@ export default function App() {
               <Route path="/manage/users" element={<ManageUsers />} />
               <Route path="/manage/customers" element={<ManageCustomers />} />
               <Route path="/std" element={<ImportSTD />} />
+              <Route path="/manual" element={<ImportManual />} />
               <Route path="/manage/shippers" element={<ManageShippers />} />
               <Route path="/manage/recipients" element={<ManageRecipients />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
