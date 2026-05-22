@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
-import { Pencil, X } from "lucide-react";
+import { Pencil } from "lucide-react";
+import AddressSearchDropdown, { type ZipAddressRow } from "../components/dropdown/AddressSearchDropdown";
 
 export default function ManageCustomers() {
   const { user } = useAuth();
 
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -15,13 +16,14 @@ export default function ManageCustomers() {
 
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const [confirmDelete, setConfirmDelete] = useState<any>(null);
 
   const [statusModal, setStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<{
     id: number;
     current: number;
   } | null>(null);
+
+  const [addressKeyword, setAddressKeyword] = useState("");
 
   const [form, setForm] = useState({
     code: "",
@@ -37,12 +39,11 @@ export default function ManageCustomers() {
     contact_name: "",
     contact_tel: "",
     email: "",
-    type: "EXPRESS",
+    type: "BUSINESS",
   });
 
   const [userForm, setUserForm] = useState({
     username: "",
-    password: "",
     first_name: "",
     last_name: "",
   });
@@ -74,6 +75,18 @@ export default function ManageCustomers() {
     setForm((prev) => ({ ...prev, [k]: v }));
   };
 
+  const handleSelectAddress = (row: ZipAddressRow) => {
+    setForm((prev) => ({
+      ...prev,
+      subdistrict_id: String(row.subdistrict_id),
+      district_id: String(row.district_id),
+      province_id: String(row.province_id),
+      zip_code: row.zip_code || "",
+    }));
+
+    setAddressKeyword(`${row.subdistrict_name} • ${row.district_name} • ${row.province_name} • ${row.zip_code}`);
+  };
+
   // =====================
   // MODAL CLOSE / RESET
   // =====================
@@ -92,14 +105,15 @@ export default function ManageCustomers() {
       contact_name: "",
       contact_tel: "",
       email: "",
-      type: "EXPRESS",
+      type: "BUSINESS",
     });
+
+    setAddressKeyword("");
   };
 
   const resetUserForm = () => {
     setUserForm({
       username: "",
-      password: "",
       first_name: "",
       last_name: "",
     });
@@ -128,8 +142,12 @@ export default function ManageCustomers() {
       contact_name: row.contact_name || "",
       contact_tel: row.contact_tel || "",
       email: row.email || "",
-      type: row.type || "EXPRESS",
+      type: row.type || "BUSINESS",
     });
+
+    const addressLabel = [row.subdistrict_name, row.district_name, row.province_name, row.zip_code].filter(Boolean).join(" • ");
+
+    setAddressKeyword(addressLabel);
 
     setShowModal(true);
   };
@@ -151,27 +169,23 @@ export default function ManageCustomers() {
     setSelectedStatus(null);
   };
 
-  const closeConfirmDelete = () => {
-    setConfirmDelete(null);
-  };
-
   // =====================
   // CREATE / UPDATE CUSTOMER
   // =====================
-const handleSaveCustomer = async () => {
-  try {
-    if (editingCustomer) {
-      await AxiosInstance.patch(`/manage/customers/${editingCustomer.id}`, form);
-    } else {
-      await AxiosInstance.post("/manage/customers", form);
-    }
+  const handleSaveCustomer = async () => {
+    try {
+      if (editingCustomer) {
+        await AxiosInstance.patch(`/manage/customers/${editingCustomer.id}`, form);
+      } else {
+        await AxiosInstance.post("/manage/customers", form);
+      }
 
-    closeCustomerModal();
-    fetchData();
-  } catch (err: any) {
-    alert(err?.response?.data?.message || "save customer failed");
-  }
-};
+      closeCustomerModal();
+      fetchData();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "save customer failed");
+    }
+  };
 
   // =====================
   // STATUS
@@ -213,7 +227,7 @@ const handleSaveCustomer = async () => {
     if (!selectedCustomer) return;
 
     try {
-      await AxiosInstance.post("/manage/customer-users", {
+      await AxiosInstance.post("/manage/customers/add-user", {
         ...userForm,
         customer_id: selectedCustomer.id,
       });
@@ -221,22 +235,6 @@ const handleSaveCustomer = async () => {
       closeUserModal();
     } catch (err: any) {
       alert(err?.response?.data?.message || "create user failed");
-    }
-  };
-
-  // =====================
-  // HARD DELETE
-  // =====================
-  const handleHardDelete = async () => {
-    if (!confirmDelete) return;
-
-    try {
-      await AxiosInstance.delete(`/manage/customers/${confirmDelete.id}/hard`);
-
-      closeConfirmDelete();
-      fetchData();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "hard delete failed");
     }
   };
 
@@ -249,11 +247,7 @@ const handleSaveCustomer = async () => {
           <p className="text-sm text-slate-500">จัดการลูกค้าในระบบ</p>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition"
-        >
+        <button type="button" onClick={openCreateModal} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
           + เพิ่มลูกค้า
         </button>
       </div>
@@ -324,9 +318,7 @@ const handleSaveCustomer = async () => {
                   </td>
 
                   <td className="py-3">
-                    <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
-                      {r.type || "-"}
-                    </span>
+                    <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">{r.type || "-"}</span>
                   </td>
 
                   <td className="py-3 hidden md:table-cell">{r.tax_id || "-"}</td>
@@ -370,16 +362,6 @@ const handleSaveCustomer = async () => {
                           + User
                         </button>
                       )}
-
-                      {[1, 10].includes(Number(user?.role_id)) && (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDelete({ id: r.id, type: "hard" })}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -396,9 +378,7 @@ const handleSaveCustomer = async () => {
             className="bg-white p-6 rounded-2xl shadow-xl w-[620px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-slate-800 mb-5">
-              {editingCustomer ? "แก้ไขลูกค้า" : "เพิ่มลูกค้า"}
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-5">{editingCustomer ? "แก้ไขลูกค้า" : "เพิ่มลูกค้า"}</h3>
 
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -407,8 +387,8 @@ const handleSaveCustomer = async () => {
                 <input className="input-modern w-full" placeholder="Name" value={form.name} onChange={(e) => handleChange("name", e.target.value)} />
 
                 <select className="input-modern w-full" value={form.type} onChange={(e) => handleChange("type", e.target.value)}>
-                  <option value="EXPRESS">EXPRESS</option>
                   <option value="BUSINESS">BUSINESS</option>
+                  <option value="EXPRESS">EXPRESS</option>
                 </select>
 
                 <input
@@ -422,35 +402,16 @@ const handleSaveCustomer = async () => {
 
                 <input className="input-modern w-full" placeholder="Line" value={form.line} onChange={(e) => handleChange("line", e.target.value)} />
 
-                <input className="input-modern w-full" placeholder="Email" value={form.email} onChange={(e) => handleChange("email", e.target.value)} />
-
                 <input
                   className="input-modern w-full"
-                  placeholder="Zip Code"
-                  value={form.zip_code}
-                  onChange={(e) => handleChange("zip_code", e.target.value)}
+                  placeholder="Email"
+                  value={form.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
                 />
 
-                <input
-                  className="input-modern w-full"
-                  placeholder="Subdistrict ID"
-                  value={form.subdistrict_id}
-                  onChange={(e) => handleChange("subdistrict_id", e.target.value)}
-                />
-
-                <input
-                  className="input-modern w-full"
-                  placeholder="District ID"
-                  value={form.district_id}
-                  onChange={(e) => handleChange("district_id", e.target.value)}
-                />
-
-                <input
-                  className="input-modern w-full"
-                  placeholder="Province ID"
-                  value={form.province_id}
-                  onChange={(e) => handleChange("province_id", e.target.value)}
-                />
+                <div className="md:col-span-2">
+                  <AddressSearchDropdown value={addressKeyword} onChange={setAddressKeyword} onSelect={handleSelectAddress} />
+                </div>
 
                 <input
                   className="input-modern w-full"
@@ -521,27 +482,6 @@ const handleSaveCustomer = async () => {
         </div>
       )}
 
-      {/* DELETE MODAL */}
-      {confirmDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeConfirmDelete}>
-          <div className="bg-white p-6 rounded-2xl shadow-xl text-center w-[320px]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">ยืนยันการลบ</h3>
-
-            <p className="text-sm text-slate-500 mb-4">ลบลูกค้ารายนี้?</p>
-
-            <div className="flex justify-center gap-3">
-              <button type="button" onClick={handleHardDelete} className="px-4 py-2 rounded-xl text-white bg-red-500 hover:bg-red-600">
-                ยืนยัน
-              </button>
-
-              <button type="button" onClick={closeConfirmDelete} className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
-                ยกเลิก
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* CREATE CUSTOMER USER MODAL */}
       {showUserModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeUserModal}>
@@ -556,13 +496,7 @@ const handleSaveCustomer = async () => {
                 onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
               />
 
-              <input
-                className="input-modern w-full"
-                type="password"
-                placeholder="Password"
-                value={userForm.password}
-                onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-              />
+              <p className="text-sm ml-2 text-blue-600">Password 123456 สามารถเปลี่ยนได้ภายหลัง</p>
 
               <input
                 className="input-modern w-full"

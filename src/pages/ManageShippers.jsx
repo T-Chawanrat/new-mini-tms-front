@@ -25,7 +25,7 @@ export default function ManageShippers() {
 
   const emptyForm = {
     shipper_code: "",
-    shipper_type_id: "",
+    shipper_type_id: "1",
     shipper_name: "",
     address: "",
 
@@ -44,7 +44,9 @@ export default function ManageShippers() {
 
   const [form, setForm] = useState(emptyForm);
 
-  const selectedCustomer = customers.find((c) => String(c.id) === String(customerId));
+  const selectedCustomer = customers.find(
+    (c) => String(c.id) === String(customerId),
+  );
 
   const handleChange = (key, value) => {
     setForm((prev) => ({
@@ -89,7 +91,7 @@ export default function ManageShippers() {
 
   const fetchCustomers = async () => {
     try {
-      const res = await AxiosInstance.get("/manage/customers");
+      const res = await AxiosInstance.get("/customers");
 
       setCustomers(res.data || []);
 
@@ -107,7 +109,7 @@ export default function ManageShippers() {
     try {
       setLoading(true);
 
-      const res = await AxiosInstance.get(`/manage/customers/${customerId}/shippers`, {
+      const res = await AxiosInstance.get(`/manage/shippers/${customerId}`, {
         params: {
           search: search || undefined,
         },
@@ -157,7 +159,7 @@ export default function ManageShippers() {
 
     setForm({
       shipper_code: row.shipper_code || "",
-      shipper_type_id: row.shipper_type_id || "",
+      shipper_type_id: row.shipper_type_id || "1",
       shipper_name: row.shipper_name || "",
       address: row.address || "",
 
@@ -210,9 +212,12 @@ export default function ManageShippers() {
 
     try {
       if (editing) {
-        await AxiosInstance.patch(`/manage/customers/${customerId}/shippers/${editing.shipper_id}`, payload);
+        await AxiosInstance.patch(
+          `/manage/shippers/${customerId}/${editing.shipper_id}`,
+          payload,
+        );
       } else {
-        await AxiosInstance.post(`/manage/customers/${customerId}/shippers`, payload);
+        await AxiosInstance.post(`/manage/shippers/${customerId}`, payload);
       }
 
       setShowModal(false);
@@ -236,9 +241,12 @@ export default function ManageShippers() {
     if (!selectedStatus || !customerId) return;
 
     try {
-      await AxiosInstance.patch(`/manage/customers/${customerId}/shippers/${selectedStatus.shipper_id}/status`, {
-        is_deleted: status === "ACTIVE" ? "N" : "Y",
-      });
+      await AxiosInstance.patch(
+        `/manage/shippers/${customerId}/${selectedStatus.shipper_id}/status`,
+        {
+          is_deleted: status === "ACTIVE" ? "N" : "Y",
+        },
+      );
 
       setStatusModal(false);
       setSelectedStatus(null);
@@ -252,7 +260,9 @@ export default function ManageShippers() {
     <div className="w-full min-h-screen px-1 py-4 bg-slate-50">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">Shipper Management</h2>
+          <h2 className="text-2xl font-semibold text-slate-800">
+            Shipper Management
+          </h2>
 
           <p className="text-sm text-slate-500">
             {isCustomer ? (
@@ -260,20 +270,32 @@ export default function ManageShippers() {
             ) : (
               <>
                 จัดการผู้ส่งของลูกค้า
-                {selectedCustomer ? <span className="font-medium text-slate-700"> {selectedCustomer.name}</span> : null}
+                {selectedCustomer ? (
+                  <span className="font-medium text-slate-700">
+                    {" "}
+                    {selectedCustomer.name}
+                  </span>
+                ) : null}
               </>
             )}
           </p>
         </div>
 
-        <button onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
+        <button
+          onClick={openCreate}
+          className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition"
+        >
           + เพิ่มผู้ส่ง
         </button>
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-5 flex gap-3 flex-wrap">
         {canSelectCustomer && (
-          <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-modern w-auto">
+          <select
+            value={customerId}
+            onChange={(e) => setCustomerId(e.target.value)}
+            className="input-modern w-auto"
+          >
             <option value="">เลือก Customer</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
@@ -293,7 +315,10 @@ export default function ManageShippers() {
           }}
         />
 
-        <button onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+        <button
+          onClick={fetchData}
+          className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+        >
           ค้นหา
         </button>
       </div>
@@ -307,7 +332,9 @@ export default function ManageShippers() {
               <th className="text-left py-4">Shipper Name</th>
               <th className="text-left py-4 hidden md:table-cell">Tel</th>
               <th className="text-left py-4 hidden lg:table-cell">Address</th>
-              <th className="text-left py-4 hidden lg:table-cell">Subdistrict</th>
+              <th className="text-left py-4 hidden lg:table-cell">
+                Subdistrict
+              </th>
               <th className="text-left py-4 hidden lg:table-cell">District</th>
               <th className="text-left py-4 hidden lg:table-cell">Province</th>
               <th className="text-left py-4 hidden lg:table-cell">Zipcode</th>
@@ -319,22 +346,26 @@ export default function ManageShippers() {
           <tbody className="text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-slate-400">
+                <td colSpan={11} className="text-center py-10 text-slate-400">
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-slate-400">
+                <td colSpan={11} className="text-center py-10 text-slate-400">
                   ไม่มีข้อมูล
                 </td>
               </tr>
             ) : (
               rows.map((r, i) => (
                 <tr key={r.shipper_id} className="border-t hover:bg-slate-50">
-                  <td className="text-center text-slate-400 py-3">{i + 1}</td>
+                  <td className="text-center text-slate-400 py-3">
+                    {i + 1}
+                  </td>
 
-                  <td className="py-3 font-medium">{r.shipper_code || "-"}</td>
+                  <td className="py-3 font-medium">
+                    {r.shipper_code || "-"}
+                  </td>
 
                   <td className="py-3">
                     <div className="leading-tight">
@@ -345,20 +376,37 @@ export default function ManageShippers() {
                     </div>
                   </td>
 
-                  <td className="py-3 hidden md:table-cell">{r.tel || "-"}</td>
+                  <td className="py-3 hidden md:table-cell">
+                    {r.tel || "-"}
+                  </td>
 
-                  <td className="py-3 hidden lg:table-cell max-w-[320px] truncate">{r.address || "-"}</td>
+                  <td className="py-3 hidden lg:table-cell max-w-[320px] truncate">
+                    {r.address || "-"}
+                  </td>
 
-                  <td className="py-3 hidden lg:table-cell">{r.subdistrict_name || "-"}</td>
+                  <td className="py-3 hidden lg:table-cell">
+                    {r.subdistrict_name || "-"}
+                  </td>
 
-                  <td className="py-3 hidden lg:table-cell">{r.district_name || "-"}</td>
+                  <td className="py-3 hidden lg:table-cell">
+                    {r.district_name || "-"}
+                  </td>
 
-                  <td className="py-3 hidden lg:table-cell">{r.province_name || "-"}</td>
+                  <td className="py-3 hidden lg:table-cell">
+                    {r.province_name || "-"}
+                  </td>
 
-                  <td className="py-3 hidden lg:table-cell">{r.zip_code || "-"}</td>
+                  <td className="py-3 hidden lg:table-cell">
+                    {r.zip_code || "-"}
+                  </td>
 
                   <td className="text-center py-3">
-                    <button type="button" onClick={() => openStatusModal(r)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
+                    <button
+                      type="button"
+                      onClick={() => openStatusModal(r)}
+                      className="inline-block"
+                      title="คลิกเพื่อเปลี่ยนสถานะ"
+                    >
                       {r.is_deleted === "N" ? (
                         <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
                           Active
@@ -400,7 +448,9 @@ export default function ManageShippers() {
             className="bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไขผู้ส่ง" : "เพิ่มผู้ส่ง"}</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-5">
+              {editing ? "แก้ไขผู้ส่ง" : "เพิ่มผู้ส่ง"}
+            </h3>
 
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -408,13 +458,17 @@ export default function ManageShippers() {
                   className="input-modern w-full"
                   placeholder="Shipper Code *"
                   value={form.shipper_code}
-                  onChange={(e) => handleChange("shipper_code", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("shipper_code", e.target.value)
+                  }
                 />
 
                 <select
                   className="input-modern w-full"
                   value={form.shipper_type_id}
-                  onChange={(e) => handleChange("shipper_type_id", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("shipper_type_id", e.target.value)
+                  }
                 >
                   <option value="1">บุคคลธรรมดา</option>
                   <option value="2">นิติบุคคล</option>
@@ -436,10 +490,16 @@ export default function ManageShippers() {
               />
 
               <div>
-                <label className="block text-xs font-medium mb-1 text-slate-600">ค้นหาพื้นที่</label>
+                <label className="block text-xs font-medium mb-1 text-slate-600">
+                  ค้นหาพื้นที่
+                </label>
 
                 <AddressSearchDropdown
-                  value={form.subdistrict_name ? `${form.subdistrict_name} • ${form.district_name} • ${form.province_name} • ${form.zip_code}` : ""}
+                  value={
+                    form.subdistrict_name
+                      ? `${form.subdistrict_name} • ${form.district_name} • ${form.province_name} • ${form.zip_code}`
+                      : ""
+                  }
                   onChange={() => {
                     clearAddress();
                   }}
@@ -448,9 +508,19 @@ export default function ManageShippers() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input className="input-modern w-full" placeholder="Tel" value={form.tel} onChange={(e) => handleChange("tel", e.target.value)} />
+                <input
+                  className="input-modern w-full"
+                  placeholder="Tel"
+                  value={form.tel}
+                  onChange={(e) => handleChange("tel", e.target.value)}
+                />
 
-                <input className="input-modern w-full" placeholder="Fax" value={form.fax} onChange={(e) => handleChange("fax", e.target.value)} />
+                <input
+                  className="input-modern w-full"
+                  placeholder="Fax"
+                  value={form.fax}
+                  onChange={(e) => handleChange("fax", e.target.value)}
+                />
               </div>
             </div>
 
@@ -465,7 +535,10 @@ export default function ManageShippers() {
                 ยกเลิก
               </button>
 
-              <button onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+              >
                 บันทึก
               </button>
             </div>
@@ -481,8 +554,13 @@ export default function ManageShippers() {
             setSelectedStatus(null);
           }}
         >
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
+          <div
+            className="bg-white p-6 rounded-2xl shadow-xl w-[300px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4 text-slate-800">
+              สถานะ
+            </h3>
 
             <div className="flex flex-col gap-3">
               <button
@@ -501,7 +579,9 @@ export default function ManageShippers() {
                 disabled={selectedStatus?.current === "INACTIVE"}
                 onClick={() => changeStatus("INACTIVE")}
                 className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
+                  selectedStatus?.current === "INACTIVE"
+                    ? "bg-red-50 text-red-300 cursor-not-allowed"
+                    : "bg-red-100 text-red-500 hover:bg-red-200"
                 }`}
               >
                 Inactive

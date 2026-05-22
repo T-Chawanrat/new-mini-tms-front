@@ -27,6 +27,7 @@ import ImportSTD from "./pages/ImportSTD";
 import ManageShippers from "./pages/ManageShippers";
 import ManageRecipients from "./pages/ManageRecipients";
 import ImportManual from "./pages/ImportManual";
+import ChangePassword from "./pages/ChangePassword";
 // import ImportVGT from "./pages/ImportVGT";
 // import ImportADV from "./pages/ImportADV";
 
@@ -148,6 +149,7 @@ export default function App() {
               <Route path="/manual" element={<ImportManual />} />
               <Route path="/manage/shippers" element={<ManageShippers />} />
               <Route path="/manage/recipients" element={<ManageRecipients />} />
+              <Route path="/manage/change-password" element={<ChangePassword />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>

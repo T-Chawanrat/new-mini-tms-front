@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 
+type MasterOption = {
+  id: number;
+  name: string;
+};
+
 export default function AdminVehicles() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
   const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [brands, setBrands] = useState<MasterOption[]>([]);
+  const [vehicleTypes, setVehicleTypes] = useState<MasterOption[]>([]);
 
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterOwnerType, setFilterOwnerType] = useState("");
 
   const [statusModal, setStatusModal] = useState(false);
   const [selected, setSelected] = useState<{
@@ -18,23 +27,26 @@ export default function AdminVehicles() {
 
   const [form, setForm] = useState({
     license_plate: "",
-    brand: "",
+    license_province: "",
+    brand_id: "",
     model: "",
-    vehicle_type: "",
+    color: "",
+    vehicle_year: "",
+    vehicle_type_id: "",
+    fuel_type: "",
     capacity_kg: "",
+    max_load_kg: "",
     warehouse_id: "",
-    status: "ACTIVE",
+    owner_type: "COMPANY",
+    owner_name: "",
+    purchase_date: "",
+    fleet_card_no: "",
+    chassis_no: "",
+    engine_no: "",
   });
 
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
-
-  const VEHICLE_TYPES = [
-    { value: "BIKE", label: "มอเตอร์ไซค์" },
-    { value: "4W", label: "รถ 4 ล้อ" },
-    { value: "TRUCK_6W", label: "รถ 6 ล้อ" },
-    { value: "TRUCK_10W", label: "รถ 10 ล้อ" },
-  ];
 
   const STATUS = [
     { value: "ACTIVE", label: "ใช้งาน" },
@@ -42,19 +54,44 @@ export default function AdminVehicles() {
     { value: "INACTIVE", label: "ปิดใช้งาน" },
   ];
 
-  const BRANDS = [
-    { value: "TOYOTA", label: "Toyota" },
-    { value: "ISUZU", label: "Isuzu" },
-    { value: "HONDA", label: "Honda" },
-    { value: "NISSAN", label: "Nissan" },
-    { value: "MITSUBISHI", label: "Mitsubishi" },
-    { value: "MAZDA", label: "Mazda" },
-    { value: "SUZUKI", label: "Suzuki" },
-    { value: "OTHER", label: "อื่นๆ" },
+  const OWNER_TYPES = [
+    { value: "COMPANY", label: "รถบริษัท" },
+    { value: "DRIVER", label: "รถคนขับ" },
   ];
 
-  const getLabel = (list: any[], value: string) => {
-    return list.find((x) => x.value === value)?.label || value;
+  const FUEL_TYPES = [
+    { value: "DIESEL", label: "ดีเซล" },
+    { value: "BENZINE", label: "เบนซิน" },
+    { value: "LPG", label: "LPG" },
+    { value: "NGV", label: "NGV" },
+  ];
+
+  const getOwnerTypeLabel = (value: string) => {
+    return OWNER_TYPES.find((x) => x.value === value)?.label || value;
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "ACTIVE") {
+      return (
+        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200">
+          Active
+        </span>
+      );
+    }
+
+    if (status === "MAINTENANCE") {
+      return (
+        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600 font-medium hover:bg-yellow-200">
+          Maintenance
+        </span>
+      );
+    }
+
+    return (
+      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200">
+        Inactive
+      </span>
+    );
   };
 
   // =====================
@@ -67,8 +104,9 @@ export default function AdminVehicles() {
       const res = await AxiosInstance.get("/manage/vehicles", {
         params: {
           search: search || undefined,
-          vehicle_type: filterType || undefined,
+          vehicle_type_id: filterType || undefined,
           status: filterStatus || undefined,
+          owner_type: filterOwnerType || undefined,
         },
       });
 
@@ -83,8 +121,21 @@ export default function AdminVehicles() {
     setWarehouses(res.data);
   };
 
+  const fetchVehicleBrands = async () => {
+    const res = await AxiosInstance.get("/vehicle-brands");
+    setBrands(res.data);
+  };
+
+  const fetchVehicleTypes = async () => {
+    const res = await AxiosInstance.get("/vehicle-types");
+    setVehicleTypes(res.data);
+  };
+
   useEffect(() => {
     fetchData();
+    fetchWarehouses();
+    fetchVehicleBrands();
+    fetchVehicleTypes();
   }, []);
 
   const handleChange = (k: string, v: any) => {
@@ -97,12 +148,22 @@ export default function AdminVehicles() {
   const resetForm = () => {
     setForm({
       license_plate: "",
-      brand: "",
+      license_province: "",
+      brand_id: "",
       model: "",
-      vehicle_type: "",
+      color: "",
+      vehicle_year: "",
+      vehicle_type_id: "",
+      fuel_type: "",
       capacity_kg: "",
+      max_load_kg: "",
       warehouse_id: "",
-      status: "ACTIVE",
+      owner_type: "COMPANY",
+      owner_name: "",
+      purchase_date: "",
+      fleet_card_no: "",
+      chassis_no: "",
+      engine_no: "",
     });
 
     setError("");
@@ -126,19 +187,44 @@ export default function AdminVehicles() {
       setError("");
 
       if (!form.license_plate) return setError("กรุณากรอกทะเบียนรถ");
-      if (!form.brand) return setError("กรุณากรอกยี่ห้อรถ");
+      if (!form.license_province) return setError("กรุณากรอกจังหวัดทะเบียน");
+      if (!form.brand_id) return setError("กรุณาเลือกยี่ห้อรถ");
       if (!form.model) return setError("กรุณากรอกรุ่นรถ");
-      if (!form.vehicle_type) return setError("กรุณาเลือกประเภทรถ");
+      if (!form.vehicle_type_id) return setError("กรุณาเลือกประเภทรถ");
+      if (!form.capacity_kg) return setError("กรุณากรอกน้ำหนักใช้งานจริง (kg)");
       if (!form.warehouse_id) return setError("กรุณาเลือก warehouse");
-      if (!form.capacity_kg) return setError("กรุณากรอกน้ำหนักบรรทุก (kg)");
 
       if (form.capacity_kg && isNaN(Number(form.capacity_kg))) {
-        return setError("capacity ต้องเป็นตัวเลข");
+        return setError("น้ำหนักใช้งานจริงต้องเป็นตัวเลข");
+      }
+
+      if (form.max_load_kg && isNaN(Number(form.max_load_kg))) {
+        return setError("น้ำหนักสูงสุดต้องเป็นตัวเลข");
+      }
+
+      if (form.vehicle_year && isNaN(Number(form.vehicle_year))) {
+        return setError("ปีรถต้องเป็นตัวเลข");
       }
 
       await AxiosInstance.post("/manage/vehicles", {
-        ...form,
-        status: "ACTIVE",
+        license_plate: form.license_plate,
+        license_province: form.license_province,
+        brand_id: form.brand_id,
+        model: form.model,
+        color: form.color || null,
+        vehicle_year: form.vehicle_year || null,
+        vehicle_type_id: form.vehicle_type_id,
+        fuel_type: form.fuel_type || null,
+        capacity_kg: form.capacity_kg,
+        max_load_kg: form.max_load_kg || "",
+        warehouse_id: form.warehouse_id,
+        owner_type: form.owner_type || "COMPANY",
+        owner_name: form.owner_type === "DRIVER" ? form.owner_name || null : null,
+        purchase_date:
+          form.owner_type === "COMPANY" ? form.purchase_date || null : null,
+        fleet_card_no: form.fleet_card_no || null,
+        chassis_no: form.chassis_no || null,
+        engine_no: form.engine_no || null,
       });
 
       closeCreateModal();
@@ -185,7 +271,6 @@ export default function AdminVehicles() {
           onClick={() => {
             resetForm();
             setShowModal(true);
-            fetchWarehouses();
           }}
           className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition"
         >
@@ -211,7 +296,20 @@ export default function AdminVehicles() {
           className="input-modern w-[180px]"
         >
           <option value="">ประเภทรถ</option>
-          {VEHICLE_TYPES.map((x) => (
+          {vehicleTypes.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filterOwnerType}
+          onChange={(e) => setFilterOwnerType(e.target.value)}
+          className="input-modern w-[160px]"
+        >
+          <option value="">เจ้าของรถ</option>
+          {OWNER_TYPES.map((x) => (
             <option key={x.value} value={x.value}>
               {x.label}
             </option>
@@ -221,7 +319,7 @@ export default function AdminVehicles() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="input-modern w-[180px]"
+          className="input-modern w-[160px]"
         >
           <option value="">สถานะ</option>
           {STATUS.map((x) => (
@@ -242,18 +340,21 @@ export default function AdminVehicles() {
 
       {/* TABLE */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
-        <table className="min-w-[1000px] w-full text-sm">
+        <table className="min-w-[1450px] w-full text-sm">
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="py-4 text-center w-12">#</th>
               <th className="text-left py-4">ทะเบียน</th>
+              <th className="text-left py-4">จังหวัด</th>
               <th className="text-left py-4">ยี่ห้อ</th>
-              <th className="text-left py-4 hidden md:table-cell">รุ่น</th>
-              <th className="text-left py-4 hidden md:table-cell">ประเภท</th>
-              <th className="text-left py-4 hidden lg:table-cell">
-                น้ำหนักบรรทุก (kg)
-              </th>
-              <th className="text-left py-4 hidden lg:table-cell">สังกัด</th>
+              <th className="text-left py-4">รุ่น</th>
+              <th className="text-left py-4">สี</th>
+              <th className="text-left py-4">ปี</th>
+              <th className="text-left py-4">ประเภท</th>
+              <th className="text-left py-4">น้ำหนักใช้งาน</th>
+              <th className="text-left py-4">น้ำหนักสูงสุด</th>
+              <th className="text-left py-4">สังกัด</th>
+              <th className="text-left py-4">เจ้าของรถ</th>
               <th className="text-center py-4">สถานะ</th>
             </tr>
           </thead>
@@ -261,13 +362,13 @@ export default function AdminVehicles() {
           <tbody className="text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-slate-400">
+                <td colSpan={13} className="text-center py-10 text-slate-400">
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-slate-400">
+                <td colSpan={13} className="text-center py-10 text-slate-400">
                   ไม่มีข้อมูล
                 </td>
               </tr>
@@ -283,30 +384,43 @@ export default function AdminVehicles() {
 
                   <td className="font-medium py-2.5">{r.license_plate}</td>
 
-                  <td className="py-2.5">
-                    <div className="leading-tight">
-                      <div>{getLabel(BRANDS, r.brand)}</div>
-
-                      <div className="text-xs text-slate-400 md:hidden">
-                        {getLabel(VEHICLE_TYPES, r.vehicle_type)}
-                      </div>
-                    </div>
+                  <td className="py-2.5 text-slate-500">
+                    {r.license_province || "-"}
                   </td>
 
-                  <td className="py-2.5 hidden md:table-cell">
-                    {r.model || "-"}
+                  <td className="py-2.5">{r.brand_name || "-"}</td>
+
+                  <td className="py-2.5">{r.model || "-"}</td>
+
+                  <td className="py-2.5 text-slate-500">{r.color || "-"}</td>
+
+                  <td className="py-2.5 text-slate-500">
+                    {r.vehicle_year || "-"}
                   </td>
 
-                  <td className="py-2.5 hidden md:table-cell">
-                    {getLabel(VEHICLE_TYPES, r.vehicle_type)}
-                  </td>
+                  <td className="py-2.5">{r.vehicle_type_name || "-"}</td>
 
-                  <td className="text-slate-500 py-2.5 hidden lg:table-cell">
+                  <td className="py-2.5 text-slate-500">
                     {r.capacity_kg || "-"}
                   </td>
 
-                  <td className="text-slate-500 py-2.5 hidden lg:table-cell">
+                  <td className="py-2.5 text-slate-500">
+                    {r.max_load_kg || "-"}
+                  </td>
+
+                  <td className="py-2.5 text-slate-500">
                     {r.warehouse_name || "-"}
+                  </td>
+
+                  <td className="py-2.5">
+                    <div className="leading-tight">
+                      <div>{getOwnerTypeLabel(r.owner_type)}</div>
+                      {r.owner_name && (
+                        <div className="text-xs text-slate-400">
+                          {r.owner_name}
+                        </div>
+                      )}
+                    </div>
                   </td>
 
                   <td className="text-center py-2.5">
@@ -315,19 +429,7 @@ export default function AdminVehicles() {
                       onClick={() => openStatusModal(r.id, r.status)}
                       className="cursor-pointer inline-block"
                     >
-                      {r.status === "ACTIVE" ? (
-                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200">
-                          Active
-                        </span>
-                      ) : r.status === "MAINTENANCE" ? (
-                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600 font-medium hover:bg-yellow-200">
-                          Maintenance
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200">
-                          Inactive
-                        </span>
-                      )}
+                      {getStatusBadge(r.status)}
                     </button>
                   </td>
                 </tr>
@@ -344,7 +446,7 @@ export default function AdminVehicles() {
           onClick={closeCreateModal}
         >
           <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[520px] animate-scaleIn"
+            className="bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-slate-800 mb-5">
@@ -357,81 +459,208 @@ export default function AdminVehicles() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                className="input-modern"
-                placeholder="ทะเบียน"
-                value={form.license_plate}
-                onChange={(e) => {
-                  const v = e.target.value
-                    .toUpperCase()
-                    .replace(/\s+/g, "")
-                    .replace(/-/g, "");
+            <div className="space-y-5">
+              <div>
+                <div className="text-sm font-semibold text-slate-700 mb-3">
+                  ข้อมูลรถ
+                </div>
 
-                  handleChange("license_plate", v);
-                }}
-              />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    className="input-modern"
+                    placeholder="ทะเบียนรถ *"
+                    value={form.license_plate}
+                    onChange={(e) => {
+                      const v = e.target.value
+                        .toUpperCase()
+                        .replace(/\s+/g, "")
+                        .replace(/-/g, "");
 
-              <select
-                className="input-modern"
-                value={form.brand}
-                onChange={(e) => handleChange("brand", e.target.value)}
-              >
-                <option value="">เลือกยี่ห้อ</option>
-                {BRANDS.map((b) => (
-                  <option key={b.value} value={b.value}>
-                    {b.label}
-                  </option>
-                ))}
-              </select>
+                      handleChange("license_plate", v);
+                    }}
+                  />
 
-              {form.brand === "OTHER" && (
-                <input
-                  className="input-modern"
-                  placeholder="กรอกยี่ห้อ"
-                  onChange={(e) => handleChange("brand", e.target.value)}
-                />
-              )}
+                  <input
+                    className="input-modern"
+                    placeholder="จังหวัดทะเบียน *"
+                    value={form.license_province}
+                    onChange={(e) =>
+                      handleChange("license_province", e.target.value)
+                    }
+                  />
 
-              <input
-                className="input-modern"
-                placeholder="รุ่น"
-                value={form.model}
-                onChange={(e) => handleChange("model", e.target.value)}
-              />
+                  <select
+                    className="input-modern"
+                    value={form.brand_id}
+                    onChange={(e) => handleChange("brand_id", e.target.value)}
+                  >
+                    <option value="">เลือกยี่ห้อ *</option>
+                    {brands.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
 
-              <select
-                className="input-modern"
-                value={form.vehicle_type}
-                onChange={(e) => handleChange("vehicle_type", e.target.value)}
-              >
-                <option value="">ประเภท</option>
-                {VEHICLE_TYPES.map((x) => (
-                  <option key={x.value} value={x.value}>
-                    {x.label}
-                  </option>
-                ))}
-              </select>
+                  <input
+                    className="input-modern"
+                    placeholder="รุ่นรถ *"
+                    value={form.model}
+                    onChange={(e) => handleChange("model", e.target.value)}
+                  />
 
-              <input
-                className="input-modern"
-                placeholder="น้ำหนักบรรทุก (kg)"
-                value={form.capacity_kg}
-                onChange={(e) => handleChange("capacity_kg", e.target.value)}
-              />
+                  <input
+                    className="input-modern"
+                    placeholder="สีรถ"
+                    value={form.color}
+                    onChange={(e) => handleChange("color", e.target.value)}
+                  />
 
-              <select
-                className="input-modern"
-                value={form.warehouse_id}
-                onChange={(e) => handleChange("warehouse_id", e.target.value)}
-              >
-                <option value="">เลือก warehouse</option>
-                {warehouses.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
+                  <input
+                    className="input-modern"
+                    placeholder="ปีรถ เช่น 2024"
+                    value={form.vehicle_year}
+                    onChange={(e) =>
+                      handleChange("vehicle_year", e.target.value)
+                    }
+                  />
+
+                  <select
+                    className="input-modern"
+                    value={form.vehicle_type_id}
+                    onChange={(e) =>
+                      handleChange("vehicle_type_id", e.target.value)
+                    }
+                  >
+                    <option value="">เลือกประเภทรถ *</option>
+                    {vehicleTypes.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {x.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="input-modern"
+                    value={form.fuel_type}
+                    onChange={(e) => handleChange("fuel_type", e.target.value)}
+                  >
+                    <option value="">เลือกเชื้อเพลิง</option>
+                    {FUEL_TYPES.map((x) => (
+                      <option key={x.value} value={x.value}>
+                        {x.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-semibold text-slate-700 mb-3">
+                  น้ำหนัก / สังกัด
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    className="input-modern"
+                    placeholder="น้ำหนักใช้งานจริง (kg) *"
+                    value={form.capacity_kg}
+                    onChange={(e) =>
+                      handleChange("capacity_kg", e.target.value)
+                    }
+                  />
+
+                  <input
+                    className="input-modern"
+                    placeholder="น้ำหนักสูงสุดตามเล่มรถ (kg)"
+                    value={form.max_load_kg}
+                    onChange={(e) =>
+                      handleChange("max_load_kg", e.target.value)
+                    }
+                  />
+
+                  <select
+                    className="input-modern"
+                    value={form.warehouse_id}
+                    onChange={(e) =>
+                      handleChange("warehouse_id", e.target.value)
+                    }
+                  >
+                    <option value="">เลือก warehouse *</option>
+                    {warehouses.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="input-modern"
+                    value={form.owner_type}
+                    onChange={(e) =>
+                      handleChange("owner_type", e.target.value)
+                    }
+                  >
+                    {OWNER_TYPES.map((x) => (
+                      <option key={x.value} value={x.value}>
+                        {x.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-semibold text-slate-700 mb-3">
+                  ข้อมูลเจ้าของ / เอกสารรถ
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {form.owner_type === "DRIVER" ? (
+                    <input
+                      className="input-modern"
+                      placeholder="ชื่อเจ้าของรถ / คนขับ"
+                      value={form.owner_name}
+                      onChange={(e) =>
+                        handleChange("owner_name", e.target.value)
+                      }
+                    />
+                  ) : (
+                    <input
+                      className="input-modern"
+                      type="date"
+                      placeholder="วันที่ซื้อ"
+                      value={form.purchase_date}
+                      onChange={(e) =>
+                        handleChange("purchase_date", e.target.value)
+                      }
+                    />
+                  )}
+
+                  <input
+                    className="input-modern"
+                    placeholder="Fleet Card"
+                    value={form.fleet_card_no}
+                    onChange={(e) =>
+                      handleChange("fleet_card_no", e.target.value)
+                    }
+                  />
+
+                  <input
+                    className="input-modern"
+                    placeholder="เลขตัวถัง"
+                    value={form.chassis_no}
+                    onChange={(e) => handleChange("chassis_no", e.target.value)}
+                  />
+
+                  <input
+                    className="input-modern"
+                    placeholder="เลขเครื่องยนต์"
+                    value={form.engine_no}
+                    onChange={(e) => handleChange("engine_no", e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">

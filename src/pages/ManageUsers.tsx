@@ -3,7 +3,7 @@ import AxiosInstance from "../utils/AxiosInstance";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from "../context/AuthContext";
-import { X, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 export default function ManageUsers() {
   const [rows, setRows] = useState<any[]>([]);
@@ -13,9 +13,6 @@ export default function ManageUsers() {
   const [loading, setLoading] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const [confirmDelete, setConfirmDelete] = useState<any>(null);
 
   const [statusModal, setStatusModal] = useState(false);
   const [selected, setSelected] = useState<any>(null);
@@ -31,18 +28,36 @@ export default function ManageUsers() {
 
   const { user } = useAuth();
 
+  const titleOptions = ["นาย", "นาง", "นางสาว"];
+
+  const genderOptions = [
+    { value: "ชาย", label: "ชาย" },
+    { value: "หญิง", label: "หญิง" },
+  ];
+
   const [editForm, setEditForm] = useState({
+    employee_code: "",
+    title_name: "",
     first_name: "",
     last_name: "",
+    gender: "",
+    citizen_id: "",
+    email: "",
+    tel: "",
     license_no: "",
     license_expire: "",
   });
 
   const [form, setForm] = useState({
+    employee_code: "",
     username: "",
-    password: "",
+    title_name: "",
     first_name: "",
     last_name: "",
+    gender: "",
+    citizen_id: "",
+    email: "",
+    tel: "",
     role_id: "",
     warehouse_id: "",
     license_no: "",
@@ -110,10 +125,15 @@ export default function ManageUsers() {
   // =====================
   const resetCreateForm = () => {
     setForm({
+      employee_code: "",
       username: "",
-      password: "",
+      title_name: "",
       first_name: "",
       last_name: "",
+      gender: "",
+      citizen_id: "",
+      email: "",
+      tel: "",
       role_id: "",
       warehouse_id: "",
       license_no: "",
@@ -122,7 +142,6 @@ export default function ManageUsers() {
 
     setSelectedZones([]);
     setError("");
-    setShowPassword(false);
   };
 
   const closeCreateModal = () => {
@@ -134,8 +153,14 @@ export default function ManageUsers() {
     setEditModal(false);
     setEditingUser(null);
     setEditForm({
+      employee_code: "",
+      title_name: "",
       first_name: "",
       last_name: "",
+      gender: "",
+      citizen_id: "",
+      email: "",
+      tel: "",
       license_no: "",
       license_expire: "",
     });
@@ -144,10 +169,6 @@ export default function ManageUsers() {
   const closeStatusModal = () => {
     setStatusModal(false);
     setSelected(null);
-  };
-
-  const closeConfirmDelete = () => {
-    setConfirmDelete(null);
   };
 
   // =====================
@@ -159,8 +180,8 @@ export default function ManageUsers() {
 
       const role = Number(form.role_id);
 
-      if (!form.username || !form.password) {
-        setError("กรุณากรอก username และ password");
+      if (!form.username) {
+        setError("กรุณากรอก username");
         return;
       }
 
@@ -229,8 +250,14 @@ export default function ManageUsers() {
 
     try {
       await AxiosInstance.put(`/manage/users/${editingUser.id}`, {
+        employee_code: editForm.employee_code || null,
+        title_name: editForm.title_name || null,
         first_name: editForm.first_name,
         last_name: editForm.last_name,
+        gender: editForm.gender || null,
+        citizen_id: editForm.citizen_id || null,
+        email: editForm.email || null,
+        tel: editForm.tel || null,
         license_no: editForm.license_no || null,
         license_expire: editForm.license_expire || null,
       });
@@ -269,29 +296,19 @@ export default function ManageUsers() {
     setEditingUser(row);
 
     setEditForm({
+      employee_code: row.employee_code || "",
+      title_name: row.title_name || "",
       first_name: row.first_name || "",
       last_name: row.last_name || "",
+      gender: row.gender || "",
+      citizen_id: row.citizen_id || "",
+      email: row.email || "",
+      tel: row.tel || "",
       license_no: row.license_no || "",
       license_expire: row.license_expire ? new Date(row.license_expire).toISOString().split("T")[0] : "",
     });
 
     setEditModal(true);
-  };
-
-  // =====================
-  // HARD DELETE
-  // =====================
-  const handleHardDelete = async () => {
-    if (!confirmDelete) return;
-
-    try {
-      await AxiosInstance.delete(`/manage/users/${confirmDelete.id}/hard`, {});
-
-      closeConfirmDelete();
-      fetchData();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "hard delete failed");
-    }
   };
 
   return (
@@ -318,10 +335,10 @@ export default function ManageUsers() {
       {/* FILTER */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-5 flex gap-3 flex-wrap">
         <input
-          placeholder="ค้นหา username / ชื่อ"
+          placeholder="ค้นหา username / ชื่อ / รหัสพนักงาน / เบอร์โทร"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="input-modern w-[220px]"
+          className="input-modern w-[320px]"
           onKeyDown={(e) => {
             if (e.key === "Enter") fetchData();
           }}
@@ -343,12 +360,15 @@ export default function ManageUsers() {
 
       {/* TABLE */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
-        <table className="min-w-[900px] w-full text-sm">
+        <table className="min-w-[1280px] w-full text-sm">
           <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="py-4 text-center w-12">#</th>
+              <th className="text-left py-4">รหัสพนักงาน</th>
               <th className="text-left py-4">Username</th>
               <th className="text-left py-4">ชื่อ - นามสกุล</th>
+              <th className="text-left py-4 hidden md:table-cell">Email</th>
+              <th className="text-left py-4 hidden md:table-cell">เบอร์โทร</th>
               <th className="text-left py-4 hidden md:table-cell">ตำแหน่ง</th>
               <th className="text-left py-4 hidden lg:table-cell">สังกัด</th>
               <th className="text-center py-4 hidden lg:table-cell">เลขที่ใบขับขี่</th>
@@ -361,13 +381,13 @@ export default function ManageUsers() {
           <tbody className="text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={9} className="text-center py-10 text-slate-400">
+                <td colSpan={12} className="text-center py-10 text-slate-400">
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-10 text-slate-400">
+                <td colSpan={12} className="text-center py-10 text-slate-400">
                   ไม่มีข้อมูล
                 </td>
               </tr>
@@ -376,20 +396,31 @@ export default function ManageUsers() {
                 <tr key={r.id} className="border-t hover:bg-slate-50 transition">
                   <td className="text-center text-slate-400 py-2.5">{i + 1}</td>
 
+                  <td className="py-2.5 font-medium">{r.employee_code || "-"}</td>
+
                   <td className="font-medium py-2.5">{r.username}</td>
 
                   <td className="py-2.5">
                     <div className="leading-tight">
                       <div>
-                        {r.first_name} {r.last_name}
+                        {r.title_name ? `${r.title_name} ` : ""}
+                        {r.first_name || "-"} {r.last_name || ""}
                       </div>
 
-                      <div className="text-xs text-slate-400 md:hidden">{r.role_name}</div>
+                      <div className="text-xs text-slate-400 md:hidden">
+                        {r.role_name || "-"} / {r.tel || "-"}
+                      </div>
+
+                      <div className="text-xs text-slate-400 lg:hidden">{r.email || "-"}</div>
                     </div>
                   </td>
 
+                  <td className="text-slate-500 py-2.5 hidden md:table-cell">{r.email || "-"}</td>
+
+                  <td className="text-slate-500 py-2.5 hidden md:table-cell">{r.tel || "-"}</td>
+
                   <td className="py-2.5 hidden md:table-cell">
-                    <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">{r.role_name}</span>
+                    <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">{r.role_name || "-"}</span>
                   </td>
 
                   <td className="text-slate-500 py-2.5 hidden lg:table-cell">{r.warehouse_name || "-"}</td>
@@ -424,7 +455,6 @@ export default function ManageUsers() {
                       {r.is_active ? "Active" : "Inactive"}
                     </button>
                   </td>
-
                   <td className="py-2.5">
                     <div className="flex gap-2">
                       <button
@@ -434,16 +464,6 @@ export default function ManageUsers() {
                       >
                         <Pencil size={14} />
                       </button>
-
-                      {[1, 10, 11].includes(Number(user?.role_id)) && (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDelete({ id: r.id, type: "hard" })}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -456,12 +476,15 @@ export default function ManageUsers() {
       {/* CREATE MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeCreateModal}>
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[520px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="bg-white p-6 rounded-2xl shadow-xl w-[720px] max-h-[90vh] overflow-auto animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-semibold text-slate-800 mb-5">เพิ่มผู้ใช้</h3>
 
             {error && <div className="mb-4 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm">{error}</div>}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 className="input-modern"
                 placeholder="Username"
@@ -469,21 +492,23 @@ export default function ManageUsers() {
                 onChange={(e) => handleChange("username", e.target.value)}
               />
 
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="input-modern w-full pr-10"
-                  placeholder="Password"
-                  value={form.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2 cursor-pointer text-gray-400 hover:text-gray-600"
-                >
-                  👁
-                </span>
-              </div>
+              <p className="text-sm mt-2 ml-5 text-blue-600">Password 123456 สามารถเปลี่ยนได้ภายหลัง</p>
+
+              <input
+                className="input-modern"
+                placeholder="รหัสพนักงาน"
+                value={form.employee_code}
+                onChange={(e) => handleChange("employee_code", e.target.value)}
+              />
+
+              <select className="input-modern" value={form.title_name} onChange={(e) => handleChange("title_name", e.target.value)}>
+                <option value="">เลือกคำนำหน้า</option>
+                {titleOptions.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
 
               <input
                 className="input-modern"
@@ -498,6 +523,27 @@ export default function ManageUsers() {
                 value={form.last_name}
                 onChange={(e) => handleChange("last_name", e.target.value)}
               />
+
+              <select className="input-modern" value={form.gender} onChange={(e) => handleChange("gender", e.target.value)}>
+                <option value="">เลือกเพศ</option>
+                {genderOptions.map((g) => (
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                className="input-modern"
+                placeholder="เลขบัตรประชาชน"
+                value={form.citizen_id}
+                maxLength={13}
+                onChange={(e) => handleChange("citizen_id", e.target.value.replace(/\D/g, ""))}
+              />
+
+              <input className="input-modern" placeholder="Email" value={form.email} onChange={(e) => handleChange("email", e.target.value)} />
+
+              <input className="input-modern" placeholder="เบอร์โทร" value={form.tel} onChange={(e) => handleChange("tel", e.target.value)} />
 
               <select className="input-modern" value={form.role_id} onChange={(e) => handleChange("role_id", e.target.value)}>
                 <option value="">เลือก role</option>
@@ -521,7 +567,7 @@ export default function ManageUsers() {
             </div>
 
             {Number(form.role_id) === 7 && (
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <input
                   className="input-modern"
                   placeholder="เลขใบขับขี่"
@@ -580,40 +626,120 @@ export default function ManageUsers() {
       {/* EDIT MODAL */}
       {editModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeEditModal}>
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[460px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="bg-white p-6 rounded-2xl shadow-xl w-[720px] max-h-[90vh] overflow-auto animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-semibold text-slate-800 mb-1">แก้ไขผู้ใช้</h3>
 
             <p className="text-sm text-slate-500 mb-5">{editingUser?.username || "-"}</p>
 
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                className="input-modern"
-                placeholder="ชื่อ"
-                value={editForm.first_name}
-                onChange={(e) => handleEditChange("first_name", e.target.value)}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">รหัสพนักงาน</label>
+                <input
+                  className="input-modern w-full"
+                  placeholder="รหัสพนักงาน"
+                  value={editForm.employee_code}
+                  onChange={(e) => handleEditChange("employee_code", e.target.value)}
+                />
+              </div>
 
-              <input
-                className="input-modern"
-                placeholder="นามสกุล"
-                value={editForm.last_name}
-                onChange={(e) => handleEditChange("last_name", e.target.value)}
-              />
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">คำนำหน้า</label>
+                <select className="input-modern w-full" value={editForm.title_name} onChange={(e) => handleEditChange("title_name", e.target.value)}>
+                  <option value="">เลือกคำนำหน้า</option>
+                  {titleOptions.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <input
-                className="input-modern"
-                placeholder="เลขใบขับขี่"
-                value={editForm.license_no}
-                onChange={(e) => handleEditChange("license_no", e.target.value)}
-              />
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">ชื่อ</label>
+                <input
+                  className="input-modern w-full"
+                  placeholder="ชื่อ"
+                  value={editForm.first_name}
+                  onChange={(e) => handleEditChange("first_name", e.target.value)}
+                />
+              </div>
 
-              <DatePicker
-                selected={editForm.license_expire ? new Date(editForm.license_expire) : null}
-                onChange={(date: Date | null) => handleEditChange("license_expire", date ? date.toISOString().split("T")[0] : "")}
-                className="input-modern w-full"
-                placeholderText="วันหมดอายุใบขับขี่"
-                dateFormat="yyyy-MM-dd"
-              />
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">นามสกุล</label>
+                <input
+                  className="input-modern w-full"
+                  placeholder="นามสกุล"
+                  value={editForm.last_name}
+                  onChange={(e) => handleEditChange("last_name", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">เพศ</label>
+                <select className="input-modern w-full" value={editForm.gender} onChange={(e) => handleEditChange("gender", e.target.value)}>
+                  <option value="">เลือกเพศ</option>
+                  {genderOptions.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">เลขบัตรประชาชน</label>
+                <input
+                  className="input-modern w-full"
+                  placeholder="เลขบัตรประชาชน"
+                  value={editForm.citizen_id}
+                  maxLength={13}
+                  onChange={(e) => handleEditChange("citizen_id", e.target.value.replace(/\D/g, ""))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Email</label>
+                <input
+                  className="input-modern w-full"
+                  placeholder="Email"
+                  value={editForm.email}
+                  onChange={(e) => handleEditChange("email", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">เบอร์โทร</label>
+                <input
+                  className="input-modern w-full"
+                  placeholder="เบอร์โทร"
+                  value={editForm.tel}
+                  onChange={(e) => handleEditChange("tel", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">เลขใบขับขี่</label>
+                <input
+                  className="input-modern w-full"
+                  placeholder="เลขใบขับขี่"
+                  value={editForm.license_no}
+                  onChange={(e) => handleEditChange("license_no", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">วันหมดอายุใบขับขี่</label>
+                <DatePicker
+                  selected={editForm.license_expire ? new Date(editForm.license_expire) : null}
+                  onChange={(date: Date | null) => handleEditChange("license_expire", date ? date.toISOString().split("T")[0] : "")}
+                  className="input-modern w-full"
+                  placeholderText="วันหมดอายุใบขับขี่"
+                  dateFormat="yyyy-MM-dd"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
@@ -656,27 +782,6 @@ export default function ManageUsers() {
                 }`}
               >
                 Inactive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CONFIRM DELETE MODAL */}
-      {confirmDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeConfirmDelete}>
-          <div className="bg-white p-6 rounded-2xl shadow-xl text-center w-[320px]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">ยืนยันการลบ</h3>
-
-            <p className="text-sm text-slate-500 mb-4">ลบผู้ใช้งานรายนี้ถาวร?</p>
-
-            <div className="flex justify-center gap-3">
-              <button type="button" onClick={handleHardDelete} className="px-4 py-2 rounded-xl bg-red-500 text-white">
-                ยืนยัน
-              </button>
-
-              <button type="button" onClick={closeConfirmDelete} className="px-4 py-2 rounded-xl bg-gray-100">
-                ยกเลิก
               </button>
             </div>
           </div>
