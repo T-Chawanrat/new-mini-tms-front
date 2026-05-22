@@ -3,6 +3,16 @@ import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
 import { Pencil } from "lucide-react";
 import AddressSearchDropdown, { type ZipAddressRow } from "../components/dropdown/AddressSearchDropdown";
+import { cleanCodeInput, cleanNameInput, cleanNumberInput, cleanEmailInput } from "../utils/textSanitizer";
+
+const RequiredLabel = ({ children, required = false }: { children: string; required?: boolean }) => {
+  return (
+    <label className="block text-xs font-medium text-slate-500 mb-1">
+      {children}
+      {required && <span className="text-red-500 ml-1">*</span>}
+    </label>
+  );
+};
 
 export default function ManageCustomers() {
   const { user } = useAuth();
@@ -73,6 +83,10 @@ export default function ManageCustomers() {
 
   const handleChange = (k: string, v: any) => {
     setForm((prev) => ({ ...prev, [k]: v }));
+  };
+
+  const handleUserChange = (k: string, v: any) => {
+    setUserForm((prev) => ({ ...prev, [k]: v }));
   };
 
   const handleSelectAddress = (row: ZipAddressRow) => {
@@ -174,10 +188,35 @@ export default function ManageCustomers() {
   // =====================
   const handleSaveCustomer = async () => {
     try {
+      const code = cleanCodeInput(form.code);
+      const name = cleanNameInput(form.name);
+
+      if (!code) {
+        alert("กรุณากรอกรหัสลูกค้า");
+        return;
+      }
+
+      if (!name) {
+        alert("กรุณากรอกชื่อลูกค้า");
+        return;
+      }
+
+      const payload = {
+        ...form,
+        code,
+        name,
+        tax_id: cleanNumberInput(form.tax_id),
+        tel: cleanNumberInput(form.tel),
+        line: cleanCodeInput(form.line),
+        contact_name: cleanNameInput(form.contact_name),
+        contact_tel: cleanNumberInput(form.contact_tel),
+        email: cleanEmailInput(form.email),
+      };
+
       if (editingCustomer) {
-        await AxiosInstance.patch(`/manage/customers/${editingCustomer.id}`, form);
+        await AxiosInstance.patch(`/manage/customers/${editingCustomer.id}`, payload);
       } else {
-        await AxiosInstance.post("/manage/customers", form);
+        await AxiosInstance.post("/manage/customers", payload);
       }
 
       closeCustomerModal();
@@ -226,9 +265,30 @@ export default function ManageCustomers() {
   const handleCreateUser = async () => {
     if (!selectedCustomer) return;
 
+    const username = cleanCodeInput(userForm.username);
+    const first_name = cleanNameInput(userForm.first_name);
+    const last_name = cleanNameInput(userForm.last_name);
+
+    if (!username) {
+      alert("กรุณากรอก Username");
+      return;
+    }
+
+    if (!first_name) {
+      alert("กรุณากรอกชื่อ");
+      return;
+    }
+
+    if (!last_name) {
+      alert("กรุณากรอกนามสกุล");
+      return;
+    }
+
     try {
       await AxiosInstance.post("/manage/customers/add-user", {
-        ...userForm,
+        username,
+        first_name,
+        last_name,
         customer_id: selectedCustomer.id,
       });
 
@@ -318,7 +378,7 @@ export default function ManageCustomers() {
                   </td>
 
                   <td className="py-3">
-                    <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">{r.type || "-"}</span>
+                    <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-medium">{r.type || "-"}</span>
                   </td>
 
                   <td className="py-3 hidden md:table-cell">{r.tax_id || "-"}</td>
@@ -348,7 +408,7 @@ export default function ManageCustomers() {
                       <button
                         type="button"
                         onClick={() => openEditModal(r)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
                       >
                         <Pencil size={14} />
                       </button>
@@ -357,7 +417,7 @@ export default function ManageCustomers() {
                         <button
                           type="button"
                           onClick={() => openUserModal(r)}
-                          className="px-2 text-xs rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+                          className="px-2 text-xs rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100"
                         >
                           + User
                         </button>
@@ -382,58 +442,109 @@ export default function ManageCustomers() {
 
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input className="input-modern w-full" placeholder="Code" value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
+                <div>
+                  <RequiredLabel required>รหัสลูกค้า</RequiredLabel>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="รหัสลูกค้า"
+                    value={form.code}
+                    onChange={(e) => handleChange("code", cleanCodeInput(e.target.value))}
+                  />
+                </div>
 
-                <input className="input-modern w-full" placeholder="Name" value={form.name} onChange={(e) => handleChange("name", e.target.value)} />
+                <div>
+                  <RequiredLabel required>ชื่อลูกค้า</RequiredLabel>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="ชื่อลูกค้า"
+                    value={form.name}
+                    onChange={(e) => handleChange("name", cleanNameInput(e.target.value))}
+                  />
+                </div>
 
-                <select className="input-modern w-full" value={form.type} onChange={(e) => handleChange("type", e.target.value)}>
-                  <option value="BUSINESS">BUSINESS</option>
-                  <option value="EXPRESS">EXPRESS</option>
-                </select>
+                <div>
+                  <RequiredLabel>ประเภทลูกค้า</RequiredLabel>
+                  <select className="input-modern w-full" value={form.type} onChange={(e) => handleChange("type", e.target.value)}>
+                    <option value="BUSINESS">BUSINESS</option>
+                    <option value="EXPRESS">EXPRESS</option>
+                  </select>
+                </div>
 
-                <input
-                  className="input-modern w-full"
-                  placeholder="Tax ID"
-                  value={form.tax_id}
-                  onChange={(e) => handleChange("tax_id", e.target.value)}
-                />
+                <div>
+                  <RequiredLabel>เลขประจำตัวผู้เสียภาษี</RequiredLabel>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="เลขประจำตัวผู้เสียภาษี"
+                    value={form.tax_id}
+                    onChange={(e) => handleChange("tax_id", cleanNumberInput(e.target.value))}
+                  />
+                </div>
 
-                <input className="input-modern w-full" placeholder="Tel" value={form.tel} onChange={(e) => handleChange("tel", e.target.value)} />
+                <div>
+                  <RequiredLabel>เบอร์โทร</RequiredLabel>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="เบอร์โทร"
+                    value={form.tel}
+                    onChange={(e) => handleChange("tel", cleanNumberInput(e.target.value))}
+                  />
+                </div>
 
-                <input className="input-modern w-full" placeholder="Line" value={form.line} onChange={(e) => handleChange("line", e.target.value)} />
+                <div>
+                  <RequiredLabel>Line ID</RequiredLabel>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="Line ID"
+                    value={form.line}
+                    onChange={(e) => handleChange("line", cleanCodeInput(e.target.value))}
+                  />
+                </div>
 
-                <input
-                  className="input-modern w-full"
-                  placeholder="Email"
-                  value={form.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                />
+                <div>
+                  <RequiredLabel>Email</RequiredLabel>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="Email"
+                    value={form.email}
+                    onChange={(e) => handleChange("email", cleanEmailInput(e.target.value))}
+                  />
+                </div>
 
                 <div className="md:col-span-2">
+                  <RequiredLabel>ค้นหาตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์</RequiredLabel>
                   <AddressSearchDropdown value={addressKeyword} onChange={setAddressKeyword} onSelect={handleSelectAddress} />
                 </div>
 
-                <input
-                  className="input-modern w-full"
-                  placeholder="Contact Name"
-                  value={form.contact_name}
-                  onChange={(e) => handleChange("contact_name", e.target.value)}
-                />
+                <div>
+                  <RequiredLabel>ชื่อผู้ติดต่อ</RequiredLabel>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="ชื่อผู้ติดต่อ"
+                    value={form.contact_name}
+                    onChange={(e) => handleChange("contact_name", cleanNameInput(e.target.value))}
+                  />
+                </div>
 
-                <input
-                  className="input-modern w-full"
-                  placeholder="Contact Tel"
-                  value={form.contact_tel}
-                  onChange={(e) => handleChange("contact_tel", e.target.value)}
-                />
+                <div>
+                  <RequiredLabel>เบอร์โทรผู้ติดต่อ</RequiredLabel>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="เบอร์โทรผู้ติดต่อ"
+                    value={form.contact_tel}
+                    onChange={(e) => handleChange("contact_tel", cleanNumberInput(e.target.value))}
+                  />
+                </div>
               </div>
 
-              <textarea
-                className="input-modern w-full min-h-[90px]"
-                placeholder="Address"
-                value={form.address}
-                onChange={(e) => handleChange("address", e.target.value)}
-              />
+              <div>
+                <RequiredLabel>ที่อยู่</RequiredLabel>
+                <textarea
+                  className="input-modern w-full min-h-[90px]"
+                  placeholder="ที่อยู่"
+                  value={form.address}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
@@ -483,34 +594,44 @@ export default function ManageCustomers() {
       )}
 
       {/* CREATE CUSTOMER USER MODAL */}
+      {/* CREATE CUSTOMER USER MODAL */}
       {showUserModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeUserModal}>
           <div className="bg-white p-6 rounded-2xl shadow-xl w-[400px]" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-slate-800 mb-5">เพิ่ม User ให้ {selectedCustomer?.name}</h3>
 
             <div className="space-y-3">
-              <input
-                className="input-modern w-full"
-                placeholder="Username"
-                value={userForm.username}
-                onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
-              />
+              <div>
+                <RequiredLabel required>Username</RequiredLabel>
+                <input
+                  className="input-modern w-full"
+                  placeholder="Username"
+                  value={userForm.username}
+                  onChange={(e) => handleUserChange("username", cleanCodeInput(e.target.value))}
+                />
+              </div>
 
               <p className="text-sm ml-2 text-blue-600">Password 123456 สามารถเปลี่ยนได้ภายหลัง</p>
 
-              <input
-                className="input-modern w-full"
-                placeholder="First Name"
-                value={userForm.first_name}
-                onChange={(e) => setUserForm({ ...userForm, first_name: e.target.value })}
-              />
+              <div>
+                <RequiredLabel required>ชื่อ</RequiredLabel>
+                <input
+                  className="input-modern w-full"
+                  placeholder="ชื่อ"
+                  value={userForm.first_name}
+                  onChange={(e) => handleUserChange("first_name", cleanNameInput(e.target.value))}
+                />
+              </div>
 
-              <input
-                className="input-modern w-full"
-                placeholder="Last Name"
-                value={userForm.last_name}
-                onChange={(e) => setUserForm({ ...userForm, last_name: e.target.value })}
-              />
+              <div>
+                <RequiredLabel required>นามสกุล</RequiredLabel>
+                <input
+                  className="input-modern w-full"
+                  placeholder="นามสกุล"
+                  value={userForm.last_name}
+                  onChange={(e) => handleUserChange("last_name", cleanNameInput(e.target.value))}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">

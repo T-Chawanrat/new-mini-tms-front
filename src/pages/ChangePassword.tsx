@@ -3,6 +3,15 @@ import AxiosInstance from "../utils/AxiosInstance";
 import { Eye, EyeOff, KeyRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
+const RequiredLabel = ({ children }: { children: string }) => {
+  return (
+    <label className="block text-xs font-medium text-slate-500 mb-1">
+      {children}
+      <span className="text-red-500 ml-1">*</span>
+    </label>
+  );
+};
+
 export default function ChangePassword() {
   const { user } = useAuth();
 
@@ -62,6 +71,11 @@ export default function ChangePassword() {
         return;
       }
 
+      if (!form.confirm_password) {
+        setError("กรุณายืนยันรหัสผ่านใหม่");
+        return;
+      }
+
       if (form.new_password !== form.confirm_password) {
         setError("รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน");
         return;
@@ -93,7 +107,9 @@ export default function ChangePassword() {
     <div className="w-full min-h-screen px-1 py-4 bg-slate-50">
       {/* HEADER */}
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-slate-800">Change Password</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">
+          Change Password
+        </h2>
         <p className="text-sm text-slate-500">เปลี่ยนรหัสผ่าน</p>
       </div>
 
@@ -104,19 +120,31 @@ export default function ChangePassword() {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-slate-800">เปลี่ยนรหัสผ่าน</h3>
-            <p className="text-sm text-slate-500">ผู้ใช้งาน: {user?.username || "-"}</p>
+            <h3 className="text-lg font-semibold text-slate-800">
+              เปลี่ยนรหัสผ่าน
+            </h3>
+            <p className="text-sm text-slate-500">
+              ผู้ใช้งาน: {user?.username || "-"}
+            </p>
           </div>
         </div>
 
-        {error && <div className="mb-4 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm">{error}</div>}
+        {error && (
+          <div className="mb-4 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm">
+            {error}
+          </div>
+        )}
 
-        {success && <div className="mb-4 px-4 py-2 rounded-xl bg-green-50 text-green-600 text-sm">{success}</div>}
+        {success && (
+          <div className="mb-4 px-4 py-2 rounded-xl bg-green-50 text-green-600 text-sm">
+            {success}
+          </div>
+        )}
 
         <div className="space-y-4">
           {/* OLD PASSWORD */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">รหัสผ่านเดิม</label>
+            <RequiredLabel>รหัสผ่านเดิม</RequiredLabel>
 
             <div className="relative">
               <input
@@ -139,7 +167,7 @@ export default function ChangePassword() {
 
           {/* NEW PASSWORD */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">รหัสผ่านใหม่</label>
+            <RequiredLabel>รหัสผ่านใหม่</RequiredLabel>
 
             <div className="relative">
               <input
@@ -162,7 +190,7 @@ export default function ChangePassword() {
 
           {/* CONFIRM PASSWORD */}
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">ยืนยันรหัสผ่านใหม่</label>
+            <RequiredLabel>ยืนยันรหัสผ่านใหม่</RequiredLabel>
 
             <div className="relative">
               <input
@@ -170,7 +198,9 @@ export default function ChangePassword() {
                 className="input-modern w-full pl-9 pr-11"
                 placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
                 value={form.confirm_password}
-                onChange={(e) => handleChange("confirm_password", e.target.value)}
+                onChange={(e) =>
+                  handleChange("confirm_password", e.target.value)
+                }
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSubmit();
                 }}
@@ -181,7 +211,11 @@ export default function ChangePassword() {
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showConfirmPassword ? (
+                  <EyeOff size={18} />
+                ) : (
+                  <Eye size={18} />
+                )}
               </button>
             </div>
           </div>
@@ -201,7 +235,9 @@ export default function ChangePassword() {
               disabled={saving}
               onClick={handleSubmit}
               className={`px-5 py-2 rounded-xl text-white shadow transition ${
-                saving ? "bg-blue-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                saving
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
               {saving ? "กำลังบันทึก..." : "เปลี่ยนรหัสผ่าน"}

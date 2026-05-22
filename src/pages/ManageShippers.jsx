@@ -3,6 +3,8 @@ import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
 import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
 import { Pencil } from "lucide-react";
+import { cleanCodeInput, cleanNameInput, cleanNumberInput } from "../utils/textSanitizer";
+import ResizableColumns from "../components/ResizableColumns";
 
 export default function ManageShippers() {
   const { user } = useAuth();
@@ -42,11 +44,51 @@ export default function ManageShippers() {
     fax: "",
   };
 
+  const shipperHeaders = [
+    "#",
+    "Shipper Code",
+    "Shipper Name",
+    "Tel",
+    "Address",
+    "Subdistrict",
+    "District",
+    "Province",
+    "Zipcode",
+    "Status",
+    "จัดการ",
+  ];
+
+  const shipperMinWidths = {
+    0: 50,
+    1: 130,
+    2: 220,
+    3: 130,
+    4: 320,
+    5: 150,
+    6: 150,
+    7: 150,
+    8: 110,
+    9: 100,
+    10: 100,
+  };
+
+  const shipperMaxWidths = {
+    0: 60,
+    1: 600,
+    2: 600,
+    3: 180,
+    4: 2000,
+    5: 220,
+    6: 220,
+    7: 220,
+    8: 140,
+    9: 130,
+    10: 120,
+  };
+
   const [form, setForm] = useState(emptyForm);
 
-  const selectedCustomer = customers.find(
-    (c) => String(c.id) === String(customerId),
-  );
+  const selectedCustomer = customers.find((c) => String(c.id) === String(customerId));
 
   const handleChange = (key, value) => {
     setForm((prev) => ({
@@ -185,7 +227,12 @@ export default function ManageShippers() {
       return;
     }
 
-    if (!form.shipper_code || !form.shipper_name) {
+    const shipper_code = cleanCodeInput(form.shipper_code);
+    const shipper_name = cleanNameInput(form.shipper_name);
+    const tel = cleanNumberInput(form.tel);
+    const fax = cleanNumberInput(form.fax);
+
+    if (!shipper_code || !shipper_name) {
       alert("กรุณากรอก shipper code และ shipper name");
       return;
     }
@@ -196,9 +243,9 @@ export default function ManageShippers() {
     }
 
     const payload = {
-      shipper_code: form.shipper_code,
+      shipper_code,
       shipper_type_id: form.shipper_type_id || null,
-      shipper_name: form.shipper_name,
+      shipper_name,
       address: form.address || null,
 
       subdistrict_id: form.subdistrict_id || null,
@@ -206,16 +253,13 @@ export default function ManageShippers() {
       province_id: form.province_id || null,
 
       zip_code: form.zip_code || null,
-      tel: form.tel || null,
-      fax: form.fax || null,
+      tel: tel || null,
+      fax: fax || null,
     };
 
     try {
       if (editing) {
-        await AxiosInstance.patch(
-          `/manage/shippers/${customerId}/${editing.shipper_id}`,
-          payload,
-        );
+        await AxiosInstance.patch(`/manage/shippers/${customerId}/${editing.shipper_id}`, payload);
       } else {
         await AxiosInstance.post(`/manage/shippers/${customerId}`, payload);
       }
@@ -241,12 +285,9 @@ export default function ManageShippers() {
     if (!selectedStatus || !customerId) return;
 
     try {
-      await AxiosInstance.patch(
-        `/manage/shippers/${customerId}/${selectedStatus.shipper_id}/status`,
-        {
-          is_deleted: status === "ACTIVE" ? "N" : "Y",
-        },
-      );
+      await AxiosInstance.patch(`/manage/shippers/${customerId}/${selectedStatus.shipper_id}/status`, {
+        is_deleted: status === "ACTIVE" ? "N" : "Y",
+      });
 
       setStatusModal(false);
       setSelectedStatus(null);
@@ -260,9 +301,7 @@ export default function ManageShippers() {
     <div className="w-full min-h-screen px-1 py-4 bg-slate-50">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">
-            Shipper Management
-          </h2>
+          <h2 className="text-2xl font-semibold text-slate-800">Shipper Management</h2>
 
           <p className="text-sm text-slate-500">
             {isCustomer ? (
@@ -270,36 +309,24 @@ export default function ManageShippers() {
             ) : (
               <>
                 จัดการผู้ส่งของลูกค้า
-                {selectedCustomer ? (
-                  <span className="font-medium text-slate-700">
-                    {" "}
-                    {selectedCustomer.name}
-                  </span>
-                ) : null}
+                {selectedCustomer ? <span className="font-medium text-slate-700"> {selectedCustomer.name}</span> : null}
               </>
             )}
           </p>
         </div>
 
-        <button
-          onClick={openCreate}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition"
-        >
+        <button type="button" onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
           + เพิ่มผู้ส่ง
         </button>
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-5 flex gap-3 flex-wrap">
         {canSelectCustomer && (
-          <select
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="input-modern w-auto"
-          >
+          <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-modern w-auto">
             <option value="">เลือก Customer</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.code} - {c.name}
+                {c.id} {c.code} - {c.name}
               </option>
             ))}
           </select>
@@ -315,125 +342,96 @@ export default function ManageShippers() {
           }}
         />
 
-        <button
-          onClick={fetchData}
-          className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-        >
+        <button type="button" onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
           ค้นหา
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
-        <table className="min-w-[900px] w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
-            <tr>
-              <th className="py-4 text-center w-12">#</th>
-              <th className="text-left py-4">Shipper Code</th>
-              <th className="text-left py-4">Shipper Name</th>
-              <th className="text-left py-4 hidden md:table-cell">Tel</th>
-              <th className="text-left py-4 hidden lg:table-cell">Address</th>
-              <th className="text-left py-4 hidden lg:table-cell">
-                Subdistrict
-              </th>
-              <th className="text-left py-4 hidden lg:table-cell">District</th>
-              <th className="text-left py-4 hidden lg:table-cell">Province</th>
-              <th className="text-left py-4 hidden lg:table-cell">Zipcode</th>
-              <th className="text-center py-4">Status</th>
-              <th className="text-center w-28">จัดการ</th>
-            </tr>
-          </thead>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-[1400px] w-full text-sm whitespace-nowrap table-fixed">
+            <ResizableColumns headers={shipperHeaders} pageKey="manage-shippers" minWidths={shipperMinWidths} maxWidths={shipperMaxWidths} />
 
-          <tbody className="text-slate-700">
-            {loading ? (
-              <tr>
-                <td colSpan={11} className="text-center py-10 text-slate-400">
-                  Loading...
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="text-center py-10 text-slate-400">
-                  ไม่มีข้อมูล
-                </td>
-              </tr>
-            ) : (
-              rows.map((r, i) => (
-                <tr key={r.shipper_id} className="border-t hover:bg-slate-50">
-                  <td className="text-center text-slate-400 py-3">
-                    {i + 1}
-                  </td>
-
-                  <td className="py-3 font-medium">
-                    {r.shipper_code || "-"}
-                  </td>
-
-                  <td className="py-3">
-                    <div className="leading-tight">
-                      <div>{r.shipper_name || "-"}</div>
-                      <div className="text-xs text-slate-400 md:hidden">
-                        {r.tel || "-"} / {r.zip_code || "-"}
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="py-3 hidden md:table-cell">
-                    {r.tel || "-"}
-                  </td>
-
-                  <td className="py-3 hidden lg:table-cell max-w-[320px] truncate">
-                    {r.address || "-"}
-                  </td>
-
-                  <td className="py-3 hidden lg:table-cell">
-                    {r.subdistrict_name || "-"}
-                  </td>
-
-                  <td className="py-3 hidden lg:table-cell">
-                    {r.district_name || "-"}
-                  </td>
-
-                  <td className="py-3 hidden lg:table-cell">
-                    {r.province_name || "-"}
-                  </td>
-
-                  <td className="py-3 hidden lg:table-cell">
-                    {r.zip_code || "-"}
-                  </td>
-
-                  <td className="text-center py-3">
-                    <button
-                      type="button"
-                      onClick={() => openStatusModal(r)}
-                      className="inline-block"
-                      title="คลิกเพื่อเปลี่ยนสถานะ"
-                    >
-                      {r.is_deleted === "N" ? (
-                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">
-                          Inactive
-                        </span>
-                      )}
-                    </button>
-                  </td>
-
-                  <td className="py-3 px-3">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => openEdit(r)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                    </div>
+            <tbody className="text-slate-700">
+              {loading ? (
+                <tr>
+                  <td colSpan={11} className="text-center py-10 text-slate-400">
+                    Loading...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="text-center py-10 text-slate-400">
+                    ไม่มีข้อมูล
+                  </td>
+                </tr>
+              ) : (
+                rows.map((r, i) => (
+                  <tr key={r.shipper_id} className="border-t hover:bg-slate-50 transition">
+                    <td className="py-3 px-3 text-center text-slate-400 truncate">{i + 1}</td>
+
+                    <td className="py-3 px-3 font-medium truncate">{r.shipper_code || "-"}</td>
+
+                    <td className="py-3 px-3 truncate">
+                      <div className="leading-tight truncate">
+                        <div className="truncate">{r.shipper_name || "-"}</div>
+                        <div className="text-xs text-slate-400 md:hidden truncate">
+                          {r.tel || "-"} / {r.zip_code || "-"}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="py-3 px-3 truncate">{r.tel || "-"}</td>
+
+                    <td className="py-3 px-3 truncate" title={r.address || ""}>
+                      {r.address || "-"}
+                    </td>
+
+                    <td className="py-3 px-3 truncate" title={r.subdistrict_name || ""}>
+                      {r.subdistrict_name || "-"}
+                    </td>
+
+                    <td className="py-3 px-3 truncate" title={r.district_name || ""}>
+                      {r.district_name || "-"}
+                    </td>
+
+                    <td className="py-3 px-3 truncate" title={r.province_name || ""}>
+                      {r.province_name || "-"}
+                    </td>
+
+                    <td className="py-3 px-3 truncate">{r.zip_code || "-"}</td>
+
+                    <td className="py-3 px-3 text-center">
+                      <button type="button" onClick={() => openStatusModal(r)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
+                        {r.is_deleted === "N" ? (
+                          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">
+                            Inactive
+                          </span>
+                        )}
+                      </button>
+                    </td>
+
+                    <td className="py-3 px-3">
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(r)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && (
@@ -448,58 +446,58 @@ export default function ManageShippers() {
             className="bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-slate-800 mb-5">
-              {editing ? "แก้ไขผู้ส่ง" : "เพิ่มผู้ส่ง"}
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไขผู้ส่ง" : "เพิ่มผู้ส่ง"}</h3>
 
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input
-                  className="input-modern w-full"
-                  placeholder="Shipper Code *"
-                  value={form.shipper_code}
-                  onChange={(e) =>
-                    handleChange("shipper_code", e.target.value)
-                  }
-                />
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">รหัสผู้ส่ง</label>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="รหัสผู้ส่ง *"
+                    value={form.shipper_code}
+                    onChange={(e) => handleChange("shipper_code", cleanCodeInput(e.target.value))}
+                  />
+                </div>
 
-                <select
-                  className="input-modern w-full"
-                  value={form.shipper_type_id}
-                  onChange={(e) =>
-                    handleChange("shipper_type_id", e.target.value)
-                  }
-                >
-                  <option value="1">บุคคลธรรมดา</option>
-                  <option value="2">นิติบุคคล</option>
-                </select>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">ประเภทผู้ส่ง</label>
+                  <select
+                    className="input-modern w-full"
+                    value={form.shipper_type_id}
+                    onChange={(e) => handleChange("shipper_type_id", e.target.value)}
+                  >
+                    <option value="1">บุคคลธรรมดา</option>
+                    <option value="2">นิติบุคคล</option>
+                  </select>
+                </div>
               </div>
 
-              <input
-                className="input-modern w-full"
-                placeholder="Shipper Name *"
-                value={form.shipper_name}
-                onChange={(e) => handleChange("shipper_name", e.target.value)}
-              />
-
-              <textarea
-                className="input-modern w-full min-h-[80px]"
-                placeholder="Address"
-                value={form.address}
-                onChange={(e) => handleChange("address", e.target.value)}
-              />
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">ชื่อผู้ส่ง</label>
+                <input
+                  className="input-modern w-full"
+                  placeholder="ชื่อผู้ส่ง *"
+                  value={form.shipper_name}
+                  onChange={(e) => handleChange("shipper_name", cleanNameInput(e.target.value))}
+                />
+              </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1 text-slate-600">
-                  ค้นหาพื้นที่
-                </label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">ที่อยู่</label>
+                <textarea
+                  className="input-modern w-full min-h-[80px]"
+                  placeholder="ที่อยู่"
+                  value={form.address}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-1 text-slate-600">ค้นหาตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์</label>
 
                 <AddressSearchDropdown
-                  value={
-                    form.subdistrict_name
-                      ? `${form.subdistrict_name} • ${form.district_name} • ${form.province_name} • ${form.zip_code}`
-                      : ""
-                  }
+                  value={form.subdistrict_name ? `${form.subdistrict_name} • ${form.district_name} • ${form.province_name} • ${form.zip_code}` : ""}
                   onChange={() => {
                     clearAddress();
                   }}
@@ -508,24 +506,31 @@ export default function ManageShippers() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input
-                  className="input-modern w-full"
-                  placeholder="Tel"
-                  value={form.tel}
-                  onChange={(e) => handleChange("tel", e.target.value)}
-                />
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">เบอร์โทร</label>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="เบอร์โทร"
+                    value={form.tel}
+                    onChange={(e) => handleChange("tel", cleanNumberInput(e.target.value))}
+                  />
+                </div>
 
-                <input
-                  className="input-modern w-full"
-                  placeholder="Fax"
-                  value={form.fax}
-                  onChange={(e) => handleChange("fax", e.target.value)}
-                />
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Fax</label>
+                  <input
+                    className="input-modern w-full"
+                    placeholder="Fax"
+                    value={form.fax}
+                    onChange={(e) => handleChange("fax", cleanNumberInput(e.target.value))}
+                  />
+                </div>
               </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
               <button
+                type="button"
                 onClick={() => {
                   setShowModal(false);
                   resetForm();
@@ -535,10 +540,7 @@ export default function ManageShippers() {
                 ยกเลิก
               </button>
 
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-              >
+              <button type="button" onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                 บันทึก
               </button>
             </div>
@@ -554,16 +556,12 @@ export default function ManageShippers() {
             setSelectedStatus(null);
           }}
         >
-          <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[300px]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">
-              สถานะ
-            </h3>
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
 
             <div className="flex flex-col gap-3">
               <button
+                type="button"
                 disabled={selectedStatus?.current === "ACTIVE"}
                 onClick={() => changeStatus("ACTIVE")}
                 className={`px-4 py-2 rounded-lg ${
@@ -576,12 +574,11 @@ export default function ManageShippers() {
               </button>
 
               <button
+                type="button"
                 disabled={selectedStatus?.current === "INACTIVE"}
                 onClick={() => changeStatus("INACTIVE")}
                 className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "INACTIVE"
-                    ? "bg-red-50 text-red-300 cursor-not-allowed"
-                    : "bg-red-100 text-red-500 hover:bg-red-200"
+                  selectedStatus?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
                 }`}
               >
                 Inactive
