@@ -1,21 +1,23 @@
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  ReactNode,
-} from "react";
+import React, { createContext, useState, useEffect, useContext, ReactNode } from "react";
 import { setTokenExpiredHandler } from "../utils/AxiosInstance"; // ✅ เพิ่ม
 import TokenExpiredModal from "../components/modal/TokenExpiredModal";
 
 export interface UserType {
-  user_id: number;
+  id: number;
+  user_id?: number;
   username: string;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
+  role_id: number;
+  warehouse_id: number | null;
+  customer_id: number | null;
+  license_no?: string | null;
+  license_expire?: string | null;
+  last_login?: string | null;
+  zones?: any[];
+  vehicles?: any[];
   license_plate?: string;
   dc_name?: number;
-  role_id: number;
 }
 interface AuthContextType {
   user: UserType | null;
@@ -29,17 +31,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUserState] = useState<UserType | null>(() => {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  const [isLoggedIn, setIsLoggedInState] = useState(
-    () => localStorage.getItem("isLoggedIn") === "true",
-  );
+  const [isLoggedIn, setIsLoggedInState] = useState(() => localStorage.getItem("isLoggedIn") === "true");
   const [tokenExpired, setTokenExpired] = useState(false);
 
   const triggerTokenExpired = () => {
@@ -56,26 +54,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   // เพิ่มฟังก์ชันนี้ไว้นอก AuthProvider
-const isTokenExpired = (token: string): boolean => {
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.exp * 1000 < Date.now();
-  } catch {
-    return true;
-  }
-};
-
-// เพิ่ม useEffect นี้ใน AuthProvider (วางไว้ใต้ useEffect ของ setTokenExpiredHandler)
-useEffect(() => {
-  const interval = setInterval(() => {
-    const token = localStorage.getItem("token");
-    if (token && isTokenExpired(token)) {
-      triggerTokenExpired();
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true;
     }
-  }, 5000); // เช็คทุก 5 วินาที
+  };
 
-  return () => clearInterval(interval);
-}, []);
+  // เพิ่ม useEffect นี้ใน AuthProvider (วางไว้ใต้ useEffect ของ setTokenExpiredHandler)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const token = localStorage.getItem("token");
+      if (token && isTokenExpired(token)) {
+        triggerTokenExpired();
+      }
+    }, 5000); // เช็คทุก 5 วินาที
+
+    return () => clearInterval(interval);
+  }, []);
 
   const setUser = (userData: UserType | null) => {
     setUserState(userData);

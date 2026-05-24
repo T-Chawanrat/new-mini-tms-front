@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
 import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
 import { Pencil } from "lucide-react";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput } from "../utils/textSanitizer";
-import ResizableColumns from "../components/ResizableColumns";
+import DataGrid from "../components/DataGrid";
+import RequiredLabel from "../components/form/RequiredLabel";
 
 export default function ManageShippers() {
   const { user } = useAuth();
@@ -42,48 +43,6 @@ export default function ManageShippers() {
     zip_code: "",
     tel: "",
     fax: "",
-  };
-
-  const shipperHeaders = [
-    "#",
-    "Shipper Code",
-    "Shipper Name",
-    "Tel",
-    "Address",
-    "Subdistrict",
-    "District",
-    "Province",
-    "Zipcode",
-    "Status",
-    "จัดการ",
-  ];
-
-  const shipperMinWidths = {
-    0: 50,
-    1: 130,
-    2: 220,
-    3: 130,
-    4: 320,
-    5: 150,
-    6: 150,
-    7: 150,
-    8: 110,
-    9: 100,
-    10: 100,
-  };
-
-  const shipperMaxWidths = {
-    0: 60,
-    1: 600,
-    2: 600,
-    3: 180,
-    4: 2000,
-    5: 220,
-    6: 220,
-    7: 220,
-    8: 140,
-    9: 130,
-    10: 120,
   };
 
   const [form, setForm] = useState(emptyForm);
@@ -297,11 +256,141 @@ export default function ManageShippers() {
     }
   };
 
+  const gridRows = useMemo(() => {
+    return rows.map((r, i) => ({
+      ...r,
+      id: r.shipper_id,
+      no: i + 1,
+    }));
+  }, [rows]);
+
+  const shipperColumns = useMemo(
+    () => [
+      {
+        field: "no",
+        headerName: "#",
+        width: 70,
+        minWidth: 60,
+        sortable: false,
+        filterable: false,
+        resizable: false,
+        align: "center",
+        headerAlign: "center",
+      },
+      {
+        field: "shipper_code",
+        headerName: "Shipper Code",
+        width: 150,
+        minWidth: 120,
+      },
+      {
+        field: "shipper_name",
+        headerName: "Shipper Name",
+        width: 240,
+        minWidth: 180,
+        renderCell: (params) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "tel",
+        headerName: "Tel",
+        width: 140,
+        minWidth: 120,
+        renderCell: (params) => params.value || "-",
+      },
+      {
+        field: "address",
+        headerName: "Address",
+        width: 360,
+        minWidth: 240,
+        maxWidth: 3000,
+        renderCell: (params) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "subdistrict_name",
+        headerName: "Subdistrict",
+        width: 160,
+        minWidth: 130,
+        renderCell: (params) => params.value || "-",
+      },
+      {
+        field: "district_name",
+        headerName: "District",
+        width: 160,
+        minWidth: 130,
+        renderCell: (params) => params.value || "-",
+      },
+      {
+        field: "province_name",
+        headerName: "Province",
+        width: 160,
+        minWidth: 130,
+        renderCell: (params) => params.value || "-",
+      },
+      {
+        field: "zip_code",
+        headerName: "Zipcode",
+        width: 120,
+        minWidth: 100,
+        renderCell: (params) => params.value || "-",
+      },
+      {
+        field: "is_deleted",
+        headerName: "Status",
+        width: 130,
+        minWidth: 120,
+        sortable: false,
+        filterable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+          <button type="button" onClick={() => openStatusModal(params.row)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
+            {params.row.is_deleted === "N" ? (
+              <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">Active</span>
+            ) : (
+              <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">Inactive</span>
+            )}
+          </button>
+        ),
+      },
+      {
+        field: "actions",
+        headerName: "จัดการ",
+        width: 110,
+        minWidth: 100,
+        sortable: false,
+        filterable: false,
+        resizable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+          <div className="flex h-full w-full items-center justify-center">
+            <button
+              type="button"
+              onClick={() => openEdit(params.row)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+            >
+              <Pencil size={14} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
-    <div className="w-full min-h-screen px-1 py-4 bg-slate-50">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full h-[calc(100vh-61px)] px-1 py-4 bg-slate-50 overflow-hidden flex flex-col">
+      <div className="flex justify-between items-center mt-[-15px] mb-2 shrink-0">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">Shipper Management</h2>
+          <h2 className="text-xl font-semibold mb-1 text-slate-800">Shipper Management</h2>
 
           <p className="text-sm text-slate-500">
             {isCustomer ? (
@@ -320,10 +409,9 @@ export default function ManageShippers() {
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-5 flex gap-3 flex-wrap">
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
         {canSelectCustomer && (
           <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-modern w-auto">
-            <option value="">เลือก Customer</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.id} {c.code} - {c.name}
@@ -347,91 +435,8 @@ export default function ManageShippers() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="w-full overflow-x-auto">
-          <table className="min-w-[1400px] w-full text-sm whitespace-nowrap table-fixed">
-            <ResizableColumns headers={shipperHeaders} pageKey="manage-shippers" minWidths={shipperMinWidths} maxWidths={shipperMaxWidths} />
-
-            <tbody className="text-slate-700">
-              {loading ? (
-                <tr>
-                  <td colSpan={11} className="text-center py-10 text-slate-400">
-                    Loading...
-                  </td>
-                </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={11} className="text-center py-10 text-slate-400">
-                    ไม่มีข้อมูล
-                  </td>
-                </tr>
-              ) : (
-                rows.map((r, i) => (
-                  <tr key={r.shipper_id} className="border-t hover:bg-slate-50 transition">
-                    <td className="py-3 px-3 text-center text-slate-400 truncate">{i + 1}</td>
-
-                    <td className="py-3 px-3 font-medium truncate">{r.shipper_code || "-"}</td>
-
-                    <td className="py-3 px-3 truncate">
-                      <div className="leading-tight truncate">
-                        <div className="truncate">{r.shipper_name || "-"}</div>
-                        <div className="text-xs text-slate-400 md:hidden truncate">
-                          {r.tel || "-"} / {r.zip_code || "-"}
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-3 truncate">{r.tel || "-"}</td>
-
-                    <td className="py-3 px-3 truncate" title={r.address || ""}>
-                      {r.address || "-"}
-                    </td>
-
-                    <td className="py-3 px-3 truncate" title={r.subdistrict_name || ""}>
-                      {r.subdistrict_name || "-"}
-                    </td>
-
-                    <td className="py-3 px-3 truncate" title={r.district_name || ""}>
-                      {r.district_name || "-"}
-                    </td>
-
-                    <td className="py-3 px-3 truncate" title={r.province_name || ""}>
-                      {r.province_name || "-"}
-                    </td>
-
-                    <td className="py-3 px-3 truncate">{r.zip_code || "-"}</td>
-
-                    <td className="py-3 px-3 text-center">
-                      <button type="button" onClick={() => openStatusModal(r)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
-                        {r.is_deleted === "N" ? (
-                          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">
-                            Inactive
-                          </span>
-                        )}
-                      </button>
-                    </td>
-
-                    <td className="py-3 px-3">
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(r)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <DataGrid rows={gridRows} columns={shipperColumns} loading={loading} getRowId={(row) => row.shipper_id} height="100%" pageSize={100} />
       </div>
 
       {showModal && (
@@ -451,17 +456,17 @@ export default function ManageShippers() {
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">รหัสผู้ส่ง</label>
+                  <RequiredLabel required>รหัสผู้ส่ง</RequiredLabel>
                   <input
                     className="input-modern w-full"
-                    placeholder="รหัสผู้ส่ง *"
+                    placeholder="รหัสผู้ส่ง"
                     value={form.shipper_code}
                     onChange={(e) => handleChange("shipper_code", cleanCodeInput(e.target.value))}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">ประเภทผู้ส่ง</label>
+                  <RequiredLabel>ประเภทผู้ส่ง</RequiredLabel>
                   <select
                     className="input-modern w-full"
                     value={form.shipper_type_id}
@@ -474,17 +479,17 @@ export default function ManageShippers() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">ชื่อผู้ส่ง</label>
+                <RequiredLabel required>ชื่อผู้ส่ง</RequiredLabel>
                 <input
                   className="input-modern w-full"
-                  placeholder="ชื่อผู้ส่ง *"
+                  placeholder="ชื่อผู้ส่ง"
                   value={form.shipper_name}
                   onChange={(e) => handleChange("shipper_name", cleanNameInput(e.target.value))}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">ที่อยู่</label>
+                <RequiredLabel>ที่อยู่</RequiredLabel>
                 <textarea
                   className="input-modern w-full min-h-[80px]"
                   placeholder="ที่อยู่"
@@ -494,7 +499,7 @@ export default function ManageShippers() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1 text-slate-600">ค้นหาตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์</label>
+                <RequiredLabel required>ค้นหาตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์</RequiredLabel>
 
                 <AddressSearchDropdown
                   value={form.subdistrict_name ? `${form.subdistrict_name} • ${form.district_name} • ${form.province_name} • ${form.zip_code}` : ""}
@@ -507,7 +512,7 @@ export default function ManageShippers() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">เบอร์โทร</label>
+                  <RequiredLabel>เบอร์โทร</RequiredLabel>
                   <input
                     className="input-modern w-full"
                     placeholder="เบอร์โทร"
@@ -517,7 +522,7 @@ export default function ManageShippers() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Fax</label>
+                  <RequiredLabel>Fax</RequiredLabel>
                   <input
                     className="input-modern w-full"
                     placeholder="Fax"

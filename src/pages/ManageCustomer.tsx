@@ -1,18 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
 import { Pencil } from "lucide-react";
 import AddressSearchDropdown, { type ZipAddressRow } from "../components/dropdown/AddressSearchDropdown";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput, cleanEmailInput } from "../utils/textSanitizer";
-
-const RequiredLabel = ({ children, required = false }: { children: string; required?: boolean }) => {
-  return (
-    <label className="block text-xs font-medium text-slate-500 mb-1">
-      {children}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-  );
-};
+import DataGrid from "../components/DataGrid";
+import RequiredLabel from "../components/form/RequiredLabel";
 
 export default function ManageCustomers() {
   const { user } = useAuth();
@@ -71,7 +64,7 @@ export default function ManageCustomers() {
         },
       });
 
-      setRows(res.data);
+      setRows(res.data || []);
     } finally {
       setLoading(false);
     }
@@ -298,12 +291,195 @@ export default function ManageCustomers() {
     }
   };
 
+  const gridRows = useMemo(() => {
+    return rows.map((r: any, i) => ({
+      ...r,
+      id: r.id,
+      no: i + 1,
+    }));
+  }, [rows]);
+
+  const customerColumns = useMemo(
+    () => [
+      {
+        field: "no",
+        headerName: "#",
+        width: 70,
+        minWidth: 60,
+        sortable: false,
+        filterable: false,
+        resizable: false,
+        align: "center" as const,
+        headerAlign: "center" as const,
+      },
+      {
+        field: "code",
+        headerName: "Code",
+        width: 140,
+        minWidth: 120,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="font-medium truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "name",
+        headerName: "Name",
+        width: 260,
+        minWidth: 200,
+        renderCell: (params: any) => (
+          <div className="flex h-full w-full items-center">
+            <div className="leading-tight truncate" title={params.value || ""}>
+              <div className="truncate">{params.value || "-"}</div>
+              <div className="text-xs text-slate-400 truncate">
+                {params.row.contact_name || "-"} / {params.row.contact_tel || params.row.tel || "-"}
+              </div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        field: "type",
+        headerName: "Type",
+        width: 130,
+        minWidth: 110,
+        renderCell: (params: any) => (
+          <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-medium">{params.value || "-"}</span>
+        ),
+      },
+      {
+        field: "tax_id",
+        headerName: "Tax ID",
+        width: 170,
+        minWidth: 140,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "address",
+        headerName: "Address",
+        width: 360,
+        minWidth: 240,
+        maxWidth: 3000,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate text-slate-500">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "contact_name",
+        headerName: "Contact",
+        width: 180,
+        minWidth: 140,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "contact_tel",
+        headerName: "Tel",
+        width: 150,
+        minWidth: 120,
+        renderCell: (params: any) => {
+          const value = params.value || params.row.tel || "-";
+
+          return (
+            <div title={value} className="truncate">
+              {value}
+            </div>
+          );
+        },
+      },
+      {
+        field: "email",
+        headerName: "Email",
+        width: 220,
+        minWidth: 180,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate text-slate-500">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "line",
+        headerName: "Line ID",
+        width: 150,
+        minWidth: 120,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "is_active",
+        headerName: "Status",
+        width: 130,
+        minWidth: 120,
+        sortable: false,
+        filterable: false,
+        align: "center" as const,
+        headerAlign: "center" as const,
+        renderCell: (params: any) => (
+          <button type="button" onClick={() => openStatusModal(params.row)} className="inline-block">
+            {Number(params.row.is_active) === 1 ? (
+              <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">Active</span>
+            ) : (
+              <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">Inactive</span>
+            )}
+          </button>
+        ),
+      },
+      {
+        field: "actions",
+        headerName: "จัดการ",
+        width: 150,
+        minWidth: 130,
+        sortable: false,
+        filterable: false,
+        resizable: false,
+        align: "center" as const,
+        headerAlign: "center" as const,
+        renderCell: (params: any) => (
+          <div className="flex h-full w-full items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => openEditModal(params.row)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+            >
+              <Pencil size={14} />
+            </button>
+
+            {[1, 10].includes(Number(user?.role_id)) && (
+              <button
+                type="button"
+                onClick={() => openUserModal(params.row)}
+                className="h-8 px-2 text-xs rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100"
+              >
+                + User
+              </button>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [user?.role_id],
+  );
+
   return (
-    <div className="w-full min-h-screen px-1 py-4 bg-slate-50">
+    <div className="w-full h-[calc(100vh-61px)] px-1 py-4 bg-slate-50 overflow-hidden flex flex-col">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mt-[-15px] mb-2 shrink-0">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">Customer Management</h2>
+          <h2 className="text-xl font-semibold mb-1 text-slate-800">Customer Management</h2>
           <p className="text-sm text-slate-500">จัดการลูกค้าในระบบ</p>
         </div>
 
@@ -313,7 +489,7 @@ export default function ManageCustomers() {
       </div>
 
       {/* FILTER CARD */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-5 flex gap-3 flex-wrap">
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
         <input
           placeholder="ค้นหา code / ชื่อ"
           value={search}
@@ -329,106 +505,9 @@ export default function ManageCustomers() {
         </button>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-auto">
-        <table className="min-w-[1000px] w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
-            <tr>
-              <th className="py-4 text-center w-12">#</th>
-              <th className="text-left py-4">Code</th>
-              <th className="text-left py-4">Name</th>
-              <th className="text-left py-4">Type</th>
-              <th className="text-left py-4 hidden md:table-cell">Tax ID</th>
-              <th className="text-left py-4 hidden lg:table-cell">Address</th>
-              <th className="text-left py-4 hidden lg:table-cell">Contact</th>
-              <th className="text-left py-4 hidden lg:table-cell">Tel</th>
-              <th className="text-center py-4">Status</th>
-              <th className="text-center w-32">จัดการ</th>
-            </tr>
-          </thead>
-
-          <tbody className="text-slate-700">
-            {loading ? (
-              <tr>
-                <td colSpan={10} className="text-center py-10 text-slate-400">
-                  Loading...
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="text-center py-10 text-slate-400">
-                  ไม่มีข้อมูล
-                </td>
-              </tr>
-            ) : (
-              rows.map((r: any, i) => (
-                <tr key={r.id} className="border-t hover:bg-slate-50">
-                  <td className="text-center text-slate-400 py-3">{i + 1}</td>
-
-                  <td className="py-3 font-medium">{r.code}</td>
-
-                  <td className="py-3">
-                    <div className="leading-tight">
-                      <div>{r.name}</div>
-
-                      <div className="text-xs text-slate-400 md:hidden">
-                        {r.contact_name || "-"} / {r.contact_tel || "-"}
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="py-3">
-                    <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-medium">{r.type || "-"}</span>
-                  </td>
-
-                  <td className="py-3 hidden md:table-cell">{r.tax_id || "-"}</td>
-
-                  <td className="py-3 hidden lg:table-cell">{r.address || "-"}</td>
-
-                  <td className="py-3 hidden lg:table-cell">{r.contact_name || "-"}</td>
-
-                  <td className="py-3 hidden lg:table-cell">{r.contact_tel || r.tel || "-"}</td>
-
-                  <td className="text-center py-3">
-                    <button type="button" onClick={() => openStatusModal(r)} className="inline-block">
-                      {Number(r.is_active) === 1 ? (
-                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">
-                          Inactive
-                        </span>
-                      )}
-                    </button>
-                  </td>
-
-                  <td className="py-3 px-3">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(r)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-                      >
-                        <Pencil size={14} />
-                      </button>
-
-                      {[1, 10].includes(Number(user?.role_id)) && (
-                        <button
-                          type="button"
-                          onClick={() => openUserModal(r)}
-                          className="px-2 text-xs rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100"
-                        >
-                          + User
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      {/* DATAGRID */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <DataGrid rows={gridRows} columns={customerColumns} loading={loading} getRowId={(row: any) => row.id} height="100%" pageSize={100} />
       </div>
 
       {/* CREATE / EDIT CUSTOMER MODAL */}
@@ -593,7 +672,6 @@ export default function ManageCustomers() {
         </div>
       )}
 
-      {/* CREATE CUSTOMER USER MODAL */}
       {/* CREATE CUSTOMER USER MODAL */}
       {showUserModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeUserModal}>

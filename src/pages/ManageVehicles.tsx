@@ -1,14 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Pencil } from "lucide-react";
-import {
-  cleanCodeInput,
-  cleanNameInput,
-  cleanNumberInput,
-  removeSpaces,
-} from "../utils/textSanitizer";
+import { cleanCodeInput, cleanNameInput, cleanNumberInput, removeSpaces } from "../utils/textSanitizer";
+import DataGrid from "../components/DataGrid";
+import RequiredLabel from "../components/form/RequiredLabel";
 
 type MasterOption = {
   id: number;
@@ -85,26 +82,18 @@ export default function ManageVehicles() {
 
   const getStatusBadge = (status: string) => {
     if (status === "ACTIVE") {
-      return (
-        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200">
-          Active
-        </span>
-      );
+      return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">Active</span>;
     }
 
     if (status === "MAINTENANCE") {
       return (
-        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600 font-medium hover:bg-yellow-200">
+        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600 font-medium hover:bg-yellow-200 cursor-pointer">
           Maintenance
         </span>
       );
     }
 
-    return (
-      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200">
-        Inactive
-      </span>
-    );
+    return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">Inactive</span>;
   };
 
   const formatDateInput = (value: any) => {
@@ -293,28 +282,236 @@ export default function ManageVehicles() {
     }
   };
 
+  const gridRows = useMemo(() => {
+    return rows.map((r: any, i) => ({
+      ...r,
+      id: r.id,
+      no: i + 1,
+    }));
+  }, [rows]);
+
+  const vehicleColumns = useMemo(
+    () => [
+      {
+        field: "no",
+        headerName: "#",
+        width: 70,
+        minWidth: 60,
+        sortable: false,
+        filterable: false,
+        resizable: false,
+        align: "center" as const,
+        headerAlign: "center" as const,
+      },
+      {
+        field: "license_plate",
+        headerName: "ทะเบียน",
+        width: 130,
+        minWidth: 105,
+        renderCell: (params: any) => {
+          const row = params.row;
+
+          return (
+            <div className="flex h-full w-full items-center">
+              <div className="min-w-0 leading-tight truncate">
+                <div title={row.license_plate || ""} className="font-medium truncate">
+                  {row.license_plate || "-"}
+                </div>
+
+                {row.license_province && (
+                  <div title={row.license_province || ""} className="text-xs text-slate-400 truncate">
+                    {row.license_province || "-"}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "brand_name",
+        headerName: "ยี่ห้อ",
+        width: 190,
+        minWidth: 160,
+        renderCell: (params: any) => {
+          const row = params.row;
+
+          return (
+            <div className="flex h-full w-full items-center">
+              <div className="min-w-0 leading-tight truncate">
+                <div title={row.brand_name || ""} className="font-medium truncate">
+                  {row.brand_name || "-"}
+                </div>
+
+                {(row.model || row.color) && (
+                  <div title={`${row.model || "-"}${row.color ? ` / ${row.color}` : ""}`} className="text-xs text-slate-400 truncate">
+                    {row.model || "-"}
+                    {row.color ? ` / ${row.color}` : ""}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "vehicle_year",
+        headerName: "ปี",
+        width: 100,
+        minWidth: 80,
+        renderCell: (params: any) => params.value || "-",
+      },
+      {
+        field: "vehicle_type_name",
+        headerName: "ประเภท",
+        width: 160,
+        minWidth: 130,
+        renderCell: (params: any) => params.value || "-",
+      },
+      {
+        field: "capacity_kg",
+        headerName: "น้ำหนักใช้งาน",
+        width: 130,
+        minWidth: 100,
+        renderCell: (params: any) => params.value || "-",
+      },
+      {
+        field: "max_load_kg",
+        headerName: "น้ำหนักสูงสุด",
+        width: 130,
+        minWidth: 100,
+        renderCell: (params: any) => params.value || "-",
+      },
+      {
+        field: "warehouse_name",
+        headerName: "สังกัด",
+        width: 170,
+        minWidth: 140,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "owner_type",
+        headerName: "เจ้าของรถ",
+        width: 190,
+        minWidth: 160,
+        renderCell: (params: any) => {
+          const row = params.row;
+          const ownerType = String(row.owner_type || "")
+            .trim()
+            .toUpperCase();
+
+          return (
+            <div className="flex h-full w-full items-center">
+              <div className="min-w-0 leading-tight truncate">
+                <div className="truncate">{getOwnerTypeLabel(row.owner_type || "-")}</div>
+
+                {ownerType === "COMPANY"
+                  ? row.purchase_date && <div className="text-xs text-slate-400 truncate">{formatDateInput(row.purchase_date)}</div>
+                  : row.owner_name && <div className="text-xs text-slate-400 truncate">{row.owner_name}</div>}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        field: "fleet_card_no",
+        headerName: "หมายเลขบัตร fleet",
+        width: 180,
+        minWidth: 150,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "chassis_no",
+        headerName: "หมายเลขตัวถัง",
+        width: 180,
+        minWidth: 150,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "engine_no",
+        headerName: "หมายเลขเครื่องยนต์",
+        width: 190,
+        minWidth: 150,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
+      {
+        field: "status",
+        headerName: "สถานะ",
+        width: 140,
+        minWidth: 120,
+        sortable: false,
+        filterable: false,
+        align: "center" as const,
+        headerAlign: "center" as const,
+        renderCell: (params: any) => (
+          <button
+            type="button"
+            onClick={() => openStatusModal(params.row.id, params.row.status)}
+            className="inline-block"
+            title="คลิกเพื่อเปลี่ยนสถานะ"
+          >
+            {getStatusBadge(params.row.status)}
+          </button>
+        ),
+      },
+      {
+        field: "actions",
+        headerName: "จัดการ",
+        width: 110,
+        minWidth: 100,
+        sortable: false,
+        filterable: false,
+        resizable: false,
+        align: "center" as const,
+        headerAlign: "center" as const,
+        renderCell: (params: any) => (
+          <div className="flex h-full w-full items-center justify-center">
+            <button
+              type="button"
+              onClick={() => openEdit(params.row)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+            >
+              <Pencil size={14} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
-    <div className="w-full min-h-screen px-1 py-4 bg-slate-50">
+    <div className="w-full h-[calc(100vh-61px)] px-1 py-4 bg-slate-50 overflow-hidden flex flex-col">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mt-[-15px] mb-2 shrink-0">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">
-            Vehicle Management
-          </h2>
+          <h2 className="text-xl font-semibold mb-1 text-slate-800">Vehicle Management</h2>
           <p className="text-sm text-slate-500">จัดการรถในระบบ</p>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreate}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition"
-        >
+        <button type="button" onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
           + เพิ่มรถ
         </button>
       </div>
 
       {/* FILTER */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-5 flex gap-3 flex-wrap">
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
         <input
           placeholder="ค้นหา..."
           value={search}
@@ -325,11 +522,7 @@ export default function ManageVehicles() {
           }}
         />
 
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="input-modern w-[180px]"
-        >
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="input-modern w-[180px]">
           <option value="">ประเภทรถ</option>
           {vehicleTypes.map((x) => (
             <option key={x.id} value={x.id}>
@@ -338,11 +531,7 @@ export default function ManageVehicles() {
           ))}
         </select>
 
-        <select
-          value={filterOwnerType}
-          onChange={(e) => setFilterOwnerType(e.target.value)}
-          className="input-modern w-[160px]"
-        >
+        <select value={filterOwnerType} onChange={(e) => setFilterOwnerType(e.target.value)} className="input-modern w-[160px]">
           <option value="">เจ้าของรถ</option>
           {OWNER_TYPES.map((x) => (
             <option key={x.value} value={x.value}>
@@ -351,11 +540,7 @@ export default function ManageVehicles() {
           ))}
         </select>
 
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="input-modern w-[160px]"
-        >
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="input-modern w-[160px]">
           <option value="">สถานะ</option>
           {STATUS.map((x) => (
             <option key={x.value} value={x.value}>
@@ -364,196 +549,40 @@ export default function ManageVehicles() {
           ))}
         </select>
 
-        <button
-          type="button"
-          onClick={fetchData}
-          className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-        >
+        <button type="button" onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
           ค้นหา
         </button>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="w-full overflow-x-auto">
-          <table className="min-w-[1500px] w-full text-sm whitespace-nowrap">
-            <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
-              <tr>
-                <th className="py-4 px-3 text-center w-12">#</th>
-                <th className="py-4 px-3 text-left">ทะเบียน</th>
-                <th className="py-4 px-3 text-left">จังหวัดทะเบียน</th>
-                <th className="py-4 px-3 text-left">ยี่ห้อ</th>
-                <th className="py-4 px-3 text-left">รุ่น</th>
-                <th className="py-4 px-3 text-left">สี</th>
-                <th className="py-4 px-3 text-left">ปี</th>
-                <th className="py-4 px-3 text-left">ประเภท</th>
-                <th className="py-4 px-3 text-left">น้ำหนักใช้งาน</th>
-                <th className="py-4 px-3 text-left">น้ำหนักสูงสุด</th>
-                <th className="py-4 px-3 text-left">สังกัด</th>
-                <th className="py-4 px-3 text-left">เจ้าของรถ</th>
-                <th className="py-4 px-3 text-left">หมายเลขบัตร fleet</th>
-                <th className="py-4 px-3 text-left">หมายเลขตัวถัง</th>
-                <th className="py-4 px-3 text-left">หมายเลขเครื่องยนต์</th>
-                <th className="py-4 px-3 text-center">สถานะ</th>
-                <th className="py-4 px-3 text-center">จัดการ</th>
-              </tr>
-            </thead>
-
-            <tbody className="text-slate-700">
-              {loading ? (
-                <tr>
-                  <td colSpan={17} className="text-center py-10 text-slate-400">
-                    Loading...
-                  </td>
-                </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={17} className="text-center py-10 text-slate-400">
-                    ไม่มีข้อมูล
-                  </td>
-                </tr>
-              ) : (
-                rows.map((r: any, i) => (
-                  <tr key={r.id} className="border-t hover:bg-slate-50 transition">
-                    <td className="py-2.5 px-3 text-center text-slate-400">
-                      {i + 1}
-                    </td>
-
-                    <td className="py-2.5 px-3 font-medium">
-                      {r.license_plate}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.license_province || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3">{r.brand_name || "-"}</td>
-
-                    <td className="py-2.5 px-3">{r.model || "-"}</td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.color || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.vehicle_year || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3">
-                      {r.vehicle_type_name || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.capacity_kg || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.max_load_kg || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.warehouse_name || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3">
-                      <div className="leading-tight">
-                        <div>{getOwnerTypeLabel(r.owner_type)}</div>
-
-                        {String(r.owner_type || "").trim().toUpperCase() ===
-                        "COMPANY"
-                          ? r.purchase_date && (
-                              <div className="text-xs text-slate-400">
-                                {r.purchase_date}
-                              </div>
-                            )
-                          : r.owner_name && (
-                              <div className="text-xs text-slate-400">
-                                {r.owner_name}
-                              </div>
-                            )}
-                      </div>
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.fleet_card_no || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.chassis_no || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {r.engine_no || "-"}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => openStatusModal(r.id, r.status)}
-                        className="cursor-pointer inline-block"
-                      >
-                        {getStatusBadge(r.status)}
-                      </button>
-                    </td>
-
-                    <td className="py-3 px-3">
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(r)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* DATAGRID */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <DataGrid rows={gridRows} columns={vehicleColumns} loading={loading} getRowId={(row: any) => row.id} height="100%" pageSize={100} />
       </div>
 
       {/* CREATE / EDIT MODAL */}
       {showModal && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={closeModal}
-        >
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeModal}>
           <div
             className="bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-slate-800 mb-5">
-              {editing ? "แก้ไขรถ" : "เพิ่มรถ"}
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไขรถ" : "เพิ่มรถ"}</h3>
 
-            {error && (
-              <div className="mb-4 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm">
-                {error}
-              </div>
-            )}
+            {error && <div className="mb-4 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm">{error}</div>}
 
             <div className="space-y-5">
               <div>
-                <div className="text-sm font-semibold text-slate-700 mb-3">
-                  ข้อมูลรถ
-                </div>
+                <div className="text-sm font-semibold text-slate-700 mb-3">ข้อมูลรถ</div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      ทะเบียนรถ <span className="text-red-500">*</span>
-                    </label>
+                    <RequiredLabel required>ทะเบียนรถ</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เช่น 1กก1234"
                       value={form.license_plate}
                       onChange={(e) => {
-                        const value = removeSpaces(e.target.value)
-                          .toUpperCase()
-                          .replace(/-/g, "");
+                        const value = removeSpaces(e.target.value).toUpperCase().replace(/-/g, "");
 
                         handleChange("license_plate", value);
                       }}
@@ -561,28 +590,18 @@ export default function ManageVehicles() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      จังหวัดทะเบียน <span className="text-red-500">*</span>
-                    </label>
+                    <RequiredLabel required>จังหวัดทะเบียน</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เช่น กรุงเทพมหานคร"
                       value={form.license_province}
-                      onChange={(e) =>
-                        handleChange("license_province", e.target.value)
-                      }
+                      onChange={(e) => handleChange("license_province", e.target.value)}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      ยี่ห้อรถ <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      className="input-modern w-full"
-                      value={form.brand_id}
-                      onChange={(e) => handleChange("brand_id", e.target.value)}
-                    >
+                    <RequiredLabel required>ยี่ห้อรถ</RequiredLabel>
+                    <select className="input-modern w-full" value={form.brand_id} onChange={(e) => handleChange("brand_id", e.target.value)}>
                       <option value="">เลือกยี่ห้อ</option>
                       {brands.map((b) => (
                         <option key={b.id} value={b.id}>
@@ -593,9 +612,7 @@ export default function ManageVehicles() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      รุ่นรถ
-                    </label>
+                    <RequiredLabel>รุ่นรถ</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เช่น D-Max / Revo"
@@ -605,9 +622,7 @@ export default function ManageVehicles() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      สีรถ
-                    </label>
+                    <RequiredLabel>สีรถ</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เช่น ขาว / ดำ / เทา"
@@ -617,32 +632,21 @@ export default function ManageVehicles() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      ปีรถ
-                    </label>
+                    <RequiredLabel>ปีรถ</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เช่น 2024"
                       value={form.vehicle_year}
-                      onChange={(e) =>
-                        handleChange(
-                          "vehicle_year",
-                          cleanNumberInput(e.target.value),
-                        )
-                      }
+                      onChange={(e) => handleChange("vehicle_year", cleanNumberInput(e.target.value))}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      ประเภทรถ <span className="text-red-500">*</span>
-                    </label>
+                    <RequiredLabel required>ประเภทรถ</RequiredLabel>
                     <select
                       className="input-modern w-full"
                       value={form.vehicle_type_id}
-                      onChange={(e) =>
-                        handleChange("vehicle_type_id", e.target.value)
-                      }
+                      onChange={(e) => handleChange("vehicle_type_id", e.target.value)}
                     >
                       <option value="">เลือกประเภทรถ</option>
                       {vehicleTypes.map((x) => (
@@ -654,16 +658,8 @@ export default function ManageVehicles() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      เชื้อเพลิง
-                    </label>
-                    <select
-                      className="input-modern w-full"
-                      value={form.fuel_type}
-                      onChange={(e) =>
-                        handleChange("fuel_type", e.target.value)
-                      }
-                    >
+                    <RequiredLabel>เชื้อเพลิง</RequiredLabel>
+                    <select className="input-modern w-full" value={form.fuel_type} onChange={(e) => handleChange("fuel_type", e.target.value)}>
                       <option value="">เลือกเชื้อเพลิง</option>
                       {FUEL_TYPES.map((x) => (
                         <option key={x.value} value={x.value}>
@@ -676,57 +672,32 @@ export default function ManageVehicles() {
               </div>
 
               <div>
-                <div className="text-sm font-semibold text-slate-700 mb-3">
-                  น้ำหนัก / สังกัด
-                </div>
+                <div className="text-sm font-semibold text-slate-700 mb-3">น้ำหนัก / สังกัด</div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      น้ำหนักใช้งานจริง (kg){" "}
-                      <span className="text-red-500">*</span>
-                    </label>
+                    <RequiredLabel required>น้ำหนักใช้งานจริง (kg)</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เช่น 1000"
                       value={form.capacity_kg}
-                      onChange={(e) =>
-                        handleChange(
-                          "capacity_kg",
-                          cleanNumberInput(e.target.value),
-                        )
-                      }
+                      onChange={(e) => handleChange("capacity_kg", cleanNumberInput(e.target.value))}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      น้ำหนักสูงสุดตามเล่มรถ (kg)
-                    </label>
+                    <RequiredLabel>น้ำหนักสูงสุดตามเล่มรถ (kg)</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เช่น 1500"
                       value={form.max_load_kg}
-                      onChange={(e) =>
-                        handleChange(
-                          "max_load_kg",
-                          cleanNumberInput(e.target.value),
-                        )
-                      }
+                      onChange={(e) => handleChange("max_load_kg", cleanNumberInput(e.target.value))}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      Warehouse <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      className="input-modern w-full"
-                      value={form.warehouse_id}
-                      onChange={(e) =>
-                        handleChange("warehouse_id", e.target.value)
-                      }
-                    >
+                    <RequiredLabel required>Warehouse</RequiredLabel>
+                    <select className="input-modern w-full" value={form.warehouse_id} onChange={(e) => handleChange("warehouse_id", e.target.value)}>
                       <option value="">เลือก warehouse</option>
                       {warehouses.map((w) => (
                         <option key={w.id} value={w.id}>
@@ -737,16 +708,8 @@ export default function ManageVehicles() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      เจ้าของรถ <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      className="input-modern w-full"
-                      value={form.owner_type}
-                      onChange={(e) =>
-                        handleChange("owner_type", e.target.value)
-                      }
-                    >
+                    <RequiredLabel required>เจ้าของรถ</RequiredLabel>
+                    <select className="input-modern w-full" value={form.owner_type} onChange={(e) => handleChange("owner_type", e.target.value)}>
                       {OWNER_TYPES.map((x) => (
                         <option key={x.value} value={x.value}>
                           {x.label}
@@ -758,45 +721,25 @@ export default function ManageVehicles() {
               </div>
 
               <div>
-                <div className="text-sm font-semibold text-slate-700 mb-3">
-                  ข้อมูลเจ้าของ / เอกสารรถ
-                </div>
+                <div className="text-sm font-semibold text-slate-700 mb-3">ข้อมูลเจ้าของ / เอกสารรถ</div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {form.owner_type === "DRIVER" ? (
                     <div>
-                      <label className="block text-xs font-medium mb-1 text-slate-600">
-                        ชื่อเจ้าของรถ / คนขับ
-                      </label>
+                      <RequiredLabel>ชื่อเจ้าของรถ / คนขับ</RequiredLabel>
                       <input
                         className="input-modern w-full"
                         placeholder="ชื่อเจ้าของรถ / คนขับ"
                         value={form.owner_name}
-                        onChange={(e) =>
-                          handleChange(
-                            "owner_name",
-                            cleanNameInput(e.target.value),
-                          )
-                        }
+                        onChange={(e) => handleChange("owner_name", cleanNameInput(e.target.value))}
                       />
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-xs font-medium mb-1 text-slate-600">
-                        วันที่ซื้อรถ
-                      </label>
+                      <RequiredLabel>วันที่ซื้อรถ</RequiredLabel>
                       <DatePicker
-                        selected={
-                          form.purchase_date
-                            ? new Date(form.purchase_date)
-                            : null
-                        }
-                        onChange={(date: Date | null) =>
-                          handleChange(
-                            "purchase_date",
-                            date ? date.toISOString().split("T")[0] : "",
-                          )
-                        }
+                        selected={form.purchase_date ? new Date(form.purchase_date) : null}
+                        onChange={(date: Date | null) => handleChange("purchase_date", date ? date.toISOString().split("T")[0] : "")}
                         className="input-modern w-full"
                         wrapperClassName="w-full"
                         placeholderText="วันที่ซื้อรถ"
@@ -806,53 +749,32 @@ export default function ManageVehicles() {
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      Fleet Card
-                    </label>
+                    <RequiredLabel>Fleet Card</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="Fleet Card"
                       value={form.fleet_card_no}
-                      onChange={(e) =>
-                        handleChange(
-                          "fleet_card_no",
-                          cleanCodeInput(e.target.value),
-                        )
-                      }
+                      onChange={(e) => handleChange("fleet_card_no", cleanCodeInput(e.target.value))}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      เลขตัวถัง
-                    </label>
+                    <RequiredLabel>เลขตัวถัง</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เลขตัวถัง"
                       value={form.chassis_no}
-                      onChange={(e) =>
-                        handleChange(
-                          "chassis_no",
-                          cleanCodeInput(e.target.value),
-                        )
-                      }
+                      onChange={(e) => handleChange("chassis_no", cleanCodeInput(e.target.value))}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-slate-600">
-                      เลขเครื่องยนต์
-                    </label>
+                    <RequiredLabel>เลขเครื่องยนต์</RequiredLabel>
                     <input
                       className="input-modern w-full"
                       placeholder="เลขเครื่องยนต์"
                       value={form.engine_no}
-                      onChange={(e) =>
-                        handleChange(
-                          "engine_no",
-                          cleanCodeInput(e.target.value),
-                        )
-                      }
+                      onChange={(e) => handleChange("engine_no", cleanCodeInput(e.target.value))}
                     />
                   </div>
                 </div>
@@ -860,19 +782,11 @@ export default function ManageVehicles() {
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200"
-              >
+              <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
                 ยกเลิก
               </button>
 
-              <button
-                type="button"
-                onClick={handleSave}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow"
-              >
+              <button type="button" onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow">
                 บันทึก
               </button>
             </div>
@@ -882,17 +796,9 @@ export default function ManageVehicles() {
 
       {/* STATUS MODAL */}
       {statusModal && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={closeStatusModal}
-        >
-          <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[300px]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">
-              สถานะ
-            </h3>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeStatusModal}>
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
 
             <div className="flex flex-col gap-3">
               <button
@@ -900,9 +806,7 @@ export default function ManageVehicles() {
                 disabled={selected?.current === "ACTIVE"}
                 onClick={() => changeStatus("ACTIVE")}
                 className={`px-4 py-2 rounded-lg ${
-                  selected?.current === "ACTIVE"
-                    ? "bg-green-50 text-green-300 cursor-not-allowed"
-                    : "bg-green-100 text-green-600 hover:bg-green-200"
+                  selected?.current === "ACTIVE" ? "bg-green-50 text-green-300 cursor-not-allowed" : "bg-green-100 text-green-600 hover:bg-green-200"
                 }`}
               >
                 Active
@@ -926,9 +830,7 @@ export default function ManageVehicles() {
                 disabled={selected?.current === "INACTIVE"}
                 onClick={() => changeStatus("INACTIVE")}
                 className={`px-4 py-2 rounded-lg ${
-                  selected?.current === "INACTIVE"
-                    ? "bg-red-50 text-red-300 cursor-not-allowed"
-                    : "bg-red-100 text-red-500 hover:bg-red-200"
+                  selected?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
                 }`}
               >
                 Inactive
