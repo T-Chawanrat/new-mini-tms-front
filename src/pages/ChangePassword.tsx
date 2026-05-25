@@ -12,7 +12,15 @@ const RequiredLabel = ({ children }: { children: string }) => {
   );
 };
 
-export default function ChangePassword() {
+type ChangePasswordProps = {
+  onClose?: () => void;
+  isModal?: boolean;
+};
+
+export default function ChangePassword({
+  onClose,
+  isModal = false,
+}: ChangePasswordProps) {
   const { user } = useAuth();
 
   const [form, setForm] = useState({
@@ -96,6 +104,12 @@ export default function ChangePassword() {
 
       setSuccess("เปลี่ยนรหัสผ่านสำเร็จ");
       resetForm();
+
+      if (isModal && onClose) {
+        setTimeout(() => {
+          onClose();
+        }, 600);
+      }
     } catch (err: any) {
       setError(err?.response?.data?.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
     } finally {
@@ -104,26 +118,33 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="w-full min-h-screen px-1 py-4 bg-slate-50">
-      {/* HEADER */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-slate-800">
-          Change Password
-        </h2>
-        <p className="text-sm text-slate-500">เปลี่ยนรหัสผ่าน</p>
-      </div>
+    <div
+      className={
+        isModal
+          ? "w-full"
+          : "w-full min-h-screen bg-slate-50 px-4 py-6"
+      }
+    >
+      {!isModal && (
+        <div className="w-full max-w-[620px] mb-6">
+          <h2 className="text-2xl font-semibold text-slate-800">
+            Change Password
+          </h2>
+          <p className="text-sm text-slate-500">เปลี่ยนรหัสผ่าน</p>
+        </div>
+      )}
 
-      <div className="max-w-[620px] bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+      <div className="w-full max-w-[620px] bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+        <div className="flex items-center gap-3 mb-6 pr-8">
+          <div className="w-11 h-11 shrink-0 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <KeyRound size={22} />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <h3 className="text-lg font-semibold text-slate-800">
               เปลี่ยนรหัสผ่าน
             </h3>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 truncate">
               ผู้ใช้งาน: {user?.username || "-"}
             </p>
           </div>
@@ -142,14 +163,13 @@ export default function ChangePassword() {
         )}
 
         <div className="space-y-4">
-          {/* OLD PASSWORD */}
           <div>
             <RequiredLabel>รหัสผ่านเดิม</RequiredLabel>
 
             <div className="relative">
               <input
                 type={showOldPassword ? "text" : "password"}
-                className="input-modern w-full pl-9 pr-11"
+                className="input-modern w-full pl-4 pr-11"
                 placeholder="กรอกรหัสผ่านเดิม"
                 value={form.old_password}
                 onChange={(e) => handleChange("old_password", e.target.value)}
@@ -165,14 +185,13 @@ export default function ChangePassword() {
             </div>
           </div>
 
-          {/* NEW PASSWORD */}
           <div>
             <RequiredLabel>รหัสผ่านใหม่</RequiredLabel>
 
             <div className="relative">
               <input
                 type={showNewPassword ? "text" : "password"}
-                className="input-modern w-full pl-9 pr-11"
+                className="input-modern w-full pl-4 pr-11"
                 placeholder="กรอกรหัสผ่านใหม่"
                 value={form.new_password}
                 onChange={(e) => handleChange("new_password", e.target.value)}
@@ -188,14 +207,13 @@ export default function ChangePassword() {
             </div>
           </div>
 
-          {/* CONFIRM PASSWORD */}
           <div>
             <RequiredLabel>ยืนยันรหัสผ่านใหม่</RequiredLabel>
 
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
-                className="input-modern w-full pl-9 pr-11"
+                className="input-modern w-full pl-4 pr-11"
                 placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
                 value={form.confirm_password}
                 onChange={(e) =>
@@ -220,12 +238,12 @@ export default function ChangePassword() {
             </div>
           </div>
 
-          <div className="pt-2 flex justify-end gap-3">
+          <div className="pt-2 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
             <button
               type="button"
               onClick={resetForm}
               disabled={saving}
-              className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-60"
+              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-60"
             >
               ล้างข้อมูล
             </button>
@@ -234,7 +252,7 @@ export default function ChangePassword() {
               type="button"
               disabled={saving}
               onClick={handleSubmit}
-              className={`px-5 py-2 rounded-xl text-white shadow transition ${
+              className={`w-full sm:w-auto px-5 py-2 rounded-xl text-white shadow transition ${
                 saving
                   ? "bg-blue-300 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"

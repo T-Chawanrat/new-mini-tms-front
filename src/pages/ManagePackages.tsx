@@ -32,9 +32,8 @@ type PackageRow = {
 
 type DetailRow = {
   id: number;
-  package_detail_code: string;
-  package_detail_name: string;
-  unit_id?: number | string | null;
+  package_detail_code?: string | null;
+  package_detail_name?: string | null;
   size_min?: number | string | null;
   size_max?: number | string | null;
   weight_min?: number | string | null;
@@ -59,7 +58,6 @@ const emptyPackageForm = {
 const emptyDetailForm = {
   package_detail_code: "",
   package_detail_name: "",
-  unit_id: "",
   size_min: "",
   size_max: "",
   weight_min: "",
@@ -320,7 +318,6 @@ export default function ManagePackages() {
     setDetailForm({
       package_detail_code: row.package_detail_code || "",
       package_detail_name: row.package_detail_name || "",
-      unit_id: String(row.unit_id ?? ""),
       size_min: String(row.size_min ?? ""),
       size_max: String(row.size_max ?? ""),
       weight_min: String(row.weight_min ?? ""),
@@ -344,20 +341,9 @@ export default function ManagePackages() {
     const package_detail_code = cleanCodeInput(detailForm.package_detail_code);
     const package_detail_name = detailForm.package_detail_name.trim();
 
-    if (!package_detail_code) {
-      alert("กรุณากรอก Detail Code");
-      return;
-    }
-
-    if (!package_detail_name) {
-      alert("กรุณากรอก Detail Name");
-      return;
-    }
-
     const payload: any = {
-      package_detail_code,
-      package_detail_name,
-      unit_id: detailForm.unit_id || null,
+      package_detail_code: package_detail_code || null,
+      package_detail_name: package_detail_name || null,
       size_min: detailForm.size_min || null,
       size_max: detailForm.size_max || null,
       weight_min: detailForm.weight_min || null,
@@ -862,7 +848,7 @@ export default function ManagePackages() {
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <RequiredLabel required>Detail Code</RequiredLabel>
+                  <RequiredLabel>Detail Code</RequiredLabel>
                   <input
                     className="input-modern w-full"
                     placeholder="Detail Code"
@@ -872,22 +858,12 @@ export default function ManagePackages() {
                 </div>
 
                 <div>
-                  <RequiredLabel required>Detail Name</RequiredLabel>
+                  <RequiredLabel>Detail Name</RequiredLabel>
                   <input
                     className="input-modern w-full"
                     placeholder="Detail Name"
                     value={detailForm.package_detail_name}
                     onChange={(e) => handleDetailChange("package_detail_name", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <RequiredLabel>Unit ID</RequiredLabel>
-                  <input
-                    className="input-modern w-full"
-                    placeholder="Unit ID"
-                    value={detailForm.unit_id}
-                    onChange={(e) => handleDetailChange("unit_id", cleanNumberInput(e.target.value))}
                   />
                 </div>
 

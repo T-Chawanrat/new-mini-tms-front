@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import DatePicker from "../components/form/DatePicker";
 import { Pencil } from "lucide-react";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput, removeSpaces } from "../utils/textSanitizer";
 import DataGrid from "../components/DataGrid";
@@ -497,348 +498,353 @@ export default function ManageVehicles() {
   );
 
   return (
-    <div className="w-full h-[calc(100vh-61px)] px-1 py-4 bg-slate-50 overflow-hidden flex flex-col">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mt-[-15px] mb-2 shrink-0">
-        <div>
-          <h2 className="text-xl font-semibold mb-1 text-slate-800">Vehicle Management</h2>
-          <p className="text-sm text-slate-500">จัดการรถในระบบ</p>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <div className="w-full h-[calc(100vh-61px)] px-1 py-4 bg-slate-50 overflow-hidden flex flex-col">
+        {/* HEADER */}
+        <div className="flex justify-between items-center mt-[-15px] mb-2 shrink-0">
+          <div>
+            <h2 className="text-xl font-semibold mb-1 text-slate-800">Vehicle Management</h2>
+            <p className="text-sm text-slate-500">จัดการรถในระบบ</p>
+          </div>
+
+          <button type="button" onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
+            + เพิ่มรถ
+          </button>
         </div>
 
-        <button type="button" onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
-          + เพิ่มรถ
-        </button>
-      </div>
+        {/* FILTER */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
+          <input
+            placeholder="ค้นหา..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-modern w-[220px]"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") fetchData();
+            }}
+          />
 
-      {/* FILTER */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
-        <input
-          placeholder="ค้นหา..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="input-modern w-[220px]"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") fetchData();
-          }}
-        />
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="input-modern w-[180px]">
+            <option value="">ประเภทรถ</option>
+            {vehicleTypes.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.name}
+              </option>
+            ))}
+          </select>
 
-        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="input-modern w-[180px]">
-          <option value="">ประเภทรถ</option>
-          {vehicleTypes.map((x) => (
-            <option key={x.id} value={x.id}>
-              {x.name}
-            </option>
-          ))}
-        </select>
+          <select value={filterOwnerType} onChange={(e) => setFilterOwnerType(e.target.value)} className="input-modern w-[160px]">
+            <option value="">เจ้าของรถ</option>
+            {OWNER_TYPES.map((x) => (
+              <option key={x.value} value={x.value}>
+                {x.label}
+              </option>
+            ))}
+          </select>
 
-        <select value={filterOwnerType} onChange={(e) => setFilterOwnerType(e.target.value)} className="input-modern w-[160px]">
-          <option value="">เจ้าของรถ</option>
-          {OWNER_TYPES.map((x) => (
-            <option key={x.value} value={x.value}>
-              {x.label}
-            </option>
-          ))}
-        </select>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="input-modern w-[160px]">
+            <option value="">สถานะ</option>
+            {STATUS.map((x) => (
+              <option key={x.value} value={x.value}>
+                {x.label}
+              </option>
+            ))}
+          </select>
 
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="input-modern w-[160px]">
-          <option value="">สถานะ</option>
-          {STATUS.map((x) => (
-            <option key={x.value} value={x.value}>
-              {x.label}
-            </option>
-          ))}
-        </select>
+          <button type="button" onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+            ค้นหา
+          </button>
+        </div>
 
-        <button type="button" onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-          ค้นหา
-        </button>
-      </div>
+        {/* DATAGRID */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <DataGrid rows={gridRows} columns={vehicleColumns} loading={loading} getRowId={(row: any) => row.id} height="100%" pageSize={100} />
+        </div>
 
-      {/* DATAGRID */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <DataGrid rows={gridRows} columns={vehicleColumns} loading={loading} getRowId={(row: any) => row.id} height="100%" pageSize={100} />
-      </div>
+        {/* CREATE / EDIT MODAL */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeModal}>
+            <div
+              className="bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[90vh] overflow-auto animate-scaleIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไขรถ" : "เพิ่มรถ"}</h3>
 
-      {/* CREATE / EDIT MODAL */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeModal}>
-          <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[90vh] overflow-auto animate-scaleIn"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไขรถ" : "เพิ่มรถ"}</h3>
+              {error && <div className="mb-4 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm">{error}</div>}
 
-            {error && <div className="mb-4 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm">{error}</div>}
+              <div className="space-y-5">
+                <div>
+                  <div className="text-sm font-semibold text-slate-700 mb-3">ข้อมูลรถ</div>
 
-            <div className="space-y-5">
-              <div>
-                <div className="text-sm font-semibold text-slate-700 mb-3">ข้อมูลรถ</div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <RequiredLabel required>ทะเบียนรถ</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เช่น 1กก1234"
-                      value={form.license_plate}
-                      onChange={(e) => {
-                        const value = removeSpaces(e.target.value).toUpperCase().replace(/-/g, "");
-
-                        handleChange("license_plate", value);
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <RequiredLabel required>จังหวัดทะเบียน</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เช่น กรุงเทพมหานคร"
-                      value={form.license_province}
-                      onChange={(e) => handleChange("license_province", e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <RequiredLabel required>ยี่ห้อรถ</RequiredLabel>
-                    <select className="input-modern w-full" value={form.brand_id} onChange={(e) => handleChange("brand_id", e.target.value)}>
-                      <option value="">เลือกยี่ห้อ</option>
-                      {brands.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <RequiredLabel>รุ่นรถ</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เช่น D-Max / Revo"
-                      value={form.model}
-                      onChange={(e) => handleChange("model", e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <RequiredLabel>สีรถ</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เช่น ขาว / ดำ / เทา"
-                      value={form.color}
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <RequiredLabel>ปีรถ</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เช่น 2024"
-                      value={form.vehicle_year}
-                      onChange={(e) => handleChange("vehicle_year", cleanNumberInput(e.target.value))}
-                    />
-                  </div>
-
-                  <div>
-                    <RequiredLabel required>ประเภทรถ</RequiredLabel>
-                    <select
-                      className="input-modern w-full"
-                      value={form.vehicle_type_id}
-                      onChange={(e) => handleChange("vehicle_type_id", e.target.value)}
-                    >
-                      <option value="">เลือกประเภทรถ</option>
-                      {vehicleTypes.map((x) => (
-                        <option key={x.id} value={x.id}>
-                          {x.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <RequiredLabel>เชื้อเพลิง</RequiredLabel>
-                    <select className="input-modern w-full" value={form.fuel_type} onChange={(e) => handleChange("fuel_type", e.target.value)}>
-                      <option value="">เลือกเชื้อเพลิง</option>
-                      {FUEL_TYPES.map((x) => (
-                        <option key={x.value} value={x.value}>
-                          {x.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-sm font-semibold text-slate-700 mb-3">น้ำหนัก / สังกัด</div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <RequiredLabel required>น้ำหนักใช้งานจริง (kg)</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เช่น 1000"
-                      value={form.capacity_kg}
-                      onChange={(e) => handleChange("capacity_kg", cleanNumberInput(e.target.value))}
-                    />
-                  </div>
-
-                  <div>
-                    <RequiredLabel>น้ำหนักสูงสุดตามเล่มรถ (kg)</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เช่น 1500"
-                      value={form.max_load_kg}
-                      onChange={(e) => handleChange("max_load_kg", cleanNumberInput(e.target.value))}
-                    />
-                  </div>
-
-                  <div>
-                    <RequiredLabel required>Warehouse</RequiredLabel>
-                    <select className="input-modern w-full" value={form.warehouse_id} onChange={(e) => handleChange("warehouse_id", e.target.value)}>
-                      <option value="">เลือก warehouse</option>
-                      {warehouses.map((w) => (
-                        <option key={w.id} value={w.id}>
-                          {w.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <RequiredLabel required>เจ้าของรถ</RequiredLabel>
-                    <select className="input-modern w-full" value={form.owner_type} onChange={(e) => handleChange("owner_type", e.target.value)}>
-                      {OWNER_TYPES.map((x) => (
-                        <option key={x.value} value={x.value}>
-                          {x.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-sm font-semibold text-slate-700 mb-3">ข้อมูลเจ้าของ / เอกสารรถ</div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {form.owner_type === "DRIVER" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <RequiredLabel>ชื่อเจ้าของรถ / คนขับ</RequiredLabel>
+                      <RequiredLabel required>ทะเบียนรถ</RequiredLabel>
                       <input
                         className="input-modern w-full"
-                        placeholder="ชื่อเจ้าของรถ / คนขับ"
-                        value={form.owner_name}
-                        onChange={(e) => handleChange("owner_name", cleanNameInput(e.target.value))}
+                        placeholder="เช่น 1กก1234"
+                        value={form.license_plate}
+                        onChange={(e) => {
+                          const value = removeSpaces(e.target.value).toUpperCase().replace(/-/g, "");
+
+                          handleChange("license_plate", value);
+                        }}
                       />
                     </div>
-                  ) : (
+
                     <div>
-                      <RequiredLabel>วันที่ซื้อรถ</RequiredLabel>
-                      <DatePicker
-                        selected={form.purchase_date ? new Date(form.purchase_date) : null}
-                        onChange={(date: Date | null) => handleChange("purchase_date", date ? date.toISOString().split("T")[0] : "")}
+                      <RequiredLabel required>จังหวัดทะเบียน</RequiredLabel>
+                      <input
                         className="input-modern w-full"
-                        wrapperClassName="w-full"
-                        placeholderText="วันที่ซื้อรถ"
-                        dateFormat="yyyy-MM-dd"
+                        placeholder="เช่น กรุงเทพมหานคร"
+                        value={form.license_province}
+                        onChange={(e) => handleChange("license_province", e.target.value)}
                       />
                     </div>
-                  )}
 
-                  <div>
-                    <RequiredLabel>Fleet Card</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="Fleet Card"
-                      value={form.fleet_card_no}
-                      onChange={(e) => handleChange("fleet_card_no", cleanCodeInput(e.target.value))}
-                    />
+                    <div>
+                      <RequiredLabel required>ยี่ห้อรถ</RequiredLabel>
+                      <select className="input-modern w-full" value={form.brand_id} onChange={(e) => handleChange("brand_id", e.target.value)}>
+                        <option value="">เลือกยี่ห้อ</option>
+                        {brands.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <RequiredLabel>รุ่นรถ</RequiredLabel>
+                      <input
+                        className="input-modern w-full"
+                        placeholder="เช่น D-Max / Revo"
+                        value={form.model}
+                        onChange={(e) => handleChange("model", e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <RequiredLabel>สีรถ</RequiredLabel>
+                      <input
+                        className="input-modern w-full"
+                        placeholder="เช่น ขาว / ดำ / เทา"
+                        value={form.color}
+                        onChange={(e) => handleChange("color", e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <RequiredLabel>ปีรถ</RequiredLabel>
+                      <input
+                        className="input-modern w-full"
+                        placeholder="เช่น 2024"
+                        value={form.vehicle_year}
+                        onChange={(e) => handleChange("vehicle_year", cleanNumberInput(e.target.value))}
+                      />
+                    </div>
+
+                    <div>
+                      <RequiredLabel required>ประเภทรถ</RequiredLabel>
+                      <select
+                        className="input-modern w-full"
+                        value={form.vehicle_type_id}
+                        onChange={(e) => handleChange("vehicle_type_id", e.target.value)}
+                      >
+                        <option value="">เลือกประเภทรถ</option>
+                        {vehicleTypes.map((x) => (
+                          <option key={x.id} value={x.id}>
+                            {x.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <RequiredLabel>เชื้อเพลิง</RequiredLabel>
+                      <select className="input-modern w-full" value={form.fuel_type} onChange={(e) => handleChange("fuel_type", e.target.value)}>
+                        <option value="">เลือกเชื้อเพลิง</option>
+                        {FUEL_TYPES.map((x) => (
+                          <option key={x.value} value={x.value}>
+                            {x.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+                </div>
 
-                  <div>
-                    <RequiredLabel>เลขตัวถัง</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เลขตัวถัง"
-                      value={form.chassis_no}
-                      onChange={(e) => handleChange("chassis_no", cleanCodeInput(e.target.value))}
-                    />
+                <div>
+                  <div className="text-sm font-semibold text-slate-700 mb-3">น้ำหนัก / สังกัด</div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <RequiredLabel required>น้ำหนักใช้งานจริง (kg)</RequiredLabel>
+                      <input
+                        className="input-modern w-full"
+                        placeholder="เช่น 1000"
+                        value={form.capacity_kg}
+                        onChange={(e) => handleChange("capacity_kg", cleanNumberInput(e.target.value))}
+                      />
+                    </div>
+
+                    <div>
+                      <RequiredLabel>น้ำหนักสูงสุดตามเล่มรถ (kg)</RequiredLabel>
+                      <input
+                        className="input-modern w-full"
+                        placeholder="เช่น 1500"
+                        value={form.max_load_kg}
+                        onChange={(e) => handleChange("max_load_kg", cleanNumberInput(e.target.value))}
+                      />
+                    </div>
+
+                    <div>
+                      <RequiredLabel required>Warehouse</RequiredLabel>
+                      <select
+                        className="input-modern w-full"
+                        value={form.warehouse_id}
+                        onChange={(e) => handleChange("warehouse_id", e.target.value)}
+                      >
+                        <option value="">เลือก warehouse</option>
+                        {warehouses.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <RequiredLabel required>เจ้าของรถ</RequiredLabel>
+                      <select className="input-modern w-full" value={form.owner_type} onChange={(e) => handleChange("owner_type", e.target.value)}>
+                        {OWNER_TYPES.map((x) => (
+                          <option key={x.value} value={x.value}>
+                            {x.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+                </div>
 
-                  <div>
-                    <RequiredLabel>เลขเครื่องยนต์</RequiredLabel>
-                    <input
-                      className="input-modern w-full"
-                      placeholder="เลขเครื่องยนต์"
-                      value={form.engine_no}
-                      onChange={(e) => handleChange("engine_no", cleanCodeInput(e.target.value))}
-                    />
+                <div>
+                  <div className="text-sm font-semibold text-slate-700 mb-3">ข้อมูลเจ้าของ / เอกสารรถ</div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {form.owner_type === "DRIVER" ? (
+                      <div>
+                        <RequiredLabel>ชื่อเจ้าของรถ / คนขับ</RequiredLabel>
+                        <input
+                          className="input-modern w-full"
+                          placeholder="ชื่อเจ้าของรถ / คนขับ"
+                          value={form.owner_name}
+                          onChange={(e) => handleChange("owner_name", cleanNameInput(e.target.value))}
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <RequiredLabel>วันที่ซื้อรถ</RequiredLabel>
+                        <DatePicker
+                          value={form.purchase_date}
+                          onChange={(value) => handleChange("purchase_date", value)}
+                          placeholder="วันที่ซื้อรถ"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <RequiredLabel>Fleet Card</RequiredLabel>
+                      <input
+                        className="input-modern w-full"
+                        placeholder="Fleet Card"
+                        value={form.fleet_card_no}
+                        onChange={(e) => handleChange("fleet_card_no", cleanCodeInput(e.target.value))}
+                      />
+                    </div>
+
+                    <div>
+                      <RequiredLabel>เลขตัวถัง</RequiredLabel>
+                      <input
+                        className="input-modern w-full"
+                        placeholder="เลขตัวถัง"
+                        value={form.chassis_no}
+                        onChange={(e) => handleChange("chassis_no", cleanCodeInput(e.target.value))}
+                      />
+                    </div>
+
+                    <div>
+                      <RequiredLabel>เลขเครื่องยนต์</RequiredLabel>
+                      <input
+                        className="input-modern w-full"
+                        placeholder="เลขเครื่องยนต์"
+                        value={form.engine_no}
+                        onChange={(e) => handleChange("engine_no", cleanCodeInput(e.target.value))}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-              <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
-                ยกเลิก
-              </button>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
+                  ยกเลิก
+                </button>
 
-              <button type="button" onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow">
-                บันทึก
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* STATUS MODAL */}
-      {statusModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeStatusModal}>
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                disabled={selected?.current === "ACTIVE"}
-                onClick={() => changeStatus("ACTIVE")}
-                className={`px-4 py-2 rounded-lg ${
-                  selected?.current === "ACTIVE" ? "bg-green-50 text-green-300 cursor-not-allowed" : "bg-green-100 text-green-600 hover:bg-green-200"
-                }`}
-              >
-                Active
-              </button>
-
-              <button
-                type="button"
-                disabled={selected?.current === "MAINTENANCE"}
-                onClick={() => changeStatus("MAINTENANCE")}
-                className={`px-4 py-2 rounded-lg ${
-                  selected?.current === "MAINTENANCE"
-                    ? "bg-yellow-50 text-yellow-300 cursor-not-allowed"
-                    : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
-                }`}
-              >
-                Maintenance
-              </button>
-
-              <button
-                type="button"
-                disabled={selected?.current === "INACTIVE"}
-                onClick={() => changeStatus("INACTIVE")}
-                className={`px-4 py-2 rounded-lg ${
-                  selected?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
-                }`}
-              >
-                Inactive
-              </button>
+                <button type="button" onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow">
+                  บันทึก
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* STATUS MODAL */}
+        {statusModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeStatusModal}>
+            <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  disabled={selected?.current === "ACTIVE"}
+                  onClick={() => changeStatus("ACTIVE")}
+                  className={`px-4 py-2 rounded-lg ${
+                    selected?.current === "ACTIVE"
+                      ? "bg-green-50 text-green-300 cursor-not-allowed"
+                      : "bg-green-100 text-green-600 hover:bg-green-200"
+                  }`}
+                >
+                  Active
+                </button>
+
+                <button
+                  type="button"
+                  disabled={selected?.current === "MAINTENANCE"}
+                  onClick={() => changeStatus("MAINTENANCE")}
+                  className={`px-4 py-2 rounded-lg ${
+                    selected?.current === "MAINTENANCE"
+                      ? "bg-yellow-50 text-yellow-300 cursor-not-allowed"
+                      : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                  }`}
+                >
+                  Maintenance
+                </button>
+
+                <button
+                  type="button"
+                  disabled={selected?.current === "INACTIVE"}
+                  onClick={() => changeStatus("INACTIVE")}
+                  className={`px-4 py-2 rounded-lg ${
+                    selected?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
+                  }`}
+                >
+                  Inactive
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </LocalizationProvider>
   );
 }

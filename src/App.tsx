@@ -1,9 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import SignIn from "./pages/AuthPages/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
 import AppLayout from "./layout/AppLayout";
@@ -36,8 +31,7 @@ const RoleRedirect = () => {
   const { user } = useAuth();
   const roleId = Number(user?.role_id);
 
-  if ([1, 2, 5, 6, 7, 8, 9, 10].includes(roleId))
-    return <Navigate to="/import" replace />;
+  if ([1, 2, 5, 6, 7, 8, 9, 10].includes(roleId)) return <Navigate to="/import" replace />;
   if (roleId === 3) return <Navigate to="/warehouse-scan" replace />;
   if (roleId === 4) return <Navigate to="/dc-scan" replace />;
 
@@ -66,9 +60,7 @@ export default function App() {
               <Route
                 path="/import"
                 element={
-                  <ProtectedRoute
-                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  >
+                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <BillImport />
                   </ProtectedRoute>
                 }
@@ -76,9 +68,7 @@ export default function App() {
               <Route
                 path="/importvgt"
                 element={
-                  <ProtectedRoute
-                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  >
+                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <BillImportVGT />
                   </ProtectedRoute>
                 }
@@ -86,9 +76,7 @@ export default function App() {
               <Route
                 path="/importadv"
                 element={
-                  <ProtectedRoute
-                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  >
+                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <BillImportADV />
                   </ProtectedRoute>
                 }
@@ -106,9 +94,7 @@ export default function App() {
               <Route
                 path="/warehouse-scan"
                 element={
-                  <ProtectedRoute
-                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  >
+                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <BillScanWarehouse />
                   </ProtectedRoute>
                 }
@@ -116,9 +102,7 @@ export default function App() {
               <Route
                 path="/dc-scan"
                 element={
-                  <ProtectedRoute
-                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  >
+                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <BillScanDc />
                   </ProtectedRoute>
                 }
@@ -126,9 +110,7 @@ export default function App() {
               <Route
                 path="/labels"
                 element={
-                  <ProtectedRoute
-                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  >
+                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <PrintLabel />
                   </ProtectedRoute>
                 }
@@ -136,9 +118,7 @@ export default function App() {
               <Route
                 path="/report"
                 element={
-                  <ProtectedRoute
-                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  >
+                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <BillReport />
                   </ProtectedRoute>
                 }
@@ -151,7 +131,7 @@ export default function App() {
               <Route path="/manage/shippers" element={<ManageShippers />} />
               <Route path="/manage/recipients" element={<ManageRecipients />} />
               <Route path="/manage/packages" element={<ManagePackages />} />
-              <Route path="/manage/change-password" element={<ChangePassword />} />
+              <Route path="/change-password" element={<ChangePassword />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>
