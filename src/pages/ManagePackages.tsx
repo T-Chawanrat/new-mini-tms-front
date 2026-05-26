@@ -451,7 +451,7 @@ export default function ManagePackages() {
       },
       {
         field: "package_code",
-        headerName: "Package Code",
+        headerName: "รหัสแพ็คเกจ",
         width: 160,
         minWidth: 130,
         renderCell: (params: any) => (
@@ -462,7 +462,7 @@ export default function ManagePackages() {
       },
       {
         field: "package_name",
-        headerName: "Package Name",
+        headerName: "ชื่อแพ็คเกจ",
         width: 280,
         minWidth: 220,
         renderCell: (params: any) => (
@@ -475,7 +475,7 @@ export default function ManagePackages() {
         ? [
             {
               field: "customer_name",
-              headerName: "Customer",
+              headerName: "ลูกค้า",
               width: 280,
               minWidth: 220,
               renderCell: (params: any) => (
@@ -488,7 +488,7 @@ export default function ManagePackages() {
         : []),
       {
         field: "detail_count",
-        headerName: "Detail",
+        headerName: "รายการ",
         width: 120,
         minWidth: 100,
         align: "center" as const,
@@ -505,7 +505,7 @@ export default function ManagePackages() {
       },
       {
         field: "is_actived",
-        headerName: "Status",
+        headerName: "สถานะ",
         width: 130,
         minWidth: 120,
         sortable: false,

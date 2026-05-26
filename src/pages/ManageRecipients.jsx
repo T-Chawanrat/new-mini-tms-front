@@ -479,7 +479,7 @@ export default function ManageRecipients() {
             >
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
-                  {customer.code} - {customer.name}
+                {customer.id}  {customer.code} - {customer.name}
                 </option>
               ))}
             </select>

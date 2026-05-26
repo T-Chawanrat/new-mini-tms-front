@@ -314,7 +314,7 @@ export default function ManageCustomers() {
       },
       {
         field: "code",
-        headerName: "Code",
+        headerName: "รหัสลูกค้า",
         width: 140,
         minWidth: 120,
         renderCell: (params: any) => (
@@ -325,7 +325,7 @@ export default function ManageCustomers() {
       },
       {
         field: "name",
-        headerName: "Name",
+        headerName: "ชื่อลูกค้า",
         width: 260,
         minWidth: 200,
         renderCell: (params: any) => (
@@ -341,7 +341,7 @@ export default function ManageCustomers() {
       },
       {
         field: "type",
-        headerName: "Type",
+        headerName: "ประเภท",
         width: 130,
         minWidth: 110,
         renderCell: (params: any) => (
@@ -350,7 +350,7 @@ export default function ManageCustomers() {
       },
       {
         field: "tax_id",
-        headerName: "Tax ID",
+        headerName: "เลขประจำตัวผู้เสียภาษี",
         width: 170,
         minWidth: 140,
         renderCell: (params: any) => (
@@ -361,7 +361,7 @@ export default function ManageCustomers() {
       },
       {
         field: "address",
-        headerName: "Address",
+        headerName: "ที่อยู่",
         width: 360,
         minWidth: 240,
         maxWidth: 3000,
@@ -373,7 +373,7 @@ export default function ManageCustomers() {
       },
       {
         field: "contact_name",
-        headerName: "Contact",
+        headerName: "ผู้ติดต่อ",
         width: 180,
         minWidth: 140,
         renderCell: (params: any) => (
@@ -384,7 +384,7 @@ export default function ManageCustomers() {
       },
       {
         field: "contact_tel",
-        headerName: "Tel",
+        headerName: "เบอร์โทรผู้ติดต่อ",
         width: 150,
         minWidth: 120,
         renderCell: (params: any) => {
@@ -421,7 +421,7 @@ export default function ManageCustomers() {
       },
       {
         field: "is_active",
-        headerName: "Status",
+        headerName: "สถานะ",
         width: 130,
         minWidth: 120,
         sortable: false,
