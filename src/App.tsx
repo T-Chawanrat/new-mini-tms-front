@@ -24,6 +24,7 @@ import ManageRecipients from "./pages/ManageRecipients";
 import ManagePackages from "./pages/ManagePackages";
 import ImportManual from "./pages/ImportManual";
 import ChangePassword from "./pages/ChangePassword";
+import CreateReceivePage from "./pages/CreateReceivePage";
 // import ImportVGT from "./pages/ImportVGT";
 // import ImportADV from "./pages/ImportADV";
 
@@ -132,6 +133,7 @@ export default function App() {
               <Route path="/manage/recipients" element={<ManageRecipients />} />
               <Route path="/manage/packages" element={<ManagePackages />} />
               <Route path="/change-password" element={<ChangePassword />} />
+              <Route path="/create-receive" element={<CreateReceivePage />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>

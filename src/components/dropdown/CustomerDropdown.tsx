@@ -16,7 +16,6 @@ interface CustomerDropdownProps {
 const CustomerDropdown: React.FC<CustomerDropdownProps> = ({ value, onChange }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>(value || "");
-  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -25,34 +24,31 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({ value, onChange }) 
     setSearchTerm(value || "");
   }, [value]);
 
+  const fetchCustomers = async (keyword = "") => {
+    try {
+      const response = await AxiosInstance.get("/customers", {
+        params: keyword ? { search: keyword } : {},
+      });
+
+      const data: Customer[] = response.data || [];
+      setCustomers(data);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      setCustomers([]);
+    }
+  };
+
   useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const response = await AxiosInstance.get("/customers");
-
-        // backend ใหม่ส่ง array ตรง ๆ: [{ id, name }]
-        const data: Customer[] = response.data || [];
-
-        setCustomers(data);
-        setFilteredCustomers(data);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-        setCustomers([]);
-        setFilteredCustomers([]);
-      }
-    };
-
     fetchCustomers();
   }, []);
 
   useEffect(() => {
-    if (searchTerm) {
-      const results = customers.filter((customer) => customer.name.toLowerCase().includes(searchTerm.toLowerCase()));
-      setFilteredCustomers(results);
-    } else {
-      setFilteredCustomers(customers);
-    }
-  }, [searchTerm, customers]);
+    const timer = setTimeout(() => {
+      fetchCustomers(searchTerm.trim());
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -115,9 +111,9 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({ value, onChange }) 
       </div>
 
       {isDropdownOpen && (
-       <ul className="absolute z-20 left-0 bg-white border border-slate-200 rounded-xl mt-1 w-full min-w-[420px] max-h-52 overflow-y-auto shadow-lg text-xs sm:text-sm">
-          {filteredCustomers.length > 0 ? (
-            filteredCustomers.map((customer) => (
+        <ul className="absolute z-20 left-0 bg-white border border-slate-200 rounded-xl mt-1 w-full min-w-[420px] max-h-52 overflow-y-auto shadow-lg text-xs sm:text-sm">
+          {customers.length > 0 ? (
+            customers.map((customer) => (
               <li
                 key={customer.id}
                 className={`px-3 py-1.5 cursor-pointer truncate hover:bg-blue-50 ${

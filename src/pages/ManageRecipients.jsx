@@ -1,9 +1,142 @@
 import { useEffect, useMemo, useState } from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import { ChevronDown, ChevronRight, Pencil, Plus } from "lucide-react";
+
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
-import { Pencil, Plus } from "lucide-react";
 import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
 import RequiredLabel from "../components/form/RequiredLabel";
+
+function RecipientDetailsInlinePanel({
+  recipient,
+  onCreateDetail,
+  onEditDetail,
+  onOpenStatus,
+}) {
+  return (
+    <div className="w-full bg-slate-50 px-6 py-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-semibold text-slate-800 truncate">
+              รายละเอียดที่อยู่ของ {recipient.recipient_code || "-"} -{" "}
+              {recipient.recipient_name || "-"}
+            </div>
+
+            <div className="text-xs text-slate-500 mt-0.5">
+              ทั้งหมด{" "}
+              {recipient.address_count || recipient.details?.length || 0} ที่อยู่
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateDetail(recipient);
+            }}
+            className="inline-flex h-9 items-center justify-center gap-1 px-3 rounded-xl bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 text-sm"
+          >
+            <Plus size={14} />
+            เพิ่มที่อยู่
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <div className="min-w-[1320px]">
+            <div className="grid grid-cols-[220px_320px_140px_140px_140px_100px_130px_150px_110px_90px] gap-3 px-4 py-2 bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-100">
+              <div>recipient_detail_name</div>
+              <div>address</div>
+              <div>subdistrict</div>
+              <div>district</div>
+              <div>province</div>
+              <div>zip_code</div>
+              <div>tel1</div>
+              <div>line_id</div>
+              <div className="text-center">status</div>
+              <div className="text-center">edit</div>
+            </div>
+
+            {!recipient.details?.length ? (
+              <div className="px-4 py-5 text-sm text-slate-400">
+                ยังไม่มีที่อยู่ของผู้รับนี้ กดปุ่ม “เพิ่มที่อยู่” เพื่อเพิ่ม
+              </div>
+            ) : (
+              recipient.details.map((detail) => (
+                <div
+                  key={detail.recipient_detail_id}
+                  className="grid grid-cols-[220px_320px_140px_140px_140px_100px_130px_150px_110px_90px] items-center gap-3 px-4 py-3 text-sm text-slate-700 border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+                >
+                  <div className="truncate font-medium">
+                    {detail.recipient_detail_name || "-"}
+                  </div>
+
+                  <div className="truncate" title={detail.address || ""}>
+                    {detail.address || "-"}
+                  </div>
+
+                  <div className="truncate">
+                    {detail.subdistrict_name || detail.subdistrict_id || "-"}
+                  </div>
+
+                  <div className="truncate">
+                    {detail.district_name || detail.district_id || "-"}
+                  </div>
+
+                  <div className="truncate">
+                    {detail.province_name || detail.province_id || "-"}
+                  </div>
+
+                  <div className="truncate">{detail.zip_code || "-"}</div>
+
+                  <div className="truncate">{detail.tel1 || "-"}</div>
+
+                  <div className="truncate">{detail.line_id || "-"}</div>
+
+                  <div className="flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenStatus(recipient, detail);
+                      }}
+                      className="inline-flex items-center justify-center"
+                      title="คลิกเพื่อเปลี่ยนสถานะ"
+                    >
+                      {detail.detail_is_deleted === "N" ? (
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">
+                          Inactive
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditDetail(recipient, detail);
+                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      title="แก้ไขที่อยู่นี้"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ManageRecipients() {
   const { user } = useAuth();
@@ -18,6 +151,15 @@ export default function ManageRecipients() {
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // DataGrid ใช้ page เริ่มจาก 0 แต่ backend util ใช้ page เริ่มจาก 1
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 100,
+  });
+
+  const [rowCount, setRowCount] = useState(0);
+  const [expandedRecipientId, setExpandedRecipientId] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
 
@@ -49,7 +191,9 @@ export default function ManageRecipients() {
 
   const [form, setForm] = useState(emptyForm);
 
-  const selectedCustomer = customers.find((customer) => String(customer.id) === String(customerId));
+  const selectedCustomer = customers.find(
+    (customer) => String(customer.id) === String(customerId),
+  );
 
   const groupedRows = useMemo(() => {
     const map = new Map();
@@ -105,10 +249,37 @@ export default function ManageRecipients() {
     return Array.from(map.values());
   }, [rows]);
 
+  const displayRows = useMemo(() => {
+    const result = [];
+
+    groupedRows.forEach((recipient) => {
+      result.push({
+        ...recipient,
+        id: `recipient-${recipient.recipient_id}`,
+        rowType: "recipient",
+      });
+
+      if (String(expandedRecipientId) === String(recipient.recipient_id)) {
+        result.push({
+          id: `detail-${recipient.recipient_id}`,
+          rowType: "detail",
+          recipient,
+        });
+      }
+    });
+
+    return result;
+  }, [groupedRows, expandedRecipientId]);
+
   const getAddressLabel = (detail) => {
     if (!detail) return "";
 
-    const parts = [detail.subdistrict_name, detail.district_name, detail.province_name, detail.zip_code].filter(Boolean);
+    const parts = [
+      detail.subdistrict_name,
+      detail.district_name,
+      detail.province_name,
+      detail.zip_code,
+    ].filter(Boolean);
 
     return parts.join(" • ");
   };
@@ -121,9 +292,11 @@ export default function ManageRecipients() {
     return "ผู้รับ";
   };
 
-  const isRecipientMode = modalMode === "createRecipient" || modalMode === "editRecipient";
+  const isRecipientMode =
+    modalMode === "createRecipient" || modalMode === "editRecipient";
 
-  const isDetailMode = modalMode === "createDetail" || modalMode === "editDetail";
+  const isDetailMode =
+    modalMode === "createDetail" || modalMode === "editDetail";
 
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -181,7 +354,7 @@ export default function ManageRecipients() {
     }
   };
 
-  const fetchData = async (searchValue = search) => {
+  const fetchData = async (searchValue = search, model = paginationModel) => {
     if (!customerId) return;
 
     try {
@@ -190,10 +363,21 @@ export default function ManageRecipients() {
       const res = await AxiosInstance.get(`/manage/recipients/${customerId}`, {
         params: {
           search: searchValue || undefined,
+          page: model.page + 1,
+          pageSize: model.pageSize,
         },
       });
 
-      setRows(res.data || []);
+      const responseData = res.data;
+
+      if (Array.isArray(responseData)) {
+        setRows(responseData);
+        setRowCount(responseData.length);
+        return;
+      }
+
+      setRows(responseData?.data || []);
+      setRowCount(Number(responseData?.pagination?.total || 0));
     } catch (err) {
       alert(err?.response?.data?.message || "fetch recipients failed");
     } finally {
@@ -218,7 +402,15 @@ export default function ManageRecipients() {
 
   useEffect(() => {
     if (!user || !customerId) return;
-    fetchData();
+
+    const firstPage = {
+      page: 0,
+      pageSize: paginationModel.pageSize,
+    };
+
+    setPaginationModel(firstPage);
+    setExpandedRecipientId(null);
+    fetchData(search, firstPage);
   }, [customerId, user]);
 
   const openCreateRecipient = () => {
@@ -357,7 +549,10 @@ export default function ManageRecipients() {
           recipient_name: form.recipient_name,
         };
 
-        await AxiosInstance.patch(`/manage/recipients/${customerId}/${editingRecipient.recipient_id}`, payload);
+        await AxiosInstance.patch(
+          `/manage/recipients/${customerId}/${editingRecipient.recipient_id}`,
+          payload,
+        );
       }
 
       if (modalMode === "createDetail") {
@@ -379,7 +574,10 @@ export default function ManageRecipients() {
           line_id: form.line_id || null,
         };
 
-        await AxiosInstance.post(`/manage/recipients/${customerId}/${editingRecipient.recipient_id}/details`, payload);
+        await AxiosInstance.post(
+          `/manage/recipients/${customerId}/${editingRecipient.recipient_id}/details`,
+          payload,
+        );
       }
 
       if (modalMode === "editDetail") {
@@ -405,11 +603,14 @@ export default function ManageRecipients() {
           },
         };
 
-        await AxiosInstance.patch(`/manage/recipients/${customerId}/${editingRecipient.recipient_id}`, payload);
+        await AxiosInstance.patch(
+          `/manage/recipients/${customerId}/${editingRecipient.recipient_id}`,
+          payload,
+        );
       }
 
       closeModal();
-      fetchData(search);
+      fetchData(search, paginationModel);
     } catch (err) {
       alert(err?.response?.data?.message || "save recipient failed");
     }
@@ -427,17 +628,199 @@ export default function ManageRecipients() {
       );
 
       closeStatusModal();
-      fetchData(search);
+      fetchData(search, paginationModel);
     } catch (err) {
-      alert(err?.response?.data?.message || "update recipient detail status failed");
+      alert(
+        err?.response?.data?.message || "update recipient detail status failed",
+      );
     }
   };
+
+  const toggleExpandedRecipient = (recipient) => {
+    if (!recipient || recipient.rowType === "detail") return;
+
+    setExpandedRecipientId((prev) =>
+      String(prev) === String(recipient.recipient_id)
+        ? null
+        : recipient.recipient_id,
+    );
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        field: "detailPanel",
+        headerName: "",
+        width: 56,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        colSpan: (...args) => {
+          const row = args[1] || args[0]?.row;
+          return row?.rowType === "detail" ? 999 : undefined;
+        },
+        renderCell: (params) => {
+          if (params.row.rowType === "detail") {
+            return (
+              <div className="w-full">
+                <RecipientDetailsInlinePanel
+                  recipient={params.row.recipient}
+                  onCreateDetail={openCreateDetail}
+                  onEditDetail={openEditDetail}
+                  onOpenStatus={openDetailStatusModal}
+                />
+              </div>
+            );
+          }
+
+          const isExpanded =
+            String(expandedRecipientId) === String(params.row.recipient_id);
+
+          return (
+            <div className="w-full h-full flex items-center justify-center">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleExpandedRecipient(params.row);
+                }}
+                className="w-8 h-8 inline-flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600"
+                title={isExpanded ? "ปิดรายละเอียด" : "ดูรายละเอียดที่อยู่"}
+              >
+                {isExpanded ? (
+                  <ChevronDown size={18} />
+                ) : (
+                  <ChevronRight size={18} />
+                )}
+              </button>
+            </div>
+          );
+        },
+      },
+      {
+        field: "recipient_code",
+        headerName: "รหัสผู้รับ",
+        width: 170,
+        minWidth: 150,
+        renderCell: (params) => {
+          if (params.row.rowType === "detail") return null;
+
+          return (
+            <div className="w-full h-full flex items-center">
+              <span className="font-semibold text-slate-800">
+                {params.value || "-"}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        field: "recipient_name",
+        headerName: "ชื่อผู้รับ",
+        flex: 1,
+        minWidth: 260,
+        renderCell: (params) => {
+          if (params.row.rowType === "detail") return null;
+
+          return (
+            <div
+              className="w-full h-full flex items-center truncate"
+              title={params.value || ""}
+            >
+              {params.value || "-"}
+            </div>
+          );
+        },
+      },
+      {
+        field: "recipient_type_name",
+        headerName: "ประเภท",
+        width: 160,
+        minWidth: 140,
+        renderCell: (params) => {
+          if (params.row.rowType === "detail") return null;
+
+          return (
+            <div className="w-full h-full flex items-center">
+              <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-600">
+                {params.value || "-"}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        field: "address_count",
+        headerName: "ที่อยู่ทั้งหมด",
+        width: 120,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => {
+          if (params.row.rowType === "detail") return null;
+
+          return (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-600">
+                {params.row.address_count || params.row.details?.length || 0} ที่อยู่
+              </span>
+            </div>
+          );
+        },
+      },
+
+      {
+        field: "actions",
+        headerName: "จัดการ",
+        width: 180,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => {
+          if (params.row.rowType === "detail") return null;
+
+          return (
+            <div className="w-full h-full flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openCreateDetail(params.row);
+                }}
+                className="inline-flex h-8 items-center justify-center gap-1 px-3 rounded-lg bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 text-xs"
+                title="เพิ่มที่อยู่ให้ผู้รับนี้"
+              >
+                <Plus size={13} />
+                ที่อยู่
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditRecipient(params.row);
+                }}
+                className="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+                title="แก้ไขข้อมูลผู้รับ"
+              >
+                <Pencil size={14} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [expandedRecipientId],
+  );
 
   return (
     <div className="w-full h-[calc(100vh-61px)] px-1 py-4 bg-slate-50 overflow-hidden flex flex-col">
       <div className="flex justify-between items-center mt-[-15px] mb-2 shrink-0">
         <div>
-          <h2 className="text-xl font-semibold mb-1 text-slate-800">Recipient Management</h2>
+          <h2 className="text-xl font-semibold mb-1 text-slate-800">
+            Recipient Management
+          </h2>
 
           <p className="text-sm text-slate-500">
             {isCustomer ? (
@@ -472,14 +855,22 @@ export default function ManageRecipients() {
             <select
               value={customerId}
               onChange={(e) => {
+                const firstPage = {
+                  ...paginationModel,
+                  page: 0,
+                };
+
                 setCustomerId(e.target.value);
                 setRows([]);
+                setRowCount(0);
+                setExpandedRecipientId(null);
+                setPaginationModel(firstPage);
               }}
               className="input-modern"
             >
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
-                {customer.id}  {customer.code} - {customer.name}
+                  {customer.id} {customer.code} - {customer.name}
                 </option>
               ))}
             </select>
@@ -491,171 +882,147 @@ export default function ManageRecipients() {
             onChange={(e) => setSearch(e.target.value)}
             className="input-modern w-full lg:w-[360px]"
             onKeyDown={(e) => {
-              if (e.key === "Enter") fetchData(e.target.value);
+              if (e.key === "Enter") {
+                const firstPage = {
+                  ...paginationModel,
+                  page: 0,
+                };
+
+                setPaginationModel(firstPage);
+                setExpandedRecipientId(null);
+                fetchData(e.target.value, firstPage);
+              }
             }}
           />
 
-          <button type="button" onClick={() => fetchData(search)} className="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+          <button
+            type="button"
+            onClick={() => {
+              const firstPage = {
+                ...paginationModel,
+                page: 0,
+              };
+
+              setPaginationModel(firstPage);
+              setExpandedRecipientId(null);
+              fetchData(search, firstPage);
+            }}
+            className="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+          >
             ค้นหา
           </button>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto pr-1">
-        {loading ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400">Loading...</div>
-        ) : groupedRows.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400">ไม่มีข้อมูล</div>
-        ) : (
-          <div className="space-y-3">
-            {groupedRows.map((recipient, recipientIndex) => (
-              <div
-                key={recipient.recipient_id}
-                className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition"
-              >
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center text-sm font-semibold shrink-0">
-                      {recipientIndex + 1}
-                    </div>
+      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <DataGrid
+          rows={displayRows}
+          columns={columns}
+          getRowId={(row) => row.id}
+          loading={loading}
+          rowCount={rowCount}
+          paginationMode="server"
+          paginationModel={paginationModel}
+          onPaginationModelChange={(model) => {
+            setPaginationModel(model);
+            setExpandedRecipientId(null);
+            fetchData(search, model);
+          }}
+          pageSizeOptions={[10, 25, 50, 100]}
+          disableRowSelectionOnClick
+          getRowHeight={(params) => {
+            if (String(params.id).startsWith("detail-")) {
+              return "auto";
+            }
 
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-slate-800">{recipient.recipient_code || "-"}</span>
+            return 52;
+          }}
+          getRowClassName={(params) =>
+            String(params.id).startsWith("detail-")
+              ? "recipient-detail-row"
+              : ""
+          }
+          onRowClick={(params) => {
+            if (params.row.rowType === "detail") return;
+            toggleExpandedRecipient(params.row);
+          }}
+          sx={{
+            border: 0,
+            fontFamily: "inherit",
 
-                        <span className="text-slate-300">•</span>
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#f8fafc",
+              color: "#475569",
+              fontWeight: 700,
+            },
 
-                        <span className="font-medium text-slate-700 truncate">{recipient.recipient_name || "-"}</span>
+            "& .MuiDataGrid-cell": {
+              borderBottom: "1px solid #f1f5f9",
+              display: "flex",
+              alignItems: "center",
+            },
 
-                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-500">{recipient.recipient_type_name || "-"}</span>
+            "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
+              outline: "none",
+            },
 
-                        <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-500">
-                          {recipient.address_count || recipient.details.length} ที่อยู่
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+            "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
+              outline: "none",
+            },
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => openCreateDetail(recipient)}
-                      className="inline-flex items-center gap-1 px-3 h-9 rounded-xl bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 text-sm"
-                      title="เพิ่มที่อยู่ให้ผู้รับนี้"
-                    >
-                      <Plus size={14} />
-                      ที่อยู่
-                    </button>
+            "& .MuiDataGrid-row:hover": {
+              backgroundColor: "#f8fafc",
+              cursor: "pointer",
+            },
 
-                    <button
-                      type="button"
-                      onClick={() => openEditRecipient(recipient)}
-                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-                      title="แก้ไขข้อมูลผู้รับ"
-                    >
-                      <Pencil size={15} />
-                    </button>
-                  </div>
-                </div>
+            "& .recipient-detail-row": {
+              backgroundColor: "#f8fafc",
+            },
 
-                <div className="overflow-x-auto">
-                  <div className="min-w-[1520px]">
-                    <div className="grid grid-cols-[260px_340px_130px_130px_130px_110px_130px_150px_120px_100px] gap-3 px-4 py-2 bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-100">
-                      <div>recipient_detail_name</div>
-                      <div>address</div>
-                      <div>subdistrict</div>
-                      <div>district</div>
-                      <div>province</div>
-                      <div>zip_code</div>
-                      <div>tel1</div>
-                      <div>line_id</div>
-                      <div className="text-center">status</div>
-                      <div className="text-center">edit</div>
-                    </div>
+            "& .recipient-detail-row:hover": {
+              backgroundColor: "#f8fafc",
+              cursor: "default",
+            },
 
-                    {recipient.details.length === 0 ? (
-                      <div className="px-4 py-4 text-sm text-slate-400">ยังไม่มีที่อยู่ของผู้รับนี้ กดปุ่ม “+ ที่อยู่” เพื่อเพิ่ม</div>
-                    ) : (
-                      recipient.details.map((detail) => (
-                        <div
-                          key={detail.recipient_detail_id}
-                          className="grid grid-cols-[260px_340px_130px_130px_130px_110px_130px_150px_120px_100px] items-center gap-3 px-4 py-3 text-sm text-slate-700 border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
-                        >
-                          <div className="truncate font-medium">{detail.recipient_detail_name || "-"}</div>
+            "& .recipient-detail-row .MuiDataGrid-cell": {
+              padding: 0,
+              borderBottom: "1px solid #e2e8f0",
+              alignItems: "stretch",
+              maxHeight: "none !important",
+            },
 
-                          <div className="truncate" title={detail.address || ""}>
-                            {detail.address || "-"}
-                          </div>
+            "& .recipient-detail-row .MuiDataGrid-cellContent": {
+              width: "100%",
+              maxHeight: "none !important",
+            },
 
-                          <div className="truncate">{detail.subdistrict_name || detail.subdistrict_id || "-"}</div>
-
-                          <div className="truncate">{detail.district_name || detail.district_id || "-"}</div>
-
-                          <div className="truncate">{detail.province_name || detail.province_id || "-"}</div>
-
-                          <div className="truncate">{detail.zip_code || "-"}</div>
-
-                          <div className="truncate">{detail.tel1 || "-"}</div>
-
-                          <div className="truncate">{detail.line_id || "-"}</div>
-
-                          <div className="flex justify-center">
-                            {" "}
-                            <button
-                              type="button"
-                              onClick={() => openDetailStatusModal(recipient, detail)}
-                              className="inline-block"
-                              title="คลิกเพื่อเปลี่ยนสถานะ"
-                            >
-                              {" "}
-                              {detail.detail_is_deleted === "N" ? (
-                                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer items-center">
-                                  {" "}
-                                  Active{" "}
-                                </span>
-                              ) : (
-                                <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">
-                                  {" "}
-                                  Inactive{" "}
-                                </span>
-                              )}{" "}
-                            </button>{" "}
-                          </div>
-
-                          <div className="flex items-center justify-center">
-                            <button
-                              type="button"
-                              onClick={() => openEditDetail(recipient, detail)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100"
-                              title="แก้ไขที่อยู่นี้"
-                            >
-                              <Pencil size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+            "& .MuiDataGrid-footerContainer": {
+              borderTop: "1px solid #e2e8f0",
+              backgroundColor: "#ffffff",
+            },
+          }}
+        />
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeModal}>
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={closeModal}
+        >
           <div
             className="bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-slate-800 mb-5">{getModalTitle()}</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-5">
+              {getModalTitle()}
+            </h3>
 
             {isDetailMode && editingRecipient && (
               <div className="mb-4 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-600">
                 เพิ่ม/แก้ไขที่อยู่ของ{" "}
                 <span className="font-semibold text-slate-800">
-                  {editingRecipient.recipient_code} - {editingRecipient.recipient_name}
+                  {editingRecipient.recipient_code} -{" "}
+                  {editingRecipient.recipient_name}
                 </span>
               </div>
             )}
@@ -670,7 +1037,9 @@ export default function ManageRecipients() {
                         className="input-modern w-full"
                         placeholder="Recipient Code"
                         value={form.recipient_code}
-                        onChange={(e) => handleChange("recipient_code", e.target.value)}
+                        onChange={(e) =>
+                          handleChange("recipient_code", e.target.value)
+                        }
                       />
                     </div>
 
@@ -679,7 +1048,9 @@ export default function ManageRecipients() {
                       <select
                         className="input-modern w-full"
                         value={form.recipient_type_id}
-                        onChange={(e) => handleChange("recipient_type_id", e.target.value)}
+                        onChange={(e) =>
+                          handleChange("recipient_type_id", e.target.value)
+                        }
                       >
                         <option value="">เลือกประเภทผู้รับ</option>
                         {recipientTypes.map((type) => (
@@ -697,7 +1068,9 @@ export default function ManageRecipients() {
                       className="input-modern w-full"
                       placeholder="Recipient Name"
                       value={form.recipient_name}
-                      onChange={(e) => handleChange("recipient_name", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("recipient_name", e.target.value)
+                      }
                     />
                   </div>
                 </>
@@ -711,7 +1084,9 @@ export default function ManageRecipients() {
                       className="input-modern w-full"
                       placeholder="เช่น สำนักงานใหญ่ / สาขา"
                       value={form.recipient_detail_name}
-                      onChange={(e) => handleChange("recipient_detail_name", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("recipient_detail_name", e.target.value)
+                      }
                     />
                   </div>
 
@@ -726,7 +1101,9 @@ export default function ManageRecipients() {
                   </div>
 
                   <div>
-                    <RequiredLabel required>ค้นหาตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์</RequiredLabel>
+                    <RequiredLabel required>
+                      ค้นหาตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์
+                    </RequiredLabel>
 
                     <AddressSearchDropdown
                       value={form.address_search || ""}
@@ -761,7 +1138,9 @@ export default function ManageRecipients() {
                         className="input-modern w-full"
                         placeholder="Line ID"
                         value={form.line_id}
-                        onChange={(e) => handleChange("line_id", e.target.value)}
+                        onChange={(e) =>
+                          handleChange("line_id", e.target.value)
+                        }
                       />
                     </div>
                   </div>
@@ -770,11 +1149,19 @@ export default function ManageRecipients() {
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200"
+              >
                 ยกเลิก
               </button>
 
-              <button type="button" onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+              >
                 บันทึก
               </button>
             </div>
@@ -790,8 +1177,13 @@ export default function ManageRecipients() {
             setSelectedStatus(null);
           }}
         >
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
+          <div
+            className="bg-white p-6 rounded-2xl shadow-xl w-[300px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4 text-slate-800">
+              สถานะ
+            </h3>
 
             <div className="flex flex-col gap-3">
               <button
@@ -812,7 +1204,9 @@ export default function ManageRecipients() {
                 disabled={selectedStatus?.current === "INACTIVE"}
                 onClick={() => changeStatus("INACTIVE")}
                 className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
+                  selectedStatus?.current === "INACTIVE"
+                    ? "bg-red-50 text-red-300 cursor-not-allowed"
+                    : "bg-red-100 text-red-500 hover:bg-red-200"
                 }`}
               >
                 Inactive
