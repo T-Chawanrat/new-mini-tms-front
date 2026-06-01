@@ -1,4 +1,5 @@
-import { Fragment } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import TablePagination from "@mui/material/TablePagination";
 import {
   type CustomerOption,
   type GroupedRecipient,
@@ -53,6 +54,24 @@ type ReceiveModalsProps = {
   handleSaveScan: () => void;
 };
 
+const paginationSx = {
+  borderTop: "1px solid #e2e8f0",
+  minHeight: 42,
+  "& .MuiTablePagination-toolbar": {
+    minHeight: 42,
+    paddingLeft: "8px",
+    paddingRight: "8px",
+    fontSize: 12,
+  },
+  "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+    margin: 0,
+    fontSize: 12,
+  },
+  "& .MuiTablePagination-actions": {
+    marginLeft: "8px",
+  },
+};
+
 export default function ReceiveModals({
   showCustomerModal,
   showShipperModal,
@@ -94,6 +113,38 @@ export default function ReceiveModals({
   handleSavePackage,
   handleSaveScan,
 }: ReceiveModalsProps) {
+  const [shipperPage, setShipperPage] = useState(0);
+  const [shipperRowsPerPage, setShipperRowsPerPage] = useState(100);
+
+  const [recipientPage, setRecipientPage] = useState(0);
+  const [recipientRowsPerPage, setRecipientRowsPerPage] = useState(100);
+
+  const pagedShippers = useMemo(() => {
+    const start = shipperPage * shipperRowsPerPage;
+    return shippers.slice(start, start + shipperRowsPerPage);
+  }, [shippers, shipperPage, shipperRowsPerPage]);
+
+  const pagedGroupedRecipients = useMemo(() => {
+    const start = recipientPage * recipientRowsPerPage;
+    return groupedRecipients.slice(start, start + recipientRowsPerPage);
+  }, [groupedRecipients, recipientPage, recipientRowsPerPage]);
+
+  useEffect(() => {
+    const maxPage = Math.max(Math.ceil(shippers.length / shipperRowsPerPage) - 1, 0);
+
+    if (shipperPage > maxPage) {
+      setShipperPage(maxPage);
+    }
+  }, [shippers.length, shipperPage, shipperRowsPerPage]);
+
+  useEffect(() => {
+    const maxPage = Math.max(Math.ceil(groupedRecipients.length / recipientRowsPerPage) - 1, 0);
+
+    if (recipientPage > maxPage) {
+      setRecipientPage(maxPage);
+    }
+  }, [groupedRecipients.length, recipientPage, recipientRowsPerPage]);
+
   return (
     <>
       {showCustomerModal && (
@@ -167,49 +218,74 @@ export default function ReceiveModals({
 
             <div className="mb-2 grid grid-cols-[70px_1fr] items-center gap-2">
               <label className={labelClass}>ค้นหา</label>
-              <input className={inputClass} value={shipperSearch} onChange={(e) => setShipperSearch(e.target.value)} autoFocus />
+              <input
+                className={inputClass}
+                value={shipperSearch}
+                onChange={(e) => {
+                  setShipperSearch(e.target.value);
+                  setShipperPage(0);
+                }}
+                autoFocus
+              />
             </div>
 
-            <div className="max-h-[560px] overflow-y-auto border border-slate-300">
-              <table className="w-full border-collapse text-xs">
-                <thead className="sticky top-0 bg-slate-50">
-                  <tr>
-                    <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อผู้ส่ง</th>
-                    <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {shippers.map((item) => (
-                    <tr key={item.shipper_id} className="hover:bg-slate-100">
-                      <td className="border-b border-slate-200 px-2 py-1.5">
-                        <div className="font-medium text-slate-700">
-                          {item.shipper_code} - {item.shipper_name}
-                        </div>
-                        <div className="text-[10px] text-slate-500">{item.address || "-"}</div>
-                      </td>
-
-                      <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => selectShipper(item)}
-                          className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
-                        >
-                          ✓เลือก
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {!shippers.length && (
+            <div className="border border-slate-300">
+              <div className="max-h-[500px] overflow-y-auto">
+                <table className="w-full border-collapse text-xs">
+                  <thead className="sticky top-0 bg-slate-50">
                     <tr>
-                      <td colSpan={2} className="py-6 text-center text-xs text-slate-400">
-                        ไม่พบข้อมูลผู้ส่ง
-                      </td>
+                      <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อผู้ส่ง</th>
+                      <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {pagedShippers.map((item) => (
+                      <tr key={item.shipper_id} className="hover:bg-slate-100">
+                        <td className="border-b border-slate-200 px-2 py-1.5">
+                          <div className="font-medium text-slate-700">
+                            {item.shipper_code} - {item.shipper_name}
+                          </div>
+                          <div className="text-[10px] text-slate-500">{item.address || "-"}</div>
+                        </td>
+
+                        <td className="border-b border-slate-200 px-2 py-1.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => selectShipper(item)}
+                            className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
+                          >
+                            ✓เลือก
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {!pagedShippers.length && (
+                      <tr>
+                        <td colSpan={2} className="py-6 text-center text-xs text-slate-400">
+                          ไม่พบข้อมูลผู้ส่ง
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <TablePagination
+                component="div"
+                count={shippers.length}
+                page={shipperPage}
+                onPageChange={(_, newPage) => setShipperPage(newPage)}
+                rowsPerPage={shipperRowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setShipperRowsPerPage(Number(e.target.value));
+                  setShipperPage(0);
+                }}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+                labelRowsPerPage="Rows per page:"
+                sx={paginationSx}
+              />
             </div>
 
             <div className="mt-3 flex justify-end">
@@ -232,119 +308,144 @@ export default function ReceiveModals({
 
             <div className="mb-2 grid grid-cols-[70px_1fr] items-center gap-2">
               <label className={labelClass}>ค้นหา</label>
-              <input className={inputClass} value={recipientSearch} onChange={(e) => setRecipientSearch(e.target.value)} autoFocus />
+              <input
+                className={inputClass}
+                value={recipientSearch}
+                onChange={(e) => {
+                  setRecipientSearch(e.target.value);
+                  setRecipientPage(0);
+                }}
+                autoFocus
+              />
             </div>
 
-            <div className="max-h-[560px] overflow-y-auto border border-slate-300">
-              <table className="w-full border-collapse text-xs">
-                <thead className="sticky top-0 bg-slate-50">
-                  <tr>
-                    <th className="w-9 border-b border-slate-300 px-1.5 py-1.5" />
-                    <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อผู้รับ</th>
-                    <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ที่อยู่ผู้รับ</th>
-                    <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
-                  </tr>
-                </thead>
+            <div className="border border-slate-300">
+              <div className="max-h-[500px] overflow-y-auto">
+                <table className="w-full border-collapse text-xs">
+                  <thead className="sticky top-0 bg-slate-50">
+                    <tr>
+                      <th className="w-9 border-b border-slate-300 px-1.5 py-1.5" />
+                      <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อผู้รับ</th>
+                      <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ที่อยู่ผู้รับ</th>
+                      <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {groupedRecipients.map(({ recipient_id, recipient, details }) => {
-                    const isOpen = !!expandedRecipientIds[String(recipient_id)];
-                    const firstDetail = details[0];
+                  <tbody>
+                    {pagedGroupedRecipients.map(({ recipient_id, recipient, details }) => {
+                      const isOpen = !!expandedRecipientIds[String(recipient_id)];
+                      const firstDetail = details[0];
 
-                    return (
-                      <Fragment key={recipient_id}>
-                        <tr className="hover:bg-slate-100">
-                          <td className="border-b border-slate-200 px-1.5 py-1.5 text-center">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setExpandedRecipientIds((prev) => ({
-                                  ...prev,
-                                  [String(recipient_id)]: !prev[String(recipient_id)],
-                                }))
-                              }
-                              className="flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white"
-                            >
-                              {isOpen ? "⌄" : "›"}
-                            </button>
-                          </td>
-
-                          <td className="border-b border-slate-200 px-2 py-1.5">
-                            <div className="font-medium text-slate-700">
-                              {recipient.recipient_code} - {recipient.recipient_name}
-                            </div>
-                          </td>
-
-                          <td className="border-b border-slate-200 px-2 py-1.5 text-[11px] text-slate-600">{firstDetail?.address || "-"}</td>
-
-                          <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                            {firstDetail?.recipient_detail_id && (
+                      return (
+                        <Fragment key={recipient_id}>
+                          <tr className="hover:bg-slate-100">
+                            <td className="border-b border-slate-200 px-1.5 py-1.5 text-center">
                               <button
                                 type="button"
-                                onClick={() => selectRecipient(firstDetail)}
-                                className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
+                                onClick={() =>
+                                  setExpandedRecipientIds((prev) => ({
+                                    ...prev,
+                                    [String(recipient_id)]: !prev[String(recipient_id)],
+                                  }))
+                                }
+                                className="flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white"
                               >
-                                ✓เลือก
+                                {isOpen ? "⌄" : "›"}
                               </button>
-                            )}
-                          </td>
-                        </tr>
+                            </td>
 
-                        {isOpen && (
-                          <tr>
-                            <td />
-                            <td colSpan={3} className="border-b border-slate-300 bg-slate-50 p-0">
-                              <table className="w-full border-collapse text-[11px]">
-                                <thead>
-                                  <tr className="bg-white">
-                                    <th className="border-b border-slate-200 px-2 py-1.5 text-left">ชื่อผู้รับ</th>
-                                    <th className="border-b border-slate-200 px-2 py-1.5 text-left">ที่อยู่</th>
-                                    <th className="w-[80px] border-b border-slate-200 px-2 py-1.5" />
-                                  </tr>
-                                </thead>
+                            <td className="border-b border-slate-200 px-2 py-1.5">
+                              <div className="font-medium text-slate-700">
+                                {recipient.recipient_code} - {recipient.recipient_name}
+                              </div>
+                            </td>
 
-                                <tbody>
-                                  {details.map((detail) => (
-                                    <tr key={detail.recipient_detail_id}>
-                                      <td className="border-b border-slate-200 px-2 py-1.5">
-                                        {detail.recipient_detail_name || detail.recipient_name}
-                                      </td>
+                            <td className="border-b border-slate-200 px-2 py-1.5 text-[11px] text-slate-600">{firstDetail?.address || "-"}</td>
 
-                                      <td className="border-b border-slate-200 px-2 py-1.5">
-                                        {[detail.address, detail.subdistrict_name, detail.district_name, detail.province_name, detail.zip_code]
-                                          .filter(Boolean)
-                                          .join(" ")}
-                                      </td>
-
-                                      <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                                        <button
-                                          type="button"
-                                          onClick={() => selectRecipient(detail)}
-                                          className="rounded border border-blue-500 bg-white px-3 py-0.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-50"
-                                        >
-                                          ✓เลือก
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                            <td className="border-b border-slate-200 px-2 py-1.5 text-right">
+                              {firstDetail?.recipient_detail_id && (
+                                <button
+                                  type="button"
+                                  onClick={() => selectRecipient(firstDetail)}
+                                  className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
+                                >
+                                  ✓เลือก
+                                </button>
+                              )}
                             </td>
                           </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })}
 
-                  {!groupedRecipients.length && (
-                    <tr>
-                      <td colSpan={4} className="py-6 text-center text-xs text-slate-400">
-                        ไม่พบข้อมูลผู้รับ
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                          {isOpen && (
+                            <tr>
+                              <td />
+                              <td colSpan={3} className="border-b border-slate-300 bg-slate-50 p-0">
+                                <table className="w-full border-collapse text-[11px]">
+                                  <thead>
+                                    <tr className="bg-white">
+                                      <th className="border-b border-slate-200 px-2 py-1.5 text-left">ชื่อผู้รับ</th>
+                                      <th className="border-b border-slate-200 px-2 py-1.5 text-left">ที่อยู่</th>
+                                      <th className="w-[80px] border-b border-slate-200 px-2 py-1.5" />
+                                    </tr>
+                                  </thead>
+
+                                  <tbody>
+                                    {details.map((detail) => (
+                                      <tr key={detail.recipient_detail_id}>
+                                        <td className="border-b border-slate-200 px-2 py-1.5">
+                                          {detail.recipient_detail_name || detail.recipient_name}
+                                        </td>
+
+                                        <td className="border-b border-slate-200 px-2 py-1.5">
+                                          {[detail.address, detail.subdistrict_name, detail.district_name, detail.province_name, detail.zip_code]
+                                            .filter(Boolean)
+                                            .join(" ")}
+                                        </td>
+
+                                        <td className="border-b border-slate-200 px-2 py-1.5 text-right">
+                                          <button
+                                            type="button"
+                                            onClick={() => selectRecipient(detail)}
+                                            className="rounded border border-blue-500 bg-white px-3 py-0.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-50"
+                                          >
+                                            ✓เลือก
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+
+                    {!pagedGroupedRecipients.length && (
+                      <tr>
+                        <td colSpan={4} className="py-6 text-center text-xs text-slate-400">
+                          ไม่พบข้อมูลผู้รับ
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <TablePagination
+                component="div"
+                count={groupedRecipients.length}
+                page={recipientPage}
+                onPageChange={(_, newPage) => setRecipientPage(newPage)}
+                rowsPerPage={recipientRowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setRecipientRowsPerPage(Number(e.target.value));
+                  setRecipientPage(0);
+                }}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+                labelRowsPerPage="Rows per page:"
+                sx={paginationSx}
+              />
             </div>
 
             <div className="mt-3 flex justify-end">

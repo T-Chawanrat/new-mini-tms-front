@@ -154,7 +154,7 @@ export const emptyReceiveForm: ReceiveForm = {
   tel: "",
 
   delivery_date: "",
-  payment_type_id: "",
+  payment_type_id: "3",
   remark: "",
 
   is_cod: "N",

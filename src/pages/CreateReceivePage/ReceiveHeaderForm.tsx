@@ -67,12 +67,7 @@ export default function ReceiveHeaderForm({
                 ผู้ส่ง
               </RequiredLabel>
 
-              <button
-                type="button"
-                disabled={!form.customer_id || loadingOptions}
-                onClick={onOpenShipperModal}
-                className={disabledButtonInputClass}
-              >
+              <button type="button" disabled={!form.customer_id || loadingOptions} onClick={onOpenShipperModal} className={disabledButtonInputClass}>
                 <span className="truncate">
                   {form.shipper_name
                     ? `${form.shipper_code ? `${form.shipper_code} - ` : ""}${form.shipper_name}`
@@ -82,12 +77,7 @@ export default function ReceiveHeaderForm({
                 </span>
               </button>
 
-              <button
-                type="button"
-                disabled={!form.customer_id || loadingOptions}
-                onClick={onOpenShipperModal}
-                className={iconButtonClass}
-              >
+              <button type="button" disabled={!form.customer_id || loadingOptions} onClick={onOpenShipperModal} className={iconButtonClass}>
                 🔍
               </button>
 
@@ -142,12 +132,7 @@ export default function ReceiveHeaderForm({
                 </span>
               </button>
 
-              <button
-                type="button"
-                disabled={!form.customer_id || loadingOptions}
-                onClick={onOpenRecipientModal}
-                className={iconButtonClass}
-              >
+              <button type="button" disabled={!form.customer_id || loadingOptions} onClick={onOpenRecipientModal} className={iconButtonClass}>
                 🔍
               </button>
 
@@ -163,12 +148,7 @@ export default function ReceiveHeaderForm({
         <div className="space-y-1.5">
           <div className="grid grid-cols-[92px_1fr] items-center gap-1.5">
             <label className={labelClass}>ประเภทการจ่าย</label>
-            <select
-              className={selectClass}
-              value={form.payment_type_id}
-              onChange={(e) => updateForm("payment_type_id", e.target.value)}
-            >
-              <option value="">เลือก</option>
+            <select className={selectClass} value={form.payment_type_id} onChange={(e) => updateForm("payment_type_id", e.target.value)}>
               {payments.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
