@@ -24,7 +24,7 @@ import ManageRecipients from "./pages/ManageRecipients";
 import ManagePackages from "./pages/ManagePackages";
 import ImportManual from "./pages/ImportManual";
 import ChangePassword from "./pages/ChangePassword";
-import CreateReceivePage from "./pages/CreateReceivePage";
+import CreateReceivePage from "./pages/CreateReceivePage/CreateReceivePage";
 // import ImportVGT from "./pages/ImportVGT";
 // import ImportADV from "./pages/ImportADV";
 

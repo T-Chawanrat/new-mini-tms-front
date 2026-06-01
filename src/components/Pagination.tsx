@@ -1,121 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React from "react";
 
 interface PaginationProps {
@@ -125,12 +7,7 @@ interface PaginationProps {
   disabled?: boolean;
 }
 
-const Pagination: React.FC<PaginationProps> = ({
-  page,
-  pageCount,
-  onPageChange,
-  disabled = false,
-}) => {
+const Pagination: React.FC<PaginationProps> = ({ page, pageCount, onPageChange, disabled = false }) => {
   if (pageCount <= 1) return null;
 
   const go = (p: number) => {
@@ -148,14 +25,10 @@ const Pagination: React.FC<PaginationProps> = ({
     return numbers;
   };
 
-  const baseBtn =
-    "h-9 min-w-[36px] px-3 rounded-full text-sm font-medium transition border shadow-sm";
-  const normalBtn =
-    "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98]";
-  const activeBtn =
-    "bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700";
-  const disabledBtn =
-    "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed shadow-none";
+  const baseBtn = "h-9 min-w-[36px] px-3 rounded-full text-sm font-medium transition border shadow-sm";
+  const normalBtn = "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98]";
+  const activeBtn = "bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700";
+  const disabledBtn = "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed shadow-none";
 
   const iconBtn = "w-9 px-0";
 
@@ -169,11 +42,7 @@ const Pagination: React.FC<PaginationProps> = ({
           title="หน้าแรก"
           disabled={page === 1 || disabled}
           onClick={() => go(1)}
-          className={[
-            baseBtn,
-            iconBtn,
-            page === 1 || disabled ? disabledBtn : normalBtn,
-          ].join(" ")}
+          className={[baseBtn, iconBtn, page === 1 || disabled ? disabledBtn : normalBtn].join(" ")}
         >
           «
         </button>
@@ -184,20 +53,14 @@ const Pagination: React.FC<PaginationProps> = ({
           title="ก่อนหน้า"
           disabled={page === 1 || disabled}
           onClick={() => go(page - 1)}
-          className={[
-            baseBtn,
-            iconBtn,
-            page === 1 || disabled ? disabledBtn : normalBtn,
-          ].join(" ")}
+          className={[baseBtn, iconBtn, page === 1 || disabled ? disabledBtn : normalBtn].join(" ")}
         >
           ‹
         </button>
 
         {/* Left dots */}
         {page > 3 && (
-          <span className="mx-1 inline-flex h-9 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-sm text-slate-400">
-            ...
-          </span>
+          <span className="mx-1 inline-flex h-9 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-sm text-slate-400">...</span>
         )}
 
         {/* Pages */}
@@ -207,11 +70,7 @@ const Pagination: React.FC<PaginationProps> = ({
             type="button"
             disabled={disabled}
             onClick={() => go(p)}
-            className={[
-              baseBtn,
-              p === page ? activeBtn : normalBtn,
-              disabled ? disabledBtn : "",
-            ].join(" ")}
+            className={[baseBtn, p === page ? activeBtn : normalBtn, disabled ? disabledBtn : ""].join(" ")}
           >
             {p}
           </button>
@@ -219,9 +78,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
         {/* Right dots */}
         {page < pageCount - 2 && (
-          <span className="mx-1 inline-flex h-9 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-sm text-slate-400">
-            ...
-          </span>
+          <span className="mx-1 inline-flex h-9 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-sm text-slate-400">...</span>
         )}
 
         {/* Next */}
@@ -230,11 +87,7 @@ const Pagination: React.FC<PaginationProps> = ({
           title="ถัดไป"
           disabled={page === pageCount || disabled}
           onClick={() => go(page + 1)}
-          className={[
-            baseBtn,
-            iconBtn,
-            page === pageCount || disabled ? disabledBtn : normalBtn,
-          ].join(" ")}
+          className={[baseBtn, iconBtn, page === pageCount || disabled ? disabledBtn : normalBtn].join(" ")}
         >
           ›
         </button>
@@ -245,11 +98,7 @@ const Pagination: React.FC<PaginationProps> = ({
           title="หน้าสุดท้าย"
           disabled={page === pageCount || disabled}
           onClick={() => go(pageCount)}
-          className={[
-            baseBtn,
-            iconBtn,
-            page === pageCount || disabled ? disabledBtn : normalBtn,
-          ].join(" ")}
+          className={[baseBtn, iconBtn, page === pageCount || disabled ? disabledBtn : normalBtn].join(" ")}
         >
           »
         </button>

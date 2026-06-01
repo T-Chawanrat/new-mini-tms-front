@@ -1,0 +1,149 @@
+import { type PackageRow, money } from "./createReceiveConfig";
+
+type PackageSectionProps = {
+  packageRows: PackageRow[];
+  totalPrice: number;
+  packageTotal: (row: PackageRow) => number;
+  onAdd: () => void;
+  onScan: () => void;
+  onEdit: (index: number) => void;
+  onDelete: (index: number) => void;
+};
+
+const displayValue = (value?: string | number | null) => {
+  if (value === undefined || value === null || value === "") return "-";
+  return String(value);
+};
+
+const safeNumber = (value?: string | number | null) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
+const safeQty = (value?: string | number | null) => {
+  const numberValue = safeNumber(value);
+  return numberValue > 0 ? numberValue : 1;
+};
+
+export default function PackageSection({
+  packageRows,
+  totalPrice,
+  packageTotal,
+  onAdd,
+  onScan,
+  onEdit,
+  onDelete,
+}: PackageSectionProps) {
+  return (
+    <div className="mt-2 border border-slate-200">
+      <div className="flex items-center justify-end border-b border-slate-200 px-2 py-1.5">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onAdd}
+            className="rounded bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+          >
+            เพิ่มรายการ +
+          </button>
+
+          <button
+            type="button"
+            onClick={onScan}
+            className="rounded bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+          >
+            สแกน
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] border-collapse text-[11px]">
+          <thead>
+            <tr className="bg-slate-50 text-left text-[11px] text-slate-600">
+              <th className="w-14 border-b border-slate-200 px-2 py-1 text-center">ลำดับ</th>
+              <th className="border-b border-slate-200 px-2 py-1">ชื่อสินค้า</th>
+              <th className="border-b border-slate-200 px-2 py-1">กxยxส cm., Q</th>
+              <th className="border-b border-slate-200 px-2 py-1 text-right">น้ำหนัก</th>
+              <th className="border-b border-slate-200 px-2 py-1 text-right">จำนวน</th>
+              <th className="border-b border-slate-200 px-2 py-1 text-right">ราคา/หน่วย(บาท)</th>
+              <th className="border-b border-slate-200 px-2 py-1 text-right">ราคา(บาท)</th>
+              <th className="w-28 border-b border-slate-200 px-2 py-1 text-center">จัดการ</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {!packageRows.length && (
+              <tr>
+                <td colSpan={8} className="h-36 border-b border-slate-200 text-center text-xs text-slate-400">
+                  ยังไม่มีรายการสินค้า
+                </td>
+              </tr>
+            )}
+
+            {packageRows.map((row, index) => {
+              const rowTotal = packageTotal(row);
+              const rowKey = `${row.package_id || row.package_code || row.package_name || "package"}-${row.package_size_name || "size"}-${index}`;
+
+              return (
+                <tr key={rowKey} className={index % 2 === 0 ? "bg-white" : "bg-slate-50/70"}>
+                  <td className="border-b border-slate-200 px-2 py-1 text-center align-middle">{index + 1}</td>
+
+                  <td className="border-b border-slate-200 px-2 py-1 align-middle">
+                    <div className="font-medium text-slate-800">{displayValue(row.package_name)}</div>
+                    <div className="text-[10px] text-slate-500">{displayValue(row.package_size_name)}</div>
+                  </td>
+
+                  <td className="border-b border-slate-200 px-2 py-1 align-middle">
+                    {`${displayValue(row.width)} x ${displayValue(row.length)} x ${displayValue(row.height)}, ${displayValue(row.q)}`}
+                  </td>
+
+                  <td className="border-b border-slate-200 px-2 py-1 text-right align-middle">{displayValue(row.weight)}</td>
+
+                  <td className="border-b border-slate-200 px-2 py-1 text-right align-middle">{safeQty(row.qty)}</td>
+
+                  <td className="border-b border-slate-200 px-2 py-1 text-right align-middle">
+                    {money(safeNumber(row.unit_price))}
+                  </td>
+
+                  <td className="border-b border-slate-200 px-2 py-1 text-right align-middle font-semibold">
+                    {money(rowTotal)}
+                  </td>
+
+                  <td className="border-b border-slate-200 px-2 py-1 align-middle">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(index)}
+                        className="rounded-full bg-blue-500 px-2 py-0.5 text-[10px] text-white hover:bg-blue-600"
+                      >
+                        แก้ไข
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onDelete(index)}
+                        className="rounded-full bg-red-500 px-2 py-0.5 text-[10px] text-white hover:bg-red-600"
+                      >
+                        ลบ
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+
+          <tfoot>
+            <tr>
+              <td colSpan={6} className="px-2 py-2 text-right text-sm font-semibold text-slate-800">
+                รวม:
+              </td>
+              <td className="px-2 py-2 text-right text-base font-bold text-slate-900">{money(totalPrice)}</td>
+              <td />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+}
