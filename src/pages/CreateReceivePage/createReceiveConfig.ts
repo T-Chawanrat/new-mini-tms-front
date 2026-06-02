@@ -96,10 +96,52 @@ export type GroupedRecipient = {
   details: RecipientOption[];
 };
 
+export type PackageOption = {
+  package_id: number | string;
+  package_code?: string | null;
+  package_name?: string | null;
+  customer_id?: number | string | null;
+  type?: string | null;
+
+  package_detail_id?: number | string | null;
+  package_detail_code?: string | null;
+  package_detail_name?: string | null;
+  unit_id?: number | string | null;
+
+  size_min?: number | string | null;
+  size_max?: number | string | null;
+  weight_min?: number | string | null;
+  weight_max?: number | string | null;
+
+  cost?: number | string | null;
+  cost_difference_warehouse?: number | string | null;
+  cost_go?: number | string | null;
+  cost_return?: number | string | null;
+
+  is_document_return?: string | null;
+  is_weight_fix?: string | null;
+  is_vat?: string | null;
+
+  package_detail_type?: "BUSINESS" | "EXPRESS" | string | null;
+};
+
+export type GroupedPackageOption = {
+  package_id: string;
+  package_code: string;
+  package_name: string;
+  type: string;
+  details: PackageOption[];
+};
+
 export type PackageRow = {
   package_id: string;
   package_code: string;
   package_name: string;
+
+  package_detail_id: string;
+  package_detail_code: string;
+  package_detail_type: string;
+
   package_size_name: string;
 
   width: string;
@@ -171,6 +213,11 @@ export const emptyPackageRow: PackageRow = {
   package_id: "",
   package_code: "",
   package_name: "",
+
+  package_detail_id: "",
+  package_detail_code: "",
+  package_detail_type: "",
+
   package_size_name: "",
 
   width: "",

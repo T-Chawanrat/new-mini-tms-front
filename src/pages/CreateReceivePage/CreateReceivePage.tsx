@@ -152,6 +152,14 @@ export default function CreateReceivePage() {
           ? recipientRes.data.data
           : [];
 
+
+console.log("raw recipient response:", recipientRes.data);
+console.log("ALL recipient rows:", recipientData.length);
+console.log(
+  "DQ details:",
+  recipientData.filter((x: RecipientOption) => Number(x.recipient_id) === 221557).length
+);
+
       setShippers(shipperData);
       setRecipients(recipientData);
     } catch (err) {
@@ -259,6 +267,14 @@ export default function CreateReceivePage() {
     }));
   }, [filteredRecipients]);
 
+  useEffect(() => {
+  const dqGroup = groupedRecipients.find((x) => Number(x.recipient_id) === 221557);
+
+  console.log("recipientSearch:", recipientSearch);
+  console.log("filteredRecipients total:", filteredRecipients.length);
+  console.log("DQ grouped details:", dqGroup?.details?.length);
+}, [recipientSearch, filteredRecipients, groupedRecipients]);
+
   const selectCustomer = (selected: CustomerOption) => {
     setForm((prev) => ({
       ...prev,
@@ -337,8 +353,13 @@ export default function CreateReceivePage() {
     setError(null);
     setSuccess(null);
 
-    if (!packageForm.package_name.trim()) {
-      setError("กรุณาระบุชื่อสินค้า");
+    if (!packageForm.package_id || !packageForm.package_name.trim()) {
+      setError("กรุณาเลือกชื่อสินค้า");
+      return;
+    }
+
+    if (!packageForm.package_detail_id || !packageForm.package_size_name.trim()) {
+      setError("กรุณาเลือกขนาดสินค้า");
       return;
     }
 
@@ -388,8 +409,13 @@ export default function CreateReceivePage() {
     setError(null);
     setSuccess(null);
 
-    if (!packageForm.package_name.trim()) {
-      setError("กรุณาระบุชื่อสินค้า");
+    if (!packageForm.package_id || !packageForm.package_name.trim()) {
+      setError("กรุณาเลือกชื่อสินค้า");
+      return;
+    }
+
+    if (!packageForm.package_detail_id || !packageForm.package_size_name.trim()) {
+      setError("กรุณาเลือกขนาดสินค้า");
       return;
     }
 
@@ -488,7 +514,13 @@ export default function CreateReceivePage() {
           package_id: row.package_id || null,
           package_code: row.package_code || null,
           package_name: row.package_name || null,
+
+          package_detail_id: row.package_detail_id || null,
+          package_detail_code: row.package_detail_code || null,
+          package_detail_type: row.package_detail_type || null,
+
           package_size_name: row.package_size_name || null,
+
           width: row.width ? Number(row.width) : null,
           length: row.length ? Number(row.length) : null,
           height: row.height ? Number(row.height) : null,
@@ -517,6 +549,8 @@ export default function CreateReceivePage() {
       setSaving(false);
     }
   };
+
+  const disablePackageActions = !form.customer_id || !form.shipper_id || !form.recipient_id || !form.recipient_detail_id;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -573,12 +607,14 @@ export default function CreateReceivePage() {
             onScan={openScanModal}
             onEdit={openEditPackageModal}
             onDelete={handleDeletePackage}
+            disabled={disablePackageActions}
           />
         </div>
 
         <ReceiveTrackingSection />
 
         <ReceiveModals
+          customerId={form.customer_id}
           showCustomerModal={showCustomerModal}
           showShipperModal={showShipperModal}
           showRecipientModal={showRecipientModal}

@@ -12,16 +12,29 @@ export const setTokenExpiredHandler = (fn: () => void) => {
 
 AxiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
   return config;
 });
 
 AxiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const url = error.config?.url || "";
+
+    // ✅ endpoint login ไม่ต้องถือว่า token หมดอายุ
+    const isLoginRequest =
+      url.includes("/login") ||
+      url.includes("/auth/login");
+
+    if (status === 401 && !isLoginRequest) {
       tokenExpiredHandler();
     }
+
     return Promise.reject(error);
   }
 );

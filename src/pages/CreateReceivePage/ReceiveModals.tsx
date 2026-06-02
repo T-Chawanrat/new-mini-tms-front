@@ -1,8 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import axios from "axios";
 import TablePagination from "@mui/material/TablePagination";
+import AxiosInstance from "../../utils/AxiosInstance";
 import {
   type CustomerOption,
+  type GroupedPackageOption,
   type GroupedRecipient,
+  type PackageOption,
   type PackageRow,
   type RecipientOption,
   type ShipperOption,
@@ -13,6 +18,8 @@ import {
 } from "./createReceiveConfig";
 
 type ReceiveModalsProps = {
+  customerId: string;
+
   showCustomerModal: boolean;
   showShipperModal: boolean;
   showRecipientModal: boolean;
@@ -32,11 +39,11 @@ type ReceiveModalsProps = {
 
   expandedRecipientIds: Record<string, boolean>;
 
-  setCustomerSearch: React.Dispatch<React.SetStateAction<string>>;
-  setShipperSearch: React.Dispatch<React.SetStateAction<string>>;
-  setRecipientSearch: React.Dispatch<React.SetStateAction<string>>;
-  setExpandedRecipientIds: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  setScanBarcode: React.Dispatch<React.SetStateAction<string>>;
+  setCustomerSearch: Dispatch<SetStateAction<string>>;
+  setShipperSearch: Dispatch<SetStateAction<string>>;
+  setRecipientSearch: Dispatch<SetStateAction<string>>;
+  setExpandedRecipientIds: Dispatch<SetStateAction<Record<string, boolean>>>;
+  setScanBarcode: Dispatch<SetStateAction<string>>;
 
   updatePackageForm: UpdatePackageForm;
 
@@ -73,6 +80,8 @@ const paginationSx = {
 };
 
 export default function ReceiveModals({
+  customerId,
+
   showCustomerModal,
   showShipperModal,
   showRecipientModal,
@@ -119,6 +128,11 @@ export default function ReceiveModals({
   const [recipientPage, setRecipientPage] = useState(0);
   const [recipientRowsPerPage, setRecipientRowsPerPage] = useState(100);
 
+  const [showPackageSelectModal, setShowPackageSelectModal] = useState(false);
+  const [packageSearch, setPackageSearch] = useState("");
+  const [packageOptions, setPackageOptions] = useState<PackageOption[]>([]);
+  const [packageError, setPackageError] = useState<string | null>(null);
+
   const pagedShippers = useMemo(() => {
     const start = shipperPage * shipperRowsPerPage;
     return shippers.slice(start, start + shipperRowsPerPage);
@@ -128,6 +142,138 @@ export default function ReceiveModals({
     const start = recipientPage * recipientRowsPerPage;
     return groupedRecipients.slice(start, start + recipientRowsPerPage);
   }, [groupedRecipients, recipientPage, recipientRowsPerPage]);
+
+  const packageGroups = useMemo<GroupedPackageOption[]>(() => {
+    const map = new Map<string, GroupedPackageOption>();
+
+    packageOptions.forEach((item) => {
+      const packageId = String(item.package_id || "");
+      if (!packageId) return;
+
+      if (!map.has(packageId)) {
+        map.set(packageId, {
+          package_id: packageId,
+          package_code: item.package_code || "",
+          package_name: item.package_name || "",
+          type: item.type || "",
+          details: [],
+        });
+      }
+
+      if (item.package_detail_id) {
+        map.get(packageId)?.details.push(item);
+      }
+    });
+
+    return Array.from(map.values());
+  }, [packageOptions]);
+
+  const selectedPackageDetails = useMemo(() => {
+    if (!packageForm.package_id) return [];
+
+    return packageGroups.find((item) => item.package_id === packageForm.package_id)?.details || [];
+  }, [packageGroups, packageForm.package_id]);
+
+  const loadPackages = async (keyword = "") => {
+    if (!customerId) {
+      setPackageOptions([]);
+      setPackageError("กรุณาเลือกเจ้าของงานก่อน");
+      return;
+    }
+
+    setPackageError(null);
+
+    try {
+      const res = await AxiosInstance.get(`/receives/options/packages/${customerId}`, {
+        params: keyword.trim() ? { search: keyword.trim() } : undefined,
+      });
+
+      const data = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];
+
+      setPackageOptions(data);
+    } catch (err) {
+      console.error("LOAD PACKAGES ERROR:", err);
+
+      if (axios.isAxiosError(err)) {
+        setPackageError(err.response?.data?.message || "โหลดข้อมูลสินค้าไม่สำเร็จ");
+      } else if (err instanceof Error) {
+        setPackageError(err.message);
+      } else {
+        setPackageError("โหลดข้อมูลสินค้าไม่สำเร็จ");
+      }
+    }
+  };
+
+  const openPackageSelectModal = () => {
+    if (!customerId) {
+      setPackageError("กรุณาเลือกเจ้าของงานก่อน");
+      return;
+    }
+
+    setPackageSearch("");
+    setPackageError(null);
+    setShowPackageSelectModal(true);
+    loadPackages("");
+  };
+
+  const closePackageSelectModal = () => {
+    setShowPackageSelectModal(false);
+    setPackageSearch("");
+    setPackageError(null);
+  };
+
+  const selectPackage = (selected: GroupedPackageOption) => {
+    updatePackageForm("package_id", selected.package_id);
+    updatePackageForm("package_code", selected.package_code || "");
+    updatePackageForm("package_name", selected.package_name || "");
+
+    updatePackageForm("package_detail_id", "");
+    updatePackageForm("package_detail_code", "");
+    updatePackageForm("package_detail_type", "");
+    updatePackageForm("package_size_name", "");
+
+    updatePackageForm("width", "");
+    updatePackageForm("length", "");
+    updatePackageForm("height", "");
+    updatePackageForm("q", "");
+    updatePackageForm("weight", "");
+    updatePackageForm("unit_price", "0");
+
+    closePackageSelectModal();
+  };
+
+  const selectPackageDetail = (detailId: string) => {
+    if (!detailId) {
+      updatePackageForm("package_detail_id", "");
+      updatePackageForm("package_detail_code", "");
+      updatePackageForm("package_detail_type", "");
+      updatePackageForm("package_size_name", "");
+
+      updatePackageForm("width", "");
+      updatePackageForm("length", "");
+      updatePackageForm("height", "");
+      updatePackageForm("q", "");
+      updatePackageForm("weight", "");
+      updatePackageForm("unit_price", "0");
+      return;
+    }
+
+    const detail = selectedPackageDetails.find((item) => String(item.package_detail_id) === detailId);
+    if (!detail) return;
+
+    updatePackageForm("package_detail_id", detail.package_detail_id != null ? String(detail.package_detail_id) : "");
+    updatePackageForm("package_detail_code", detail.package_detail_code || "");
+    updatePackageForm("package_detail_type", detail.package_detail_type || "");
+    updatePackageForm("package_size_name", detail.package_detail_name || "");
+
+    updatePackageForm("width", "");
+    updatePackageForm("length", "");
+    updatePackageForm("height", "");
+
+    updatePackageForm("q", detail.size_max != null ? String(detail.size_max) : "");
+    updatePackageForm("weight", detail.weight_max != null ? String(detail.weight_max) : "");
+    updatePackageForm("unit_price", detail.cost != null ? String(detail.cost) : "0");
+  };
 
   useEffect(() => {
     const maxPage = Math.max(Math.ceil(shippers.length / shipperRowsPerPage) - 1, 0);
@@ -144,6 +290,14 @@ export default function ReceiveModals({
       setRecipientPage(maxPage);
     }
   }, [groupedRecipients.length, recipientPage, recipientRowsPerPage]);
+
+  useEffect(() => {
+    if (!showPackageModal && !showScanModal) return;
+
+    setShowPackageSelectModal(false);
+    setPackageSearch("");
+    setPackageError(null);
+  }, [showPackageModal, showScanModal]);
 
   return (
     <>
@@ -379,41 +533,47 @@ export default function ReceiveModals({
                             <tr>
                               <td />
                               <td colSpan={3} className="border-b border-slate-300 bg-slate-50 p-0">
-                                <table className="w-full border-collapse text-[11px]">
-                                  <thead>
-                                    <tr className="bg-white">
-                                      <th className="border-b border-slate-200 px-2 py-1.5 text-left">ชื่อผู้รับ</th>
-                                      <th className="border-b border-slate-200 px-2 py-1.5 text-left">ที่อยู่</th>
-                                      <th className="w-[80px] border-b border-slate-200 px-2 py-1.5" />
-                                    </tr>
-                                  </thead>
+                                <div className="border-b border-slate-200 bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
+                                  รายละเอียดทั้งหมด {details.length} รายการ
+                                </div>
 
-                                  <tbody>
-                                    {details.map((detail) => (
-                                      <tr key={detail.recipient_detail_id}>
-                                        <td className="border-b border-slate-200 px-2 py-1.5">
-                                          {detail.recipient_detail_name || detail.recipient_name}
-                                        </td>
-
-                                        <td className="border-b border-slate-200 px-2 py-1.5">
-                                          {[detail.address, detail.subdistrict_name, detail.district_name, detail.province_name, detail.zip_code]
-                                            .filter(Boolean)
-                                            .join(" ")}
-                                        </td>
-
-                                        <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                                          <button
-                                            type="button"
-                                            onClick={() => selectRecipient(detail)}
-                                            className="rounded border border-blue-500 bg-white px-3 py-0.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-50"
-                                          >
-                                            ✓เลือก
-                                          </button>
-                                        </td>
+                                <div className="max-h-[360px] overflow-y-auto">
+                                  <table className="w-full border-collapse text-[11px]">
+                                    <thead className="sticky top-0 z-10 bg-white">
+                                      <tr>
+                                        <th className="border-b border-slate-200 px-2 py-1.5 text-left">ชื่อผู้รับ</th>
+                                        <th className="border-b border-slate-200 px-2 py-1.5 text-left">ที่อยู่</th>
+                                        <th className="w-[80px] border-b border-slate-200 px-2 py-1.5" />
                                       </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                    </thead>
+
+                                    <tbody>
+                                      {details.map((detail, index) => (
+                                        <tr key={`${detail.recipient_id}-${detail.recipient_detail_id || index}`}>
+                                          <td className="border-b border-slate-200 px-2 py-1.5">
+                                            {detail.recipient_detail_name || detail.recipient_name}
+                                          </td>
+
+                                          <td className="border-b border-slate-200 px-2 py-1.5">
+                                            {[detail.address, detail.subdistrict_name, detail.district_name, detail.province_name, detail.zip_code]
+                                              .filter(Boolean)
+                                              .join(" ")}
+                                          </td>
+
+                                          <td className="border-b border-slate-200 px-2 py-1.5 text-right">
+                                            <button
+                                              type="button"
+                                              onClick={() => selectRecipient(detail)}
+                                              className="rounded border border-blue-500 bg-white px-3 py-0.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-50"
+                                            >
+                                              ✓เลือก
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
                               </td>
                             </tr>
                           )}
@@ -463,7 +623,7 @@ export default function ReceiveModals({
 
       {showPackageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closePackageModal}>
-          <div className="w-full max-w-5xl rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-start justify-between">
               <h3 className="text-lg font-semibold text-slate-900">เพิ่มรายการสินค้า</h3>
 
@@ -473,68 +633,43 @@ export default function ReceiveModals({
             </div>
 
             <div className="space-y-3">
+              {packageError && <div className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{packageError}</div>}
+
               <div className="grid grid-cols-[115px_1fr_36px] items-center gap-2">
                 <label className="text-[11px] font-medium text-slate-700">ชื่อสินค้า</label>
-                <input
-                  className={inputClass}
-                  value={packageForm.package_name}
-                  onChange={(e) => updatePackageForm("package_name", e.target.value)}
-                  placeholder="ค้นหา"
-                />
-                <button className="flex h-9 items-center justify-center text-slate-500" type="button">
-                  🔍
-                </button>
+                <input className={inputClass} value={packageForm.package_name} readOnly placeholder="ค้นหา" onClick={openPackageSelectModal} />
+                <div />
 
-                <label className="text-[11px] font-medium text-slate-700">ขนาดสินค้า</label>
+                <label className="text-[11px] font-medium text-slate-700">รายละเอียดแพ็กเกจ</label>
                 <select
                   className={selectClass}
-                  value={packageForm.package_size_name}
-                  onChange={(e) => updatePackageForm("package_size_name", e.target.value)}
+                  value={packageForm.package_detail_id}
+                  onChange={(e) => selectPackageDetail(e.target.value)}
+                  disabled={!packageForm.package_id}
                 >
-                  <option value="">เลือกขนาดสินค้า</option>
-                  <option value="BOX-S">BOX-S</option>
-                  <option value="BOX-M">BOX-M</option>
-                  <option value="BOX-L">BOX-L</option>
+                  <option value="">เลือกรายละเอียดแพ็กเกจ</option>
+                  {selectedPackageDetails.map((item) => (
+                    <option key={String(item.package_detail_id)} value={String(item.package_detail_id)}>
+                      {item.package_detail_name || "-"}
+                    </option>
+                  ))}
                 </select>
                 <div />
 
-                <label className="text-[11px] font-medium text-slate-700">กว้างยาวสูง (ซม.)</label>
-                <div className="grid grid-cols-4 gap-2">
-                  <input
-                    className={inputClass}
-                    placeholder="กว้าง"
-                    value={packageForm.width}
-                    onChange={(e) => updatePackageForm("width", e.target.value)}
-                  />
-                  <input
-                    className={inputClass}
-                    placeholder="ยาว"
-                    value={packageForm.length}
-                    onChange={(e) => updatePackageForm("length", e.target.value)}
-                  />
-                  <input
-                    className={inputClass}
-                    placeholder="สูง"
-                    value={packageForm.height}
-                    onChange={(e) => updatePackageForm("height", e.target.value)}
-                  />
-                  <input className={inputClass} placeholder="Q" value={packageForm.q} onChange={(e) => updatePackageForm("q", e.target.value)} />
-                </div>
+                <label className="text-[11px] font-medium text-slate-700">Q</label>
+                <input className={inputClass} placeholder="size_max" value={packageForm.q} readOnly />
                 <div />
 
                 <label className="text-[11px] font-medium text-slate-700">น้ำหนัก</label>
-                <input
-                  className={inputClass}
-                  placeholder="น้ำหนัก(กรัม)"
-                  value={packageForm.weight}
-                  onChange={(e) => updatePackageForm("weight", e.target.value)}
-                />
+                <input className={inputClass} placeholder="weight_max" value={packageForm.weight} readOnly />
+                <div />
+
+                <label className="text-[11px] font-medium text-slate-700">ราคา</label>
+                <input className={inputClass} placeholder="cost" value={packageForm.unit_price} readOnly />
                 <div />
 
                 <label className="text-[11px] font-medium text-slate-700">จำนวนรายการ</label>
                 <input className={inputClass} type="number" value={packageForm.qty} onChange={(e) => updatePackageForm("qty", e.target.value)} />
-                <div />
-
                 <div />
               </div>
             </div>
@@ -552,9 +687,92 @@ export default function ReceiveModals({
         </div>
       )}
 
+      {showPackageSelectModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4" onClick={closePackageSelectModal}>
+          <div className="w-full max-w-lg rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">ข้อมูลสินค้า</h3>
+
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
+                ทั้งหมด {packageGroups.length} รายการ
+              </span>
+            </div>
+
+            <div className="mb-2 grid grid-cols-[70px_1fr] items-center gap-2">
+              <label className={labelClass}>ค้นหา</label>
+              <input
+                className={inputClass}
+                value={packageSearch}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setPackageSearch(value);
+                  loadPackages(value);
+                }}
+                autoFocus
+                placeholder="ค้นหาชื่อสินค้า / รหัสสินค้า"
+              />
+            </div>
+
+            {packageError && <div className="mb-2 rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{packageError}</div>}
+
+            <div className="max-h-[560px] overflow-y-auto border border-slate-300">
+              <table className="w-full border-collapse text-xs">
+                <thead className="sticky top-0 bg-slate-50">
+                  <tr>
+                    <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อสินค้า</th>
+                    <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {packageGroups.map((item) => (
+                    <tr key={item.package_id} className="hover:bg-slate-100">
+                      <td className="border-b border-slate-200 px-2 py-1.5">
+                        <div className="font-medium text-slate-700">
+                          {item.package_code ? `${item.package_code} - ${item.package_name}` : item.package_name}
+                        </div>
+                        <div className="text-[10px] text-slate-500">{item.details.length ? `มี ${item.details.length} detail` : "ไม่มี detail"}</div>
+                      </td>
+
+                      <td className="border-b border-slate-200 px-2 py-1.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => selectPackage(item)}
+                          className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
+                        >
+                          ✓เลือก
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {!packageGroups.length && (
+                    <tr>
+                      <td colSpan={2} className="py-6 text-center text-xs text-slate-400">
+                        ไม่พบข้อมูลสินค้า
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={closePackageSelectModal}
+                className="rounded bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showScanModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closeScanModal}>
-          <div className="w-full max-w-5xl rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-start justify-between">
               <h3 className="text-lg font-normal text-slate-900">Scan</h3>
 
@@ -564,62 +782,39 @@ export default function ReceiveModals({
             </div>
 
             <div className="space-y-3">
+              {packageError && <div className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{packageError}</div>}
+
               <div className="grid grid-cols-[115px_1fr_36px] items-center gap-2">
                 <label className="text-[11px] font-medium text-slate-700">ชื่อสินค้า</label>
-                <input
-                  className={inputClass}
-                  value={packageForm.package_name}
-                  onChange={(e) => updatePackageForm("package_name", e.target.value)}
-                  placeholder="ค้นหา"
-                />
-                <button className="flex h-9 items-center justify-center text-slate-500" type="button">
-                  🔍
-                </button>
+                <input className={inputClass} value={packageForm.package_name} readOnly placeholder="ค้นหา" onClick={openPackageSelectModal} />
+                <div />
 
-                <label className="text-[11px] font-medium text-slate-700">ขนาดสินค้า</label>
+                <label className="text-[11px] font-medium text-slate-700">รายละเอียดแพ็กเกจ</label>
                 <select
                   className={selectClass}
-                  value={packageForm.package_size_name}
-                  onChange={(e) => updatePackageForm("package_size_name", e.target.value)}
+                  value={packageForm.package_detail_id}
+                  onChange={(e) => selectPackageDetail(e.target.value)}
+                  disabled={!packageForm.package_id}
                 >
-                  <option value="">เลือกขนาดสินค้า</option>
-                  <option value="BOX-S">BOX-S</option>
-                  <option value="BOX-M">BOX-M</option>
-                  <option value="BOX-L">BOX-L</option>
+                  <option value="">เลือกรายละเอียดแพ็กเกจ</option>
+                  {selectedPackageDetails.map((item) => (
+                    <option key={String(item.package_detail_id)} value={String(item.package_detail_id)}>
+                      {item.package_detail_name || "-"}
+                    </option>
+                  ))}
                 </select>
                 <div />
 
-                <label className="text-[11px] font-medium text-slate-700">กว้างยาวสูง (ซม.)</label>
-                <div className="grid grid-cols-4 gap-2">
-                  <input
-                    className={inputClass}
-                    placeholder="กว้าง"
-                    value={packageForm.width}
-                    onChange={(e) => updatePackageForm("width", e.target.value)}
-                  />
-                  <input
-                    className={inputClass}
-                    placeholder="ยาว"
-                    value={packageForm.length}
-                    onChange={(e) => updatePackageForm("length", e.target.value)}
-                  />
-                  <input
-                    className={inputClass}
-                    placeholder="สูง"
-                    value={packageForm.height}
-                    onChange={(e) => updatePackageForm("height", e.target.value)}
-                  />
-                  <input className={inputClass} placeholder="Q" value={packageForm.q} onChange={(e) => updatePackageForm("q", e.target.value)} />
-                </div>
+                <label className="text-[11px] font-medium text-slate-700">Q</label>
+                <input className={inputClass} placeholder="size_max" value={packageForm.q} readOnly />
                 <div />
 
                 <label className="text-[11px] font-medium text-slate-700">น้ำหนัก</label>
-                <input
-                  className={inputClass}
-                  placeholder="น้ำหนัก(กรัม)"
-                  value={packageForm.weight}
-                  onChange={(e) => updatePackageForm("weight", e.target.value)}
-                />
+                <input className={inputClass} placeholder="weight_max" value={packageForm.weight} readOnly />
+                <div />
+
+                <label className="text-[11px] font-medium text-slate-700">ราคา</label>
+                <input className={inputClass} placeholder="cost" value={packageForm.unit_price} readOnly />
                 <div />
 
                 <label className="text-[11px] font-medium text-slate-700">กรุณาแสกนบาร์โค้ด</label>

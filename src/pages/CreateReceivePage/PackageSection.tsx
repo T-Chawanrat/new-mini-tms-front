@@ -8,6 +8,7 @@ type PackageSectionProps = {
   onScan: () => void;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
+  disabled?: boolean;
 };
 
 const displayValue = (value?: string | number | null) => {
@@ -25,6 +26,13 @@ const safeQty = (value?: string | number | null) => {
   return numberValue > 0 ? numberValue : 1;
 };
 
+const actionButtonClass = (disabled: boolean) =>
+  `rounded px-2.5 py-1 text-[11px] font-semibold ${
+    disabled
+      ? "cursor-not-allowed bg-slate-300 text-slate-500"
+      : "bg-blue-600 text-white hover:bg-blue-700"
+  }`;
+
 export default function PackageSection({
   packageRows,
   totalPrice,
@@ -33,6 +41,7 @@ export default function PackageSection({
   onScan,
   onEdit,
   onDelete,
+  disabled = false,
 }: PackageSectionProps) {
   return (
     <div className="mt-2 border border-slate-200">
@@ -41,7 +50,8 @@ export default function PackageSection({
           <button
             type="button"
             onClick={onAdd}
-            className="rounded bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+            disabled={disabled}
+            className={actionButtonClass(disabled)}
           >
             เพิ่มรายการ +
           </button>
@@ -49,7 +59,8 @@ export default function PackageSection({
           <button
             type="button"
             onClick={onScan}
-            className="rounded bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+            disabled={disabled}
+            className={actionButtonClass(disabled)}
           >
             สแกน
           </button>
@@ -82,7 +93,9 @@ export default function PackageSection({
 
             {packageRows.map((row, index) => {
               const rowTotal = packageTotal(row);
-              const rowKey = `${row.package_id || row.package_code || row.package_name || "package"}-${row.package_size_name || "size"}-${index}`;
+              const rowKey = `${row.package_id || row.package_code || row.package_name || "package"}-${
+                row.package_detail_id || row.package_size_name || "size"
+              }-${index}`;
 
               return (
                 <tr key={rowKey} className={index % 2 === 0 ? "bg-white" : "bg-slate-50/70"}>
