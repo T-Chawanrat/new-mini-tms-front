@@ -6,7 +6,7 @@ import AxiosInstance from "../../utils/AxiosInstance";
 
 import ReceiveHeaderForm from "./ReceiveHeaderForm";
 import PackageSection from "./PackageSection";
-import ReceiveTrackingSection from "./ReceiveTrackingSection";
+// import ReceiveTrackingSection from "./ReceiveTrackingSection";
 import ReceiveModals from "./ReceiveModals";
 
 import {
@@ -81,12 +81,23 @@ export default function CreateReceivePage() {
       shipper_code: "",
       shipper_name: "",
       shipper_address: "",
+
+      shipper_subdistrict_id: "",
+      shipper_district_id: "",
+      shipper_province_id: "",
+
+      shipper_subdistrict_name: "",
       shipper_district_name: "",
+      shipper_province_name: "",
+
+      shipper_zip_code: "",
+      shipper_tel: "",
 
       recipient_id: "",
       recipient_code: "",
-      recipient_detail_id: "",
       recipient_name: "",
+      recipient_detail_id: "",
+      recipient_detail_name: "",
       address: "",
 
       province_id: "",
@@ -151,14 +162,6 @@ export default function CreateReceivePage() {
         : Array.isArray(recipientRes.data?.data)
           ? recipientRes.data.data
           : [];
-
-
-console.log("raw recipient response:", recipientRes.data);
-console.log("ALL recipient rows:", recipientData.length);
-console.log(
-  "DQ details:",
-  recipientData.filter((x: RecipientOption) => Number(x.recipient_id) === 221557).length
-);
 
       setShippers(shipperData);
       setRecipients(recipientData);
@@ -267,14 +270,6 @@ console.log(
     }));
   }, [filteredRecipients]);
 
-  useEffect(() => {
-  const dqGroup = groupedRecipients.find((x) => Number(x.recipient_id) === 221557);
-
-  console.log("recipientSearch:", recipientSearch);
-  console.log("filteredRecipients total:", filteredRecipients.length);
-  console.log("DQ grouped details:", dqGroup?.details?.length);
-}, [recipientSearch, filteredRecipients, groupedRecipients]);
-
   const selectCustomer = (selected: CustomerOption) => {
     setForm((prev) => ({
       ...prev,
@@ -290,11 +285,22 @@ console.log(
   const selectShipper = (selected: ShipperOption) => {
     setForm((prev) => ({
       ...prev,
-      shipper_id: String(selected.shipper_id),
+
+      shipper_id: String(selected.shipper_id || ""),
       shipper_code: selected.shipper_code || "",
       shipper_name: selected.shipper_name || "",
       shipper_address: selected.address || "",
-      shipper_district_name: "",
+
+      shipper_subdistrict_id: selected.subdistrict_id ? String(selected.subdistrict_id) : "",
+      shipper_district_id: selected.district_id ? String(selected.district_id) : "",
+      shipper_province_id: selected.province_id ? String(selected.province_id) : "",
+
+      shipper_subdistrict_name: selected.subdistrict_name || "",
+      shipper_district_name: selected.district_name || "",
+      shipper_province_name: selected.province_name || "",
+
+      shipper_zip_code: selected.zip_code || "",
+      shipper_tel: selected.tel || "",
     }));
 
     setShowShipperModal(false);
@@ -303,10 +309,14 @@ console.log(
   const selectRecipient = (selected: RecipientOption) => {
     setForm((prev) => ({
       ...prev,
+
       recipient_id: String(selected.recipient_id || ""),
       recipient_code: selected.recipient_code || "",
-      recipient_detail_id: String(selected.recipient_detail_id || ""),
       recipient_name: selected.recipient_name || "",
+
+      recipient_detail_id: String(selected.recipient_detail_id || ""),
+      recipient_detail_name: selected.recipient_detail_name || "",
+
       address: selected.address || "",
 
       province_id: selected.province_id ? String(selected.province_id) : "",
@@ -316,6 +326,7 @@ console.log(
       province_name: selected.province_name || "",
       district_name: selected.district_name || "",
       subdistrict_name: selected.subdistrict_name || "",
+
       zip_code: selected.zip_code || "",
       tel: selected.tel || "",
     }));
@@ -611,7 +622,7 @@ console.log(
           />
         </div>
 
-        <ReceiveTrackingSection />
+        {/* <ReceiveTrackingSection /> */}
 
         <ReceiveModals
           customerId={form.customer_id}

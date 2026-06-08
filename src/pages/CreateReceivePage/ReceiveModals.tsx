@@ -479,16 +479,15 @@ export default function ReceiveModals({
                   <thead className="sticky top-0 bg-slate-50">
                     <tr>
                       <th className="w-9 border-b border-slate-300 px-1.5 py-1.5" />
+                      <th className="w-[180px] min-w-[180px] border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">รหัสผู้รับ</th>
                       <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อผู้รับ</th>
-                      <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ที่อยู่ผู้รับ</th>
-                      <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
+                      <th className="w-[150px] border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">รายละเอียด</th>
                     </tr>
                   </thead>
 
                   <tbody>
                     {pagedGroupedRecipients.map(({ recipient_id, recipient, details }) => {
                       const isOpen = !!expandedRecipientIds[String(recipient_id)];
-                      const firstDetail = details[0];
 
                       return (
                         <Fragment key={recipient_id}>
@@ -508,23 +507,22 @@ export default function ReceiveModals({
                               </button>
                             </td>
 
-                            <td className="border-b border-slate-200 px-2 py-1.5">
-                              <div className="font-medium text-slate-700">
-                                {recipient.recipient_code} - {recipient.recipient_name}
-                              </div>
+                            <td className="w-[180px] min-w-[180px] border-b border-slate-200 px-2 py-1.5">
+                              <div className="whitespace-nowrap font-medium text-slate-700">{recipient.recipient_code || "-"}</div>
                             </td>
 
-                            <td className="border-b border-slate-200 px-2 py-1.5 text-[11px] text-slate-600">{firstDetail?.address || "-"}</td>
-
-                            <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                              {firstDetail?.recipient_detail_id && (
-                                <button
-                                  type="button"
-                                  onClick={() => selectRecipient(firstDetail)}
-                                  className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
-                                >
-                                  ✓เลือก
-                                </button>
+                            <td className="border-b border-slate-200 px-2 py-1.5">
+                              <div className="font-medium text-slate-700">{recipient.recipient_name || "-"}</div>
+                            </td>
+                            <td className="border-b border-slate-200 px-2 py-1.5">
+                              {details.length ? (
+                                <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
+                                  {details.length} รายการ
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] text-slate-400">
+                                  ไม่มีรายละเอียด
+                                </span>
                               )}
                             </td>
                           </tr>
@@ -533,10 +531,6 @@ export default function ReceiveModals({
                             <tr>
                               <td />
                               <td colSpan={3} className="border-b border-slate-300 bg-slate-50 p-0">
-                                <div className="border-b border-slate-200 bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
-                                  รายละเอียดทั้งหมด {details.length} รายการ
-                                </div>
-
                                 <div className="max-h-[360px] overflow-y-auto">
                                   <table className="w-full border-collapse text-[11px]">
                                     <thead className="sticky top-0 z-10 bg-white">
@@ -551,20 +545,20 @@ export default function ReceiveModals({
                                       {details.map((detail, index) => (
                                         <tr key={`${detail.recipient_id}-${detail.recipient_detail_id || index}`}>
                                           <td className="border-b border-slate-200 px-2 py-1.5">
-                                            {detail.recipient_detail_name || detail.recipient_name}
+                                            {detail.recipient_detail_name || detail.recipient_name || "-"}
                                           </td>
 
                                           <td className="border-b border-slate-200 px-2 py-1.5">
                                             {[detail.address, detail.subdistrict_name, detail.district_name, detail.province_name, detail.zip_code]
                                               .filter(Boolean)
-                                              .join(" ")}
+                                              .join(" ") || "-"}
                                           </td>
 
                                           <td className="border-b border-slate-200 px-2 py-1.5 text-right">
                                             <button
                                               type="button"
                                               onClick={() => selectRecipient(detail)}
-                                              className="rounded border border-blue-500 bg-white px-3 py-0.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-50"
+                                              className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
                                             >
                                               ✓เลือก
                                             </button>
@@ -623,9 +617,12 @@ export default function ReceiveModals({
 
       {showPackageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closePackageModal}>
-          <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-[680px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-start justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">เพิ่มรายการสินค้า</h3>
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">เพิ่มรายการสินค้า</h3>
+                <p className="mt-0.5 text-[11px] text-slate-500">เลือกสินค้า รายละเอียดแพ็กเกจ แล้วระบุจำนวนรายการ</p>
+              </div>
 
               <button type="button" onClick={closePackageModal} className="text-xl leading-none text-slate-400 hover:text-slate-700">
                 ×
@@ -635,46 +632,85 @@ export default function ReceiveModals({
             <div className="space-y-3">
               {packageError && <div className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{packageError}</div>}
 
-              <div className="grid grid-cols-[115px_1fr_36px] items-center gap-2">
-                <label className="text-[11px] font-medium text-slate-700">ชื่อสินค้า</label>
-                <input className={inputClass} value={packageForm.package_name} readOnly placeholder="ค้นหา" onClick={openPackageSelectModal} />
-                <div />
+              <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[96px_1fr] items-center gap-2">
+                    <label className="text-[11px] font-medium text-slate-700">ชื่อสินค้า</label>
+                    <input
+                      className={`${inputClass} cursor-pointer bg-white`}
+                      value={packageForm.package_name}
+                      readOnly
+                      placeholder="ค้นหาสินค้า"
+                      onClick={openPackageSelectModal}
+                    />
+                  </div>
 
-                <label className="text-[11px] font-medium text-slate-700">รายละเอียดแพ็กเกจ</label>
-                <select
-                  className={selectClass}
-                  value={packageForm.package_detail_id}
-                  onChange={(e) => selectPackageDetail(e.target.value)}
-                  disabled={!packageForm.package_id}
-                >
-                  <option value="">เลือกรายละเอียดแพ็กเกจ</option>
-                  {selectedPackageDetails.map((item) => (
-                    <option key={String(item.package_detail_id)} value={String(item.package_detail_id)}>
-                      {item.package_detail_name || "-"}
-                    </option>
-                  ))}
-                </select>
-                <div />
+                  <div className="grid grid-cols-[96px_1fr] items-center gap-2">
+                    <label className="text-[11px] font-medium text-slate-700">รายละเอียด</label>
+                    <select
+                      className={selectClass}
+                      value={packageForm.package_detail_id}
+                      onChange={(e) => selectPackageDetail(e.target.value)}
+                      disabled={!packageForm.package_id}
+                    >
+                      <option value="">เลือกรายละเอียดแพ็กเกจ</option>
+                      {selectedPackageDetails.map((item) => (
+                        <option key={String(item.package_detail_id)} value={String(item.package_detail_id)}>
+                          {item.package_detail_name || "-"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
 
-                <label className="text-[11px] font-medium text-slate-700">Q</label>
-                <input className={inputClass} placeholder="size_max" value={packageForm.q} readOnly />
-                <div />
+              <div className="rounded-md border border-slate-200 bg-slate-50/80 p-2.5">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="text-[11px] font-semibold text-slate-700">ข้อมูลขนาด / ราคา</div>
+                </div>
 
-                <label className="text-[11px] font-medium text-slate-700">น้ำหนัก</label>
-                <input className={inputClass} placeholder="weight_max" value={packageForm.weight} readOnly />
-                <div />
+                <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">กว้าง (ซม.)</label>
+                    <input className={`${inputClass} bg-white text-center`} value={packageForm.width} readOnly />
+                  </div>
 
-                <label className="text-[11px] font-medium text-slate-700">ราคา</label>
-                <input className={inputClass} placeholder="cost" value={packageForm.unit_price} readOnly />
-                <div />
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">ยาว (ซม.)</label>
+                    <input className={`${inputClass} bg-white text-center`} value={packageForm.length} readOnly />
+                  </div>
 
-                <label className="text-[11px] font-medium text-slate-700">จำนวนรายการ</label>
-                <input className={inputClass} type="number" value={packageForm.qty} onChange={(e) => updatePackageForm("qty", e.target.value)} />
-                <div />
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">สูง (ซม.)</label>
+                    <input className={`${inputClass} bg-white text-center`} value={packageForm.height} readOnly />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">Q (ลบ.ซม.)</label>
+                    <input className={`${inputClass} bg-white text-center`} value={packageForm.q} readOnly />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">น้ำหนัก (ก.ก.)</label>
+                    <input className={`${inputClass} bg-white text-center`} value={packageForm.weight} readOnly />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">ราคา</label>
+                    <input className={`${inputClass} bg-white text-right`} value={packageForm.unit_price} readOnly />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                <div className="grid grid-cols-[96px_120px] items-center gap-2">
+                  <label className="text-[11px] font-medium text-slate-700">จำนวนรายการ</label>
+                  <input className={inputClass} type="number" value={packageForm.qty} onChange={(e) => updatePackageForm("qty", e.target.value)} />
+                </div>
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end">
+            <div className="mt-4 flex justify-end">
               <button
                 type="button"
                 onClick={handleSavePackage}
@@ -772,9 +808,9 @@ export default function ReceiveModals({
 
       {showScanModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closeScanModal}>
-          <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-[720px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-start justify-between">
-              <h3 className="text-lg font-normal text-slate-900">Scan</h3>
+              <h3 className="text-lg font-semibold text-slate-900">Scan</h3>
 
               <button type="button" onClick={closeScanModal} className="text-xl leading-none text-slate-400 hover:text-slate-700">
                 ×
@@ -784,52 +820,76 @@ export default function ReceiveModals({
             <div className="space-y-3">
               {packageError && <div className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{packageError}</div>}
 
-              <div className="grid grid-cols-[115px_1fr_36px] items-center gap-2">
-                <label className="text-[11px] font-medium text-slate-700">ชื่อสินค้า</label>
-                <input className={inputClass} value={packageForm.package_name} readOnly placeholder="ค้นหา" onClick={openPackageSelectModal} />
-                <div />
+              <div className="space-y-2">
+                <div className="grid grid-cols-[105px_1fr] items-center gap-2">
+                  <label className="text-[11px] font-medium text-slate-700">ชื่อสินค้า</label>
+                  <input className={inputClass} value={packageForm.package_name} readOnly placeholder="ค้นหา" onClick={openPackageSelectModal} />
+                </div>
 
-                <label className="text-[11px] font-medium text-slate-700">รายละเอียดแพ็กเกจ</label>
-                <select
-                  className={selectClass}
-                  value={packageForm.package_detail_id}
-                  onChange={(e) => selectPackageDetail(e.target.value)}
-                  disabled={!packageForm.package_id}
-                >
-                  <option value="">เลือกรายละเอียดแพ็กเกจ</option>
-                  {selectedPackageDetails.map((item) => (
-                    <option key={String(item.package_detail_id)} value={String(item.package_detail_id)}>
-                      {item.package_detail_name || "-"}
-                    </option>
-                  ))}
-                </select>
-                <div />
+                <div className="grid grid-cols-[105px_1fr] items-center gap-2">
+                  <label className="text-[11px] font-medium text-slate-700">รายละเอียดแพ็กเกจ</label>
+                  <select
+                    className={selectClass}
+                    value={packageForm.package_detail_id}
+                    onChange={(e) => selectPackageDetail(e.target.value)}
+                    disabled={!packageForm.package_id}
+                  >
+                    <option value="">เลือกรายละเอียดแพ็กเกจ</option>
+                    {selectedPackageDetails.map((item) => (
+                      <option key={String(item.package_detail_id)} value={String(item.package_detail_id)}>
+                        {item.package_detail_name || "-"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <label className="text-[11px] font-medium text-slate-700">Q</label>
-                <input className={inputClass} placeholder="size_max" value={packageForm.q} readOnly />
-                <div />
+                <div className="grid grid-cols-12 gap-2">
+                  <div className="col-span-4 grid grid-cols-[42px_1fr] items-center gap-1.5">
+                    <label className="text-[11px] font-medium text-slate-700">กว้าง (ซม.)</label>
+                    <input className={inputClass} value={packageForm.width} readOnly />
+                  </div>
 
-                <label className="text-[11px] font-medium text-slate-700">น้ำหนัก</label>
-                <input className={inputClass} placeholder="weight_max" value={packageForm.weight} readOnly />
-                <div />
+                  <div className="col-span-4 grid grid-cols-[32px_1fr] items-center gap-1.5">
+                    <label className="text-[11px] font-medium text-slate-700">ยาว (ซม.)</label>
+                    <input className={inputClass} value={packageForm.length} readOnly />
+                  </div>
 
-                <label className="text-[11px] font-medium text-slate-700">ราคา</label>
-                <input className={inputClass} placeholder="cost" value={packageForm.unit_price} readOnly />
-                <div />
+                  <div className="col-span-4 grid grid-cols-[32px_1fr] items-center gap-1.5">
+                    <label className="text-[11px] font-medium text-slate-700">สูง (ซม.)</label>
+                    <input className={inputClass} value={packageForm.height} readOnly />
+                  </div>
 
-                <label className="text-[11px] font-medium text-slate-700">กรุณาแสกนบาร์โค้ด</label>
-                <input
-                  className={inputClass}
-                  value={scanBarcode}
-                  autoFocus
-                  onChange={(e) => setScanBarcode(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSaveScan();
-                    }
-                  }}
-                />
-                <div />
+                  <div className="col-span-4 grid grid-cols-[42px_1fr] items-center gap-1.5">
+                    <label className="text-[11px] font-medium text-slate-700">Q (ลบ.ซม.)</label>
+                    <input className={inputClass} placeholder="Q" value={packageForm.q} readOnly />
+                  </div>
+
+                  <div className="col-span-4 grid grid-cols-[42px_1fr] items-center gap-1.5">
+                    <label className="text-[11px] font-medium text-slate-700">น้ำหนัก (ก.ก.)</label>
+                    <input className={inputClass} placeholder="น้ำหนัก" value={packageForm.weight} readOnly />
+                  </div>
+
+                  <div className="col-span-4 grid grid-cols-[42px_1fr] items-center gap-1.5">
+                    <label className="text-[11px] font-medium text-slate-700">ราคา</label>
+                    <input className={inputClass} placeholder="ราคา" value={packageForm.unit_price} readOnly />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[105px_1fr] items-center gap-2">
+                  <label className="text-[11px] font-medium text-slate-700">บาร์โค้ด</label>
+                  <input
+                    className={inputClass}
+                    value={scanBarcode}
+                    autoFocus
+                    placeholder="สแกนหรือกรอกบาร์โค้ด"
+                    onChange={(e) => setScanBarcode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSaveScan();
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
 

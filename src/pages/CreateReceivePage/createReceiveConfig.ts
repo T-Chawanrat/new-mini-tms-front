@@ -10,11 +10,22 @@ export type ReceiveForm = {
   shipper_code: string;
   shipper_name: string;
   shipper_address: string;
+
+  shipper_subdistrict_id: string;
+  shipper_district_id: string;
+  shipper_province_id: string;
+
+  shipper_subdistrict_name: string;
   shipper_district_name: string;
+  shipper_province_name: string;
+
+  shipper_zip_code: string;
+  shipper_tel: string;
 
   recipient_id: string;
   recipient_code: string;
   recipient_detail_id: string;
+  recipient_detail_name: string;
   recipient_name: string;
   address: string;
 
@@ -59,14 +70,17 @@ export type ShipperOption = {
   shipper_code: string;
   shipper_name: string;
   address: string;
-  tel?: string;
-  zip_code?: string;
+
+  tel?: string | null;
+  zip_code?: string | null;
+
   subdistrict_id?: number | null;
   district_id?: number | null;
   province_id?: number | null;
-  subdistrict_name?: string;
-  district_name?: string;
-  province_name?: string;
+
+  subdistrict_name?: string | null;
+  district_name?: string | null;
+  province_name?: string | null;
 };
 
 export type RecipientOption = {
@@ -176,12 +190,23 @@ export const emptyReceiveForm: ReceiveForm = {
   shipper_code: "",
   shipper_name: "",
   shipper_address: "",
+
+  shipper_subdistrict_id: "",
+  shipper_district_id: "",
+  shipper_province_id: "",
+
+  shipper_subdistrict_name: "",
   shipper_district_name: "",
+  shipper_province_name: "",
+
+  shipper_zip_code: "",
+  shipper_tel: "",
 
   recipient_id: "",
   recipient_code: "",
   recipient_detail_id: "",
   recipient_name: "",
+  recipient_detail_name: "",
   address: "",
 
   province_id: "",
