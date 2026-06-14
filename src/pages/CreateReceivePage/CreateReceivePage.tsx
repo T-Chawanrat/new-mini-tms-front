@@ -8,7 +8,7 @@ import ReceiveHeaderForm from "./ReceiveHeaderForm";
 import PackageSection from "./PackageSection";
 // import ReceiveTrackingSection from "./ReceiveTrackingSection";
 import ReceiveModals from "./ReceiveModals";
-
+import { toNum } from "../../utils/packageRate";
 import {
   type CustomerOption,
   type GroupedRecipient,
@@ -17,6 +17,7 @@ import {
   type ReceiveForm,
   type RecipientOption,
   type ShipperOption,
+  type ShipperROCodeOption,
   emptyPackageRow,
   emptyReceiveForm,
 } from "./createReceiveConfig";
@@ -28,6 +29,9 @@ export default function CreateReceivePage() {
   const [payments, setPayments] = useState<PaymentOption[]>([]);
   const [shippers, setShippers] = useState<ShipperOption[]>([]);
   const [recipients, setRecipients] = useState<RecipientOption[]>([]);
+
+  const [roCodes, setRoCodes] = useState<ShipperROCodeOption[]>([]);
+  const [loadingROCodes, setLoadingROCodes] = useState(false);
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [shipperSearch, setShipperSearch] = useState("");
@@ -70,9 +74,16 @@ export default function CreateReceivePage() {
   const resetCustomerRelatedFields = () => {
     setShippers([]);
     setRecipients([]);
+    setRoCodes([]);
+
     setShipperSearch("");
     setRecipientSearch("");
     setExpandedRecipientIds({});
+
+    setPackageRows([]);
+    setPackageForm(emptyPackageRow);
+    setEditingPackageIndex(null);
+    setScanBarcode("");
 
     setForm((prev) => ({
       ...prev,
@@ -110,6 +121,9 @@ export default function CreateReceivePage() {
 
       zip_code: "",
       tel: "",
+
+      is_document_return: "N",
+      document_return: "",
     }));
   };
 
@@ -180,6 +194,28 @@ export default function CreateReceivePage() {
     }
   };
 
+  const loadShipperROCodes = async (customerId: string, shipperId: string) => {
+    if (!customerId || !shipperId) {
+      setRoCodes([]);
+      return;
+    }
+
+    setLoadingROCodes(true);
+
+    try {
+      const res = await AxiosInstance.get(`/receives/options/ro-codes/${customerId}/${shipperId}`);
+
+      const data = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];
+
+      setRoCodes(data);
+    } catch (err) {
+      console.error("LOAD SHIPPER RO CODES ERROR:", err);
+      setRoCodes([]);
+    } finally {
+      setLoadingROCodes(false);
+    }
+  };
+
   useEffect(() => {
     loadCustomers();
     loadPayments();
@@ -187,6 +223,7 @@ export default function CreateReceivePage() {
 
   useEffect(() => {
     if (!form.customer_id) return;
+
     loadReceiveOptions(form.customer_id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.customer_id]);
@@ -283,10 +320,12 @@ export default function CreateReceivePage() {
   };
 
   const selectShipper = (selected: ShipperOption) => {
+    const selectedShipperId = String(selected.shipper_id || "");
+
     setForm((prev) => ({
       ...prev,
 
-      shipper_id: String(selected.shipper_id || ""),
+      shipper_id: selectedShipperId,
       shipper_code: selected.shipper_code || "",
       shipper_name: selected.shipper_name || "",
       shipper_address: selected.address || "",
@@ -301,7 +340,13 @@ export default function CreateReceivePage() {
 
       shipper_zip_code: selected.zip_code || "",
       shipper_tel: selected.tel || "",
+
+      is_document_return: "N",
+      document_return: "",
     }));
+
+    setRoCodes([]);
+    loadShipperROCodes(form.customer_id, selectedShipperId);
 
     setShowShipperModal(false);
   };
@@ -344,13 +389,7 @@ export default function CreateReceivePage() {
     setPackageForm(emptyPackageRow);
     setEditingPackageIndex(null);
     setError(null);
-    setShowPackageModal(true);
-  };
-
-  const openEditPackageModal = (index: number) => {
-    setPackageForm(packageRows[index]);
-    setEditingPackageIndex(index);
-    setError(null);
+    setSuccess(null);
     setShowPackageModal(true);
   };
 
@@ -371,6 +410,11 @@ export default function CreateReceivePage() {
 
     if (!packageForm.package_detail_id || !packageForm.package_size_name.trim()) {
       setError("กรุณาเลือกขนาดสินค้า");
+      return;
+    }
+
+    if (toNum(packageForm.unit_price) <= 0) {
+      setError("ไม่พบราคาสินค้า กรุณาตรวจสอบขนาดและน้ำหนัก");
       return;
     }
 
@@ -402,14 +446,6 @@ export default function CreateReceivePage() {
     setPackageRows((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const openScanModal = () => {
-    setPackageForm(emptyPackageRow);
-    setEditingPackageIndex(null);
-    setScanBarcode("");
-    setError(null);
-    setShowScanModal(true);
-  };
-
   const closeScanModal = () => {
     setPackageForm(emptyPackageRow);
     setScanBarcode("");
@@ -430,19 +466,28 @@ export default function CreateReceivePage() {
       return;
     }
 
-    if (!scanBarcode.trim()) {
-      setError("กรุณาแสกนบาร์โค้ด");
+    if (toNum(packageForm.unit_price) <= 0) {
+      setError("ไม่พบราคาสินค้า กรุณาตรวจสอบขนาดและน้ำหนัก");
+      return;
+    }
+
+    const cleanBarcode = scanBarcode.trim();
+
+    if (!cleanBarcode) {
+      setError("กรุณาสแกนบาร์โค้ด");
       return;
     }
 
     const nextRow: PackageRow = {
       ...packageForm,
+      barcode: cleanBarcode,
       qty: "1",
       unit_price: packageForm.unit_price || "0",
     };
 
     setPackageRows((prev) => [...prev, nextRow]);
-    closeScanModal();
+
+    setScanBarcode("");
   };
 
   const validateReceive = () => {
@@ -460,6 +505,7 @@ export default function CreateReceivePage() {
     setForm(emptyReceiveForm);
     setShippers([]);
     setRecipients([]);
+    setRoCodes([]);
     setPackageRows([]);
     setPackageForm(emptyPackageRow);
     setScanBarcode("");
@@ -525,6 +571,8 @@ export default function CreateReceivePage() {
           package_id: row.package_id || null,
           package_code: row.package_code || null,
           package_name: row.package_name || null,
+
+          barcode: row.barcode || null,
 
           package_detail_id: row.package_detail_id || null,
           package_detail_code: row.package_detail_code || null,
@@ -601,8 +649,10 @@ export default function CreateReceivePage() {
           <ReceiveHeaderForm
             form={form}
             payments={payments}
+            roCodes={roCodes}
             loadingCustomers={loadingCustomers}
             loadingOptions={loadingOptions}
+            loadingROCodes={loadingROCodes}
             updateForm={updateForm}
             setForm={setForm}
             onOpenCustomerModal={() => setShowCustomerModal(true)}
@@ -615,8 +665,6 @@ export default function CreateReceivePage() {
             totalPrice={totalPrice}
             packageTotal={packageTotal}
             onAdd={openAddPackageModal}
-            onScan={openScanModal}
-            onEdit={openEditPackageModal}
             onDelete={handleDeletePackage}
             disabled={disablePackageActions}
           />
@@ -638,6 +686,7 @@ export default function CreateReceivePage() {
           shipperSearch={shipperSearch}
           recipientSearch={recipientSearch}
           packageForm={packageForm}
+          packageRows={packageRows}
           scanBarcode={scanBarcode}
           expandedRecipientIds={expandedRecipientIds}
           setCustomerSearch={setCustomerSearch}

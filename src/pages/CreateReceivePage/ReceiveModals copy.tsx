@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import axios from "axios";
 import TablePagination from "@mui/material/TablePagination";
@@ -36,7 +36,6 @@ type ReceiveModalsProps = {
   recipientSearch: string;
 
   packageForm: PackageRow;
-  packageRows: PackageRow[];
   scanBarcode: string;
 
   expandedRecipientIds: Record<string, boolean>;
@@ -99,7 +98,6 @@ export default function ReceiveModals({
   recipientSearch,
 
   packageForm,
-  packageRows,
   scanBarcode,
 
   expandedRecipientIds,
@@ -135,11 +133,6 @@ export default function ReceiveModals({
   const [packageSearch, setPackageSearch] = useState("");
   const [packageOptions, setPackageOptions] = useState<PackageOption[]>([]);
   const [packageError, setPackageError] = useState<string | null>(null);
-  const [scanError, setScanError] = useState<string | null>(null);
-
-  const scanBarcodeRef = useRef<HTMLInputElement | null>(null);
-
-  const [modalMode, setModalMode] = useState<"package" | "scan">("package");
 
   const pagedShippers = useMemo(() => {
     const start = shipperPage * shipperRowsPerPage;
@@ -207,10 +200,10 @@ export default function ReceiveModals({
 
   const packageBaseReady = Boolean(
     packageForm.package_id &&
-      packageForm.package_name.trim() &&
-      packageForm.package_detail_id &&
-      packageForm.package_size_name.trim() &&
-      toNum(packageForm.unit_price) > 0,
+    packageForm.package_name.trim() &&
+    packageForm.package_detail_id &&
+    packageForm.package_size_name.trim() &&
+    toNum(packageForm.unit_price) > 0,
   );
 
   const packageDimensionReady =
@@ -342,7 +335,6 @@ export default function ReceiveModals({
 
     setPackageSearch("");
     setPackageError(null);
-    setScanError(null);
     setShowPackageSelectModal(true);
     loadPackages("");
   };
@@ -370,14 +362,11 @@ export default function ReceiveModals({
     updatePackageForm("weight", "");
     updatePackageForm("unit_price", "0");
 
-    setScanError(null);
     closePackageSelectModal();
   };
 
   const selectPackageDetail = (detailId: string) => {
     if (selectedPackageIsRateCalculate) return;
-
-    setScanError(null);
 
     if (!detailId) {
       updatePackageForm("package_detail_id", "");
@@ -411,64 +400,6 @@ export default function ReceiveModals({
     updatePackageForm("unit_price", moneyValue(detail.cost));
   };
 
-  const handleSubmitScan = () => {
-    setScanError(null);
-
-    if (!packageForm.package_id || !packageForm.package_name.trim()) {
-      setScanError("กรุณาเลือกชื่อสินค้า");
-      scanBarcodeRef.current?.focus();
-      return;
-    }
-
-    if (!packageForm.package_detail_id || !packageForm.package_size_name.trim()) {
-      setScanError("กรุณาเลือกขนาดสินค้า");
-      scanBarcodeRef.current?.focus();
-      return;
-    }
-
-    if (toNum(packageForm.unit_price) <= 0) {
-      setScanError("ไม่พบราคาสินค้า กรุณาตรวจสอบขนาดและน้ำหนัก");
-      scanBarcodeRef.current?.focus();
-      return;
-    }
-
-    if (packageValueTooHigh) {
-      setScanError("ขนาดหรือน้ำหนักเกินเงื่อนไขที่กำหนด");
-      scanBarcodeRef.current?.focus();
-      return;
-    }
-
-    const cleanBarcode = scanBarcode.trim();
-
-    if (!cleanBarcode) {
-      setScanError("กรุณาสแกนบาร์โค้ด");
-      scanBarcodeRef.current?.focus();
-      return;
-    }
-
-    const isDuplicateSN = packageRows.some(
-      (row) => String(row.barcode || "").trim().toLowerCase() === cleanBarcode.toLowerCase(),
-    );
-
-    if (isDuplicateSN) {
-      setScanError(`SN / Barcode "${cleanBarcode}" ซ้ำในรายการแล้ว`);
-      setScanBarcode("");
-
-      setTimeout(() => {
-        scanBarcodeRef.current?.focus();
-      }, 0);
-
-      return;
-    }
-
-    handleSaveScan();
-    setScanError(null);
-
-    setTimeout(() => {
-      scanBarcodeRef.current?.focus();
-    }, 0);
-  };
-
   useEffect(() => {
     const maxPage = Math.max(Math.ceil(shippers.length / shipperRowsPerPage) - 1, 0);
 
@@ -486,27 +417,12 @@ export default function ReceiveModals({
   }, [groupedRecipients.length, recipientPage, recipientRowsPerPage]);
 
   useEffect(() => {
-    if (showScanModal) {
-      setModalMode("scan");
-    } else if (showPackageModal) {
-      setModalMode("package");
-    }
-
     if (!showPackageModal && !showScanModal) return;
 
     setShowPackageSelectModal(false);
     setPackageSearch("");
     setPackageError(null);
-    setScanError(null);
   }, [showPackageModal, showScanModal]);
-
-  const handleCloseModal = () => {
-    setScanError(null);
-    closePackageModal();
-    closeScanModal();
-  };
-
-  const showCombinedModal = showPackageModal || showScanModal;
 
   return (
     <>
@@ -609,9 +525,7 @@ export default function ReceiveModals({
                           <div className="font-medium text-slate-700">
                             {item.shipper_code} - {item.shipper_name}
                           </div>
-                          <div className="text-[10px] text-slate-500">
-                            {item.address || "-"} &nbsp;&nbsp;Tel.{item.tel || "-"}
-                          </div>
+                          <div className="text-[10px] text-slate-500">{item.address || "-"}</div>
                         </td>
 
                         <td className="border-b border-slate-200 px-2 py-1.5 text-right">
@@ -725,7 +639,6 @@ export default function ReceiveModals({
                             <td className="border-b border-slate-200 px-2 py-1.5">
                               <div className="font-medium text-slate-700">{recipient.recipient_name || "-"}</div>
                             </td>
-
                             <td className="border-b border-slate-200 px-2 py-1.5">
                               {details.length ? (
                                 <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
@@ -761,14 +674,7 @@ export default function ReceiveModals({
                                           </td>
 
                                           <td className="border-b border-slate-200 px-2 py-1.5">
-                                            {[
-                                              detail.address,
-                                              detail.subdistrict_name,
-                                              detail.district_name,
-                                              detail.province_name,
-                                              detail.zip_code,
-                                              detail.tel ? `Tel.${detail.tel}` : "",
-                                            ]
+                                            {[detail.address, detail.subdistrict_name, detail.district_name, detail.province_name, detail.zip_code]
                                               .filter(Boolean)
                                               .join(" ") || "-"}
                                           </td>
@@ -834,41 +740,16 @@ export default function ReceiveModals({
         </div>
       )}
 
-      {showCombinedModal && (
+      {showPackageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
           <div className="w-full max-w-[680px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-semibold text-slate-900">เพิ่มรายการสินค้า</h3>
-              <button type="button" onClick={handleCloseModal} className="text-xl leading-none text-slate-400 hover:text-slate-700">
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">เพิ่มรายการสินค้า</h3>
+              </div>
+
+              <button type="button" onClick={closePackageModal} className="text-xl leading-none text-slate-400 hover:text-slate-700">
                 ×
-              </button>
-            </div>
-
-            <div className="mb-3 flex gap-1 rounded-md border border-slate-200 bg-slate-100 p-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setModalMode("package");
-                  setScanError(null);
-                }}
-                className={`flex-1 rounded py-1 text-xs font-semibold transition-colors ${
-                  modalMode === "package" ? "bg-white text-blue-700 shadow ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                📦 เพิ่มรายการ
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setModalMode("scan");
-                  setScanError(null);
-                }}
-                className={`flex-1 rounded py-1 text-xs font-semibold transition-colors ${
-                  modalMode === "scan" ? "bg-white text-blue-700 shadow ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                🔍 สแกนบาร์โค้ด
               </button>
             </div>
 
@@ -998,70 +879,25 @@ export default function ReceiveModals({
                 )}
               </div>
 
-              {modalMode === "package" && (
-                <div className="rounded-md border border-slate-200 bg-white p-2.5">
-                  <div className="grid grid-cols-[96px_120px] items-center gap-2">
-                    <label className="text-[11px] font-medium text-slate-700">จำนวนรายการ</label>
-                    <input className={inputClass} type="number" value={packageForm.qty} onChange={(e) => updatePackageForm("qty", e.target.value)} />
-                  </div>
+              <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                <div className="grid grid-cols-[96px_120px] items-center gap-2">
+                  <label className="text-[11px] font-medium text-slate-700">จำนวนรายการ</label>
+                  <input className={inputClass} type="number" value={packageForm.qty} onChange={(e) => updatePackageForm("qty", e.target.value)} />
                 </div>
-              )}
-
-              {modalMode === "scan" && (
-                <div className="rounded-md border border-slate-200 bg-white p-2.5">
-                  <div className="grid grid-cols-[96px_1fr] items-start gap-2">
-                    <label className="pt-1.5 text-[11px] font-medium text-slate-700">บาร์โค้ด</label>
-
-                    <div>
-                      <input
-                        ref={scanBarcodeRef}
-                        className={`${inputClass} ${scanError ? "border-red-400 ring-1 ring-red-200" : ""}`}
-                        value={scanBarcode}
-                        autoFocus
-                        placeholder="สแกนหรือกรอกบาร์โค้ด"
-                        onChange={(e) => {
-                          setScanBarcode(e.target.value);
-                          setScanError(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleSubmitScan();
-                          }
-                        }}
-                      />
-
-                      {scanError && <div className="mt-1 text-[11px] font-medium text-red-600">{scanError}</div>}
-                    </div>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
 
             <div className="mt-4 flex justify-end">
-              {modalMode === "package" ? (
-                <button
-                  type="button"
-                  onClick={handleSavePackage}
-                  disabled={!canSavePackage}
-                  className={`rounded px-5 py-1.5 text-xs font-semibold text-white ${
-                    canSavePackage ? "bg-blue-600 hover:bg-blue-700" : "cursor-not-allowed bg-slate-300"
-                  }`}
-                >
-                  บันทึก
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSubmitScan}
-                  disabled={!canSaveScan}
-                  className={`rounded px-5 py-1.5 text-xs font-semibold text-white ${
-                    canSaveScan ? "bg-blue-600 hover:bg-blue-700" : "cursor-not-allowed bg-slate-300"
-                  }`}
-                >
-                  บันทึก
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleSavePackage}
+                disabled={!canSavePackage}
+                className={`rounded px-5 py-1.5 text-xs font-semibold text-white ${
+                  canSavePackage ? "bg-blue-600 hover:bg-blue-700" : "cursor-not-allowed bg-slate-300"
+                }`}
+              >
+                บันทึก
+              </button>
             </div>
           </div>
         </div>
@@ -1157,6 +993,180 @@ export default function ReceiveModals({
                 className="rounded bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
               >
                 ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showScanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-[680px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">สแกนบาร์โค้ด</h3>
+              </div>
+
+              <button type="button" onClick={closeScanModal} className="text-xl leading-none text-slate-400 hover:text-slate-700">
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {packageError && <div className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{packageError}</div>}
+
+              <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[96px_1fr] items-center gap-2">
+                    <label className="text-[11px] font-medium text-slate-700">ชื่อสินค้า</label>
+                    <input
+                      className={`${inputClass} cursor-pointer bg-white`}
+                      value={packageForm.package_code ? `${packageForm.package_code} - ${packageForm.package_name}` : packageForm.package_name}
+                      readOnly
+                      placeholder="ค้นหาสินค้า"
+                      onClick={openPackageSelectModal}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-[96px_1fr] items-center gap-2">
+                    <label className="text-[11px] font-medium text-slate-700">รายละเอียด</label>
+                    <select
+                      className={selectClass}
+                      value={packageForm.package_detail_id}
+                      onChange={(e) => selectPackageDetail(e.target.value)}
+                      disabled={!packageForm.package_id || selectedPackageIsRateCalculate}
+                    >
+                      <option value="">{selectedPackageIsRateCalculate ? "ระบบจะคำนวณราคาให้" : "เลือกรายละเอียด"}</option>
+                      {selectedPackageDetails.map((item) => (
+                        <option key={String(item.package_detail_id)} value={String(item.package_detail_id)}>
+                          {item.package_detail_name || "-"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-slate-200 bg-slate-50/80 p-2.5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="text-[11px] font-semibold text-slate-700">ข้อมูลขนาด / ราคา</div>
+
+                  {selectedPackageIsRateCalculate && (
+                    <div className="text-[10px] text-amber-700">
+                      ไม่เกิน{" "}
+                      {selectedPackageLimits.maxSize || selectedPackageLimits.maxWeight
+                        ? `(${[
+                            selectedPackageLimits.maxSize ? `${moneyValue(selectedPackageLimits.maxSize)} ลบ.ซม.` : "",
+                            selectedPackageLimits.maxWeight ? `${moneyValue(selectedPackageLimits.maxWeight)} ก.ก.` : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" / ")})`
+                        : ""}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">กว้าง (ซม.)</label>
+                    <input
+                      className={`${inputClass} bg-white text-center`}
+                      type="number"
+                      min="0"
+                      value={packageForm.width}
+                      readOnly={!selectedPackageIsRateCalculate}
+                      onChange={(e) => updateCalculatedPackageForm("width", e.target.value)}
+                      onBlur={() => formatCalculatedPackageField("width")}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">ยาว (ซม.)</label>
+                    <input
+                      className={`${inputClass} bg-white text-center`}
+                      type="number"
+                      min="0"
+                      value={packageForm.length}
+                      readOnly={!selectedPackageIsRateCalculate}
+                      onChange={(e) => updateCalculatedPackageForm("length", e.target.value)}
+                      onBlur={() => formatCalculatedPackageField("length")}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">สูง (ซม.)</label>
+                    <input
+                      className={`${inputClass} bg-white text-center`}
+                      type="number"
+                      min="0"
+                      value={packageForm.height}
+                      readOnly={!selectedPackageIsRateCalculate}
+                      onChange={(e) => updateCalculatedPackageForm("height", e.target.value)}
+                      onBlur={() => formatCalculatedPackageField("height")}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">Q (ลบ.ซม.)</label>
+                    <input className={`${inputClass} bg-white text-center`} value={packageForm.q} readOnly />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">น้ำหนัก (ก.ก.)</label>
+                    <input
+                      className={`${inputClass} bg-white text-center`}
+                      type="number"
+                      min="0"
+                      max={selectedPackageLimits.maxWeight || undefined}
+                      value={packageForm.weight}
+                      readOnly={!selectedPackageIsRateCalculate}
+                      onChange={(e) => updateCalculatedPackageForm("weight", e.target.value)}
+                      onBlur={() => formatCalculatedPackageField("weight")}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] text-slate-500">ราคา</label>
+                    <input className={`${inputClass} bg-white text-right`} value={packageForm.unit_price} readOnly />
+                  </div>
+                </div>
+
+                {selectedPackageIsRateCalculate && packageForm.package_size_name && (
+                  <div className="mt-2 rounded border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] text-blue-700">
+                    เรทราคาที่ระบบเลือก: {packageForm.package_size_name}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                <div className="grid grid-cols-[96px_1fr] items-center gap-2">
+                  <label className="text-[11px] font-medium text-slate-700">บาร์โค้ด</label>
+                  <input
+                    className={inputClass}
+                    value={scanBarcode}
+                    autoFocus
+                    placeholder="สแกนหรือกรอกบาร์โค้ด"
+                    onChange={(e) => setScanBarcode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && canSaveScan) {
+                        handleSaveScan();
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={handleSaveScan}
+                disabled={!canSaveScan}
+                className={`rounded px-5 py-1.5 text-xs font-semibold text-white ${
+                  canSaveScan ? "bg-blue-600 hover:bg-blue-700" : "cursor-not-allowed bg-slate-300"
+                }`}
+              >
+                บันทึก
               </button>
             </div>
           </div>

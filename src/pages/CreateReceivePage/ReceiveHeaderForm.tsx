@@ -3,6 +3,7 @@ import RequiredLabel from "../../components/form/RequiredLabel";
 import {
   type PaymentOption,
   type ReceiveForm,
+  type ShipperROCodeOption,
   type UpdateReceiveForm,
   buttonInputClass,
   checkboxInputClass,
@@ -19,8 +20,10 @@ import {
 type ReceiveHeaderFormProps = {
   form: ReceiveForm;
   payments: PaymentOption[];
+  roCodes: ShipperROCodeOption[];
   loadingCustomers: boolean;
   loadingOptions: boolean;
+  loadingROCodes: boolean;
   updateForm: UpdateReceiveForm;
   setForm: React.Dispatch<React.SetStateAction<ReceiveForm>>;
   onOpenCustomerModal: () => void;
@@ -31,8 +34,10 @@ type ReceiveHeaderFormProps = {
 export default function ReceiveHeaderForm({
   form,
   payments,
+  roCodes,
   loadingCustomers,
   loadingOptions,
+  loadingROCodes,
   updateForm,
   setForm,
   onOpenCustomerModal,
@@ -252,9 +257,8 @@ export default function ReceiveHeaderForm({
         </div>
       </div>
 
-      {/* ล่าง */}
       <div className="rounded-md border border-slate-200 bg-slate-50/70 p-2">
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[230px_1fr_260px_310px]">
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[230px_1fr_200px_370px]">
           <div className="grid grid-cols-[88px_135px] items-center gap-1.5">
             <label className={labelClass}>ประเภทการจ่าย</label>
 
@@ -266,6 +270,7 @@ export default function ReceiveHeaderForm({
               ))}
             </select>
           </div>
+
           <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-1.5">
             <label className={`${labelClass} whitespace-nowrap`}>เงื่อนไขการจัดส่ง</label>
             <input
@@ -276,9 +281,10 @@ export default function ReceiveHeaderForm({
             />
           </div>
 
-          <div className="grid grid-cols-[40px_1fr] items-center gap-1.5">
+          <div className="grid grid-cols-[40px_150px] items-center gap-1.5">
             <label className={labelClass}>COD</label>
-            <div className="grid grid-cols-[18px_1fr] items-center gap-1.5">
+
+            <div className="grid grid-cols-[18px_125px] items-center gap-1.5">
               <input
                 type="checkbox"
                 className={checkboxInputClass}
@@ -287,7 +293,7 @@ export default function ReceiveHeaderForm({
                   setForm((prev) => ({
                     ...prev,
                     is_cod: e.target.checked ? "Y" : "N",
-                    cod: e.target.checked ? prev.cod : "",
+                    cod: e.target.checked ? prev.cod || "0.00" : "",
                   }))
                 }
               />
@@ -295,16 +301,25 @@ export default function ReceiveHeaderForm({
               <input
                 className={form.is_cod === "Y" ? inputClass : disabledInputClass}
                 type="number"
+                step="0.01"
+                min="0"
                 value={form.cod}
                 disabled={form.is_cod !== "Y"}
                 onChange={(e) => updateForm("cod", e.target.value)}
-                placeholder="ยอด COD"
+                onBlur={() => {
+                  if (form.is_cod !== "Y") return;
+
+                  const value = Number(form.cod || 0);
+                  updateForm("cod", value.toFixed(2));
+                }}
+                placeholder="0.00"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-[88px_1fr] items-center gap-1.5">
-            <label className={labelClass}>เอกสารส่งกลับ</label>
+            <label className={labelClass}>เอกสารรับกลับ</label>
+
             <div className="grid grid-cols-[18px_1fr] items-center gap-1.5">
               <input
                 type="checkbox"
@@ -319,13 +334,28 @@ export default function ReceiveHeaderForm({
                 }
               />
 
-              <input
-                className={form.is_document_return === "Y" ? inputClass : disabledInputClass}
+              <select
+                className={form.is_document_return === "Y" ? selectClass : disabledInputClass}
                 value={form.document_return}
-                disabled={form.is_document_return !== "Y"}
+                disabled={form.is_document_return !== "Y" || loadingROCodes || !form.shipper_id}
                 onChange={(e) => updateForm("document_return", e.target.value)}
-                placeholder="รายละเอียด"
-              />
+              >
+                <option value="">
+                  {loadingROCodes
+                    ? "กำลังโหลด..."
+                    : !form.shipper_id
+                      ? "เลือกผู้ส่งก่อน"
+                      : roCodes.length === 0
+                        ? "ไม่มีเอกสารรับกลับ"
+                        : "เลือกเอกสารรับกลับ"}
+                </option>
+
+                {roCodes.map((item) => (
+                  <option key={item.ro_code_id} value={String(item.ro_code_id)}>
+                    {item.ro_code} - {item.ro_name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

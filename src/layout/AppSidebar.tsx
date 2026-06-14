@@ -120,8 +120,8 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 10, 11],
       },
       {
-        name: "Create Receive",
-        path: "/create-receive",
+        name: "Create Delivery Order",
+        path: "/create-do",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 10, 11],
       },

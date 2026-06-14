@@ -133,7 +133,7 @@ export default function App() {
               <Route path="/manage/recipients" element={<ManageRecipients />} />
               <Route path="/manage/packages" element={<ManagePackages />} />
               <Route path="/change-password" element={<ChangePassword />} />
-              <Route path="/create-receive" element={<CreateReceivePage />} />
+              <Route path="/create-do" element={<CreateReceivePage />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>

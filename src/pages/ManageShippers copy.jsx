@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
 import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
-import { FileImage, Pencil, Trash2, X } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput } from "../utils/textSanitizer";
 import DataGrid from "../components/DataGrid";
 import RequiredLabel from "../components/form/RequiredLabel";
@@ -25,20 +25,6 @@ export default function ManageShippers() {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
-
-  const [roModal, setRoModal] = useState(false);
-  const [selectedShipper, setSelectedShipper] = useState(null);
-
-  const [roEditing, setRoEditing] = useState(null);
-  const [roCode, setRoCode] = useState("");
-  const [roName, setRoName] = useState("");
-  const [roImages, setRoImages] = useState([]);
-
-  const [roRows, setRoRows] = useState([]);
-  const [roLoading, setRoLoading] = useState(false);
-  const [roSaving, setRoSaving] = useState(false);
-
-  const roFileInputRef = useRef(null);
 
   const emptyForm = {
     shipper_code: "",
@@ -73,24 +59,6 @@ export default function ManageShippers() {
   const resetForm = () => {
     setForm(emptyForm);
     setEditing(null);
-  };
-
-  const resetROForm = () => {
-    setRoEditing(null);
-    setRoCode("");
-    setRoName("");
-    setRoImages([]);
-
-    if (roFileInputRef.current) {
-      roFileInputRef.current.value = "";
-    }
-  };
-
-  const closeROModal = () => {
-    setRoModal(false);
-    setSelectedShipper(null);
-    setRoRows([]);
-    resetROForm();
   };
 
   const clearAddress = () => {
@@ -156,23 +124,6 @@ export default function ManageShippers() {
     }
   };
 
-  const fetchRODocuments = async (shipperId) => {
-    if (!customerId || !shipperId) return;
-
-    try {
-      setRoLoading(true);
-
-      const res = await AxiosInstance.get(`/manage/shippers/${customerId}/${shipperId}/ro-codes`);
-
-      setRoRows(res.data || []);
-    } catch (err) {
-      alert(err?.response?.data?.message || "fetch ro documents failed");
-      setRoRows([]);
-    } finally {
-      setRoLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!user) return;
 
@@ -227,182 +178,6 @@ export default function ManageShippers() {
     });
 
     setShowModal(true);
-  };
-
-  const openROModal = (row) => {
-    if (!customerId) {
-      alert("กรุณาเลือก customer ก่อน");
-      return;
-    }
-
-    setSelectedShipper(row);
-    resetROForm();
-    setRoRows([]);
-    setRoModal(true);
-    fetchRODocuments(row.shipper_id);
-  };
-
-  const handleROImageChange = (e) => {
-    const files = Array.from(e.target.files || []);
-
-    if (files.length > 5) {
-      alert("อัปโหลดรูปได้สูงสุด 5 รูป");
-      e.target.value = "";
-      setRoImages([]);
-      return;
-    }
-
-    if (roEditing) {
-      const oldCount = roEditing.images?.length || 0;
-
-      if (oldCount + files.length > 5) {
-        alert(`RO นี้มีรูปเดิม ${oldCount} รูป เพิ่มได้อีกไม่เกิน ${5 - oldCount} รูป`);
-        e.target.value = "";
-        setRoImages([]);
-        return;
-      }
-    }
-
-    setRoImages(files);
-  };
-
-  const getImageSrc = (url) => {
-    if (!url) return "";
-
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-
-    const baseURL = AxiosInstance.defaults.baseURL || "";
-
-    return `${baseURL}${url}`;
-  };
-
-  const uploadROImages = async (roCodeId) => {
-    if (roImages.length === 0) return;
-
-    const formData = new FormData();
-
-    roImages.forEach((file) => {
-      formData.append("images", file);
-    });
-
-    await AxiosInstance.post(`/manage/shippers/${customerId}/${selectedShipper.shipper_id}/ro-codes/${roCodeId}/images`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  };
-
-  const handleSaveRO = async () => {
-    if (!customerId) {
-      alert("กรุณาเลือก customer ก่อน");
-      return;
-    }
-
-    if (!selectedShipper?.shipper_id) {
-      alert("ไม่พบข้อมูลผู้ส่ง");
-      return;
-    }
-
-    const cleanROCode = cleanCodeInput(roCode);
-    const cleanROName = roName.trim();
-
-    if (!cleanROCode) {
-      alert("กรุณากรอก RO Code");
-      return;
-    }
-
-    if (!cleanROName) {
-      alert("กรุณากรอกชื่อ RO");
-      return;
-    }
-
-    if (!roEditing && roImages.length === 0) {
-      alert("กรุณาเลือกรูปเอกสารรับกลับอย่างน้อย 1 รูป");
-      return;
-    }
-
-    if (roImages.length > 5) {
-      alert("อัปโหลดรูปได้สูงสุด 5 รูป");
-      return;
-    }
-
-    try {
-      setRoSaving(true);
-
-      if (roEditing) {
-        await AxiosInstance.patch(`/manage/shippers/${customerId}/${selectedShipper.shipper_id}/ro-codes/${roEditing.ro_code_id}`, {
-          ro_code: cleanROCode,
-          ro_name: cleanROName,
-        });
-
-        if (roImages.length > 0) {
-          await uploadROImages(roEditing.ro_code_id);
-        }
-
-        alert("แก้ไขเอกสารรับกลับสำเร็จ");
-      } else {
-        const createRes = await AxiosInstance.post(`/manage/shippers/${customerId}/${selectedShipper.shipper_id}/ro-codes`, {
-          ro_code: cleanROCode,
-          ro_name: cleanROName,
-        });
-
-        const roCodeId = createRes.data?.ro_code_id;
-
-        if (!roCodeId) {
-          throw new Error("ไม่พบ ro_code_id");
-        }
-
-        await uploadROImages(roCodeId);
-
-        alert("บันทึกเอกสารรับกลับสำเร็จ");
-      }
-
-      resetROForm();
-      await fetchRODocuments(selectedShipper.shipper_id);
-    } catch (err) {
-      alert(err?.response?.data?.message || err?.message || "save ro failed");
-    } finally {
-      setRoSaving(false);
-    }
-  };
-
-  const handleEditRO = (row) => {
-    setRoEditing(row);
-    setRoCode(row.ro_code || "");
-    setRoName(row.ro_name || "");
-    setRoImages([]);
-
-    if (roFileInputRef.current) {
-      roFileInputRef.current.value = "";
-    }
-  };
-
-  const handleCancelEditRO = () => {
-    resetROForm();
-  };
-
-  const handleDeleteRO = async (row) => {
-    if (!customerId || !selectedShipper?.shipper_id || !row?.ro_code_id) return;
-
-    const ok = window.confirm(`ต้องการลบ RO "${row.ro_code}" ใช่ไหม?`);
-
-    if (!ok) return;
-
-    try {
-      await AxiosInstance.delete(`/manage/shippers/${customerId}/${selectedShipper.shipper_id}/ro-codes/${row.ro_code_id}`);
-
-      if (roEditing?.ro_code_id === row.ro_code_id) {
-        resetROForm();
-      }
-
-      await fetchRODocuments(selectedShipper.shipper_id);
-
-      alert("ลบ RO สำเร็จ");
-    } catch (err) {
-      alert(err?.response?.data?.message || "delete ro failed");
-    }
   };
 
   const handleSave = async () => {
@@ -488,15 +263,6 @@ export default function ManageShippers() {
       no: i + 1,
     }));
   }, [rows]);
-
-  const roGridRows = useMemo(() => {
-    return roRows.map((r, i) => ({
-      ...r,
-      id: r.ro_code_id,
-      no: i + 1,
-      image_count: r.images?.length || 0,
-    }));
-  }, [roRows]);
 
   const shipperColumns = useMemo(
     () => [
@@ -597,149 +363,27 @@ export default function ManageShippers() {
       {
         field: "actions",
         headerName: "จัดการ",
-        width: 150,
-        minWidth: 140,
+        width: 110,
+        minWidth: 100,
         sortable: false,
         filterable: false,
         resizable: false,
         align: "center",
         headerAlign: "center",
         renderCell: (params) => (
-          <div className="flex h-full w-full items-center justify-center gap-2">
+          <div className="flex h-full w-full items-center justify-center">
             <button
               type="button"
               onClick={() => openEdit(params.row)}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-              title="แก้ไขผู้ส่ง"
             >
               <Pencil size={14} />
             </button>
-
-            <button
-              type="button"
-              onClick={() => openROModal(params.row)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100"
-              title="เอกสารรับกลับ"
-            >
-              <FileImage size={14} />
-            </button>
           </div>
         ),
       },
     ],
-    [customerId],
-  );
-
-  const roColumns = useMemo(
-    () => [
-      {
-        field: "no",
-        headerName: "#",
-        width: 52,
-        minWidth: 50,
-        sortable: false,
-        filterable: false,
-        resizable: false,
-        align: "center",
-        headerAlign: "center",
-        renderCell: (params) => <div className="h-full w-full flex items-center justify-center text-sm">{params.value}</div>,
-      },
-      {
-        field: "ro_code",
-        headerName: "RO Code",
-        width: 115,
-        minWidth: 105,
-        renderCell: (params) => (
-          <div className="h-full w-full flex items-center">
-            <span title={params.value || ""} className="truncate text-sm">
-              {params.value || "-"}
-            </span>
-          </div>
-        ),
-      },
-      {
-        field: "ro_name",
-        headerName: "ชื่อ RO",
-        width: 170,
-        minWidth: 145,
-        renderCell: (params) => (
-          <div className="h-full w-full flex items-center">
-            <span title={params.value || ""} className="truncate text-sm">
-              {params.value || "-"}
-            </span>
-          </div>
-        ),
-      },
-      {
-        field: "images",
-        headerName: "รูปเอกสาร",
-        width: 225,
-        minWidth: 215,
-        sortable: false,
-        filterable: false,
-        renderCell: (params) => {
-          const images = params.row.images || [];
-
-          if (images.length === 0) {
-            return (
-              <div className="h-full w-full flex items-center">
-                <span className="text-xs text-slate-400">ไม่มีรูป</span>
-              </div>
-            );
-          }
-
-          return (
-            <div className="h-full w-full flex items-center gap-1 overflow-hidden">
-              {images.slice(0, 5).map((img, index) => (
-                <a
-                  key={img.ro_image_id || `${params.row.ro_code_id}-${index}`}
-                  href={getImageSrc(img.image_url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-7 h-7 rounded border border-slate-200 overflow-hidden bg-slate-100 shrink-0 hover:border-blue-300"
-                  title={`เปิดรูปที่ ${img.image_order || index + 1}`}
-                >
-                  <img src={getImageSrc(img.image_url)} alt={`${params.row.ro_code}-${index + 1}`} className="w-full h-full object-cover" />
-                </a>
-              ))}
-            </div>
-          );
-        },
-      },
-      {
-        field: "actions",
-        headerName: "จัดการ",
-        width: 95,
-        minWidth: 90,
-        sortable: false,
-        filterable: false,
-        resizable: false,
-        align: "center",
-        headerAlign: "center",
-        renderCell: (params) => (
-          <div className="h-full w-full flex items-center justify-center gap-1">
-            <button
-              type="button"
-              onClick={() => handleEditRO(params.row)}
-              className="w-6 h-6 flex items-center justify-center rounded-md bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-              title="แก้ไข RO"
-            >
-              <Pencil size={12} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDeleteRO(params.row)}
-              className="w-6 h-6 flex items-center justify-center rounded-md bg-red-50 text-red-500 border border-red-200 hover:bg-red-100"
-              title="ลบ RO"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [roEditing],
+    [],
   );
 
   return (
@@ -904,149 +548,6 @@ export default function ManageShippers() {
               <button type="button" onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                 บันทึก
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-   {roModal && (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-    <div
-      className="bg-white p-4 rounded-2xl shadow-xl w-[760px] max-h-[88vh] overflow-auto animate-scaleIn"
-      onClick={(e) => e.stopPropagation()}
-    >
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div>
-                <h3 className="text-base font-semibold text-slate-800">เอกสารรับกลับ</h3>
-                <p className="text-slate-500 mt-1 text-sm">
-                  ผู้ส่ง: {selectedShipper?.shipper_code || "-"} - {selectedShipper?.shipper_name || "-"}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeROModal}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50 mb-3">
-              <div className="flex items-center justify-between gap-3 mb-2">
-                <h4 className="font-medium text-slate-700 text-sm">{roEditing ? "แก้ไขเอกสารรับกลับ" : "เพิ่มเอกสารรับกลับ"}</h4>
-
-                {roEditing && (
-                  <button
-                    type="button"
-                    onClick={handleCancelEditRO}
-                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs"
-                  >
-                    ยกเลิกแก้ไข
-                  </button>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-end gap-2">
-                <div className="w-full sm:w-[180px] shrink-0">
-                  <RequiredLabel required>RO Code</RequiredLabel>
-                  <input
-                    className="input-modern w-full h-9 text-sm"
-                    placeholder="รหัสเอกสารรับกลับ"
-                    value={roCode}
-                    onChange={(e) => setRoCode(cleanCodeInput(e.target.value))}
-                  />
-                </div>
-
-                <div className="w-full sm:flex-1 sm:min-w-[220px]">
-                  <RequiredLabel required>ชื่อ RO</RequiredLabel>
-                  <input
-                    className="input-modern w-full h-9 text-sm"
-                    placeholder="ชื่อเอกสารรับกลับ"
-                    value={roName}
-                    onChange={(e) => setRoName(e.target.value)}
-                  />
-                </div>
-
-                <div className="w-[105px] shrink-0">
-                  <RequiredLabel required={!roEditing}>{roEditing ? "เพิ่มรูป" : "รูปเอกสาร"}</RequiredLabel>
-
-                  <input
-                    ref={roFileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    multiple
-                    className="hidden"
-                    onChange={handleROImageChange}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => roFileInputRef.current?.click()}
-                    className="w-full h-9 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 text-xs px-2 whitespace-nowrap"
-                  >
-                    เลือกรูป
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleSaveRO}
-                  disabled={roSaving}
-                  className="w-[70px] h-9 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 text-xs shrink-0"
-                >
-                  {roSaving ? "..." : roEditing ? "อัปเดต" : "บันทึก"}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between mt-2 gap-3">
-                <p className="text-[11px] text-slate-500">
-                  {roEditing ? "ถ้าไม่เพิ่มรูปใหม่ ไม่ต้องเลือกไฟล์ รวมได้ไม่เกิน 5 รูป" : "สูงสุด 5 รูป รองรับ JPG, PNG, WEBP"}
-                </p>
-
-                {roImages.length > 0 && (
-                  <span className="text-[11px] text-blue-600 bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 shrink-0">
-                    เลือกแล้ว {roImages.length} รูป
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {roImages.length > 0 && (
-              <div className="mt-2 rounded-lg border border-slate-200 bg-white px-2 py-1">
-                <div className="flex flex-wrap gap-x-2 gap-y-1 text-[10px] text-slate-500">
-                  {roImages.map((file, index) => (
-                    <span
-                      key={`${file.name}-${index}`}
-                      className="max-w-[135px] truncate bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5"
-                      title={file.name}
-                    >
-                      {index + 1}. {file.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <h4 className="font-medium text-slate-700 mb-2 text-sm">รายการเอกสารรับกลับ</h4>
-
-              {roLoading ? (
-                <div className="text-sm text-slate-500 py-5 text-center border rounded-xl">กำลังโหลด...</div>
-              ) : roRows.length === 0 ? (
-                <div className="text-sm text-slate-500 py-5 text-center border rounded-xl">ยังไม่มีเอกสารรับกลับ</div>
-              ) : (
-                <div className="h-[320px] overflow-hidden border border-slate-200 rounded-xl">
-                  <DataGrid
-                    rows={roGridRows}
-                    columns={roColumns}
-                    loading={roLoading}
-                    getRowId={(row) => row.ro_code_id}
-                    height="100%"
-                    pageSize={10}
-                    rowHeight={38}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>

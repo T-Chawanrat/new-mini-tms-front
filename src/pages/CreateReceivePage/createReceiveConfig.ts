@@ -158,6 +158,8 @@ export type PackageRow = {
 
   package_size_name: string;
 
+  barcode: string;
+
   width: string;
   length: string;
   height: string;
@@ -166,6 +168,13 @@ export type PackageRow = {
 
   qty: string;
   unit_price: string;
+};
+
+export type ShipperROCodeOption = {
+  ro_code_id: number;
+  shipper_id: number;
+  ro_code: string;
+  ro_name: string;
 };
 
 export type UpdateReceiveForm = <K extends keyof ReceiveForm>(
@@ -244,6 +253,8 @@ export const emptyPackageRow: PackageRow = {
   package_detail_type: "",
 
   package_size_name: "",
+
+  barcode: "",
 
   width: "",
   length: "",
