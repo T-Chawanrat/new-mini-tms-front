@@ -11,6 +11,13 @@ type DatePickerProps = {
   disabled?: boolean;
   required?: boolean;
   variant?: DatePickerVariant;
+
+  // เพิ่มไว้สำหรับ disable วันที่บางวัน เช่น วันที่รถไม่เข้า
+  shouldDisableDate?: (day: Dayjs) => boolean;
+
+  // เผื่อใช้กันเลือกก่อน/หลังวันที่กำหนด
+  minDate?: string | null;
+  maxDate?: string | null;
 };
 
 const getDatePickerSx = (variant: DatePickerVariant) => {
@@ -52,7 +59,9 @@ const getDatePickerSx = (variant: DatePickerVariant) => {
     },
 
     "& .MuiOutlinedInput-root.Mui-focused": {
-      boxShadow: isCompact ? "0 0 0 2px rgba(59, 130, 246, 0.10)" : "0 0 0 3px rgba(59, 130, 246, 0.12)",
+      boxShadow: isCompact
+        ? "0 0 0 2px rgba(59, 130, 246, 0.10)"
+        : "0 0 0 3px rgba(59, 130, 246, 0.12)",
     },
 
     "& .MuiInputBase-input": {
@@ -97,21 +106,33 @@ export default function DatePicker({
   disabled = false,
   required = false,
   variant = "default",
+  shouldDisableDate,
+  minDate,
+  maxDate,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
+
+  const parsedValue = value ? dayjs(value) : null;
+  const parsedMinDate = minDate ? dayjs(minDate) : undefined;
+  const parsedMaxDate = maxDate ? dayjs(maxDate) : undefined;
 
   return (
     <MuiDatePicker
       open={open}
-      onOpen={() => setOpen(true)}
+      onOpen={() => {
+        if (!disabled) setOpen(true);
+      }}
       onClose={() => setOpen(false)}
-      value={value ? dayjs(value) : null}
+      value={parsedValue}
       onChange={(date: Dayjs | null) => {
         onChange(date ? date.format("YYYY-MM-DD") : "");
         setOpen(false);
       }}
       format="YYYY-MM-DD"
       disabled={disabled}
+      shouldDisableDate={shouldDisableDate}
+      minDate={parsedMinDate}
+      maxDate={parsedMaxDate}
       slotProps={{
         textField: {
           fullWidth: true,

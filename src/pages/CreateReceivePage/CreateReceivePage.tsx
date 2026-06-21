@@ -33,6 +33,10 @@ export default function CreateReceivePage() {
   const [roCodes, setRoCodes] = useState<ShipperROCodeOption[]>([]);
   const [loadingROCodes, setLoadingROCodes] = useState(false);
 
+  const [recipientServiceDayIds, setRecipientServiceDayIds] = useState<number[]>([]);
+  const [recipientTransitDays, setRecipientTransitDays] = useState<number | null>(null);
+  const [holidayDates, setHolidayDates] = useState<string[]>([]);
+
   const [customerSearch, setCustomerSearch] = useState("");
   const [shipperSearch, setShipperSearch] = useState("");
   const [recipientSearch, setRecipientSearch] = useState("");
@@ -71,10 +75,17 @@ export default function CreateReceivePage() {
     }));
   };
 
+  const resetRecipientCalendar = () => {
+    setRecipientServiceDayIds([]);
+    setRecipientTransitDays(null);
+    setHolidayDates([]);
+  };
+
   const resetCustomerRelatedFields = () => {
     setShippers([]);
     setRecipients([]);
     setRoCodes([]);
+    resetRecipientCalendar();
 
     setShipperSearch("");
     setRecipientSearch("");
@@ -121,6 +132,8 @@ export default function CreateReceivePage() {
 
       zip_code: "",
       tel: "",
+
+      delivery_date: "",
 
       is_document_return: "N",
       document_return: "",
@@ -213,6 +226,33 @@ export default function CreateReceivePage() {
       setRoCodes([]);
     } finally {
       setLoadingROCodes(false);
+    }
+  };
+
+  const loadRecipientCalendar = async (customerId: string, recipientDetailId: string) => {
+    if (!customerId || !recipientDetailId) {
+      resetRecipientCalendar();
+      return;
+    }
+
+    try {
+      const res = await AxiosInstance.get(`/receives/options/recipient-calendar/${customerId}/${recipientDetailId}`);
+
+      setRecipientServiceDayIds((res.data?.service_day_ids || []).map(Number));
+      setRecipientTransitDays(res.data?.transit_days ?? null);
+      setHolidayDates(res.data?.holiday_dates || []);
+    } catch (err) {
+      console.error("LOAD RECIPIENT CALENDAR ERROR:", err);
+
+      resetRecipientCalendar();
+
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "โหลดปฏิทินวันรถเข้าไม่สำเร็จ");
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("โหลดปฏิทินวันรถเข้าไม่สำเร็จ");
+      }
     }
   };
 
@@ -352,6 +392,8 @@ export default function CreateReceivePage() {
   };
 
   const selectRecipient = (selected: RecipientOption) => {
+    const selectedRecipientDetailId = String(selected.recipient_detail_id || "");
+
     setForm((prev) => ({
       ...prev,
 
@@ -359,7 +401,7 @@ export default function CreateReceivePage() {
       recipient_code: selected.recipient_code || "",
       recipient_name: selected.recipient_name || "",
 
-      recipient_detail_id: String(selected.recipient_detail_id || ""),
+      recipient_detail_id: selectedRecipientDetailId,
       recipient_detail_name: selected.recipient_detail_name || "",
 
       address: selected.address || "",
@@ -374,7 +416,12 @@ export default function CreateReceivePage() {
 
       zip_code: selected.zip_code || "",
       tel: selected.tel || "",
+
+      delivery_date: "",
     }));
+
+    resetRecipientCalendar();
+    loadRecipientCalendar(form.customer_id, selectedRecipientDetailId);
 
     setShowRecipientModal(false);
   };
@@ -506,6 +553,7 @@ export default function CreateReceivePage() {
     setShippers([]);
     setRecipients([]);
     setRoCodes([]);
+    resetRecipientCalendar();
     setPackageRows([]);
     setPackageForm(emptyPackageRow);
     setScanBarcode("");
@@ -531,43 +579,41 @@ export default function CreateReceivePage() {
       }
 
       const payload = {
-        receive_code: null,
-        reference_no: form.reference_no || null,
+        receiveHeader: {
+          reference_no: form.reference_no || null,
 
-        customer_id: form.customer_id,
-        shipper_id: form.shipper_id,
-        recipient_id: form.recipient_id,
-        recipient_detail_id: form.recipient_detail_id,
+          customer_id: form.customer_id,
+          shipper_id: form.shipper_id,
+          recipient_id: form.recipient_id,
+          recipient_detail_id: form.recipient_detail_id,
 
-        recipient_name: form.recipient_name,
-        address: form.address,
+          recipient_name: form.recipient_detail_name || form.recipient_name,
+          address: form.address,
 
-        province_id: form.province_id || null,
-        district_id: form.district_id || null,
-        subdistrict_id: form.subdistrict_id || null,
+          province_id: form.province_id || null,
+          district_id: form.district_id || null,
+          subdistrict_id: form.subdistrict_id || null,
 
-        zip_code: form.zip_code || null,
-        tel: form.tel || null,
+          zip_code: form.zip_code || null,
+          tel: form.tel || null,
 
-        delivery_date: form.delivery_date || null,
-        payment_type_id: form.payment_type_id || null,
+          delivery_date: form.delivery_date || null,
+          payment_type_id: form.payment_type_id || null,
 
-        is_cod: form.is_cod,
-        cod: form.is_cod === "Y" ? Number(form.cod || 0) : 0,
+          is_cod: form.is_cod,
+          cod: form.is_cod === "Y" ? Number(form.cod || 0) : 0,
 
-        is_document_return: form.is_document_return,
-        document_return: form.is_document_return === "Y" ? form.document_return || null : null,
+          is_document_return: form.is_document_return,
+          document_return_id: form.is_document_return === "Y" && form.document_return ? Number(form.document_return) : null,
 
-        is_pickup_customer: form.is_pickup_customer,
-        is_pickup_shipper: form.is_pickup_shipper,
+          remark: form.remark || null,
 
-        is_invoices: "N",
-        app_create: "WEB",
-        is_returned: "N",
+          cost: totalPrice,
+          net: totalPrice,
+        },
 
-        remark: form.remark || null,
-
-        packages: packageRows.map((row) => ({
+        // ส่งไว้ก่อน สำหรับ step ต่อไปที่จะ insert tm_receive_details / SN
+        packageRows: packageRows.map((row) => ({
           package_id: row.package_id || null,
           package_code: row.package_code || null,
           package_name: row.package_name || null,
@@ -586,14 +632,17 @@ export default function CreateReceivePage() {
           q: row.q ? Number(row.q) : null,
           weight: row.weight ? Number(row.weight) : null,
           qty: row.qty ? Number(row.qty) : 1,
+          unit_price: row.unit_price ? Number(row.unit_price) : 0,
           cost: row.unit_price ? Number(row.unit_price) : 0,
         })),
       };
 
-      const res = await AxiosInstance.post("/receives", payload);
+      const res = await AxiosInstance.post("/create/receives", payload);
 
-      setSuccess(`สร้างบิลสำเร็จ receive_id: ${res.data?.receive_id || "-"}`);
+      const receiveCode = res.data?.receive_code || "-";
+
       handleClearForm();
+      setSuccess(`สร้างบิลสำเร็จ ${receiveCode}`);
     } catch (err) {
       console.error(err);
 
@@ -658,6 +707,9 @@ export default function CreateReceivePage() {
             onOpenCustomerModal={() => setShowCustomerModal(true)}
             onOpenShipperModal={() => setShowShipperModal(true)}
             onOpenRecipientModal={() => setShowRecipientModal(true)}
+            recipientServiceDayIds={recipientServiceDayIds}
+            recipientTransitDays={recipientTransitDays}
+            holidayDates={holidayDates}
           />
 
           <PackageSection

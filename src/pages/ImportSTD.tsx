@@ -1,20 +1,24 @@
-import { useState, ChangeEvent, useMemo } from "react";
+// src/pages/BillImport.tsx
+
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import * as XLSX from "xlsx";
 import axios from "axios";
-import { format } from "date-fns";
+import ResizableColumns from "../components/ResizableColumns";
 import { useAuth } from "../context/AuthContext";
 import AxiosInstance from "../utils/AxiosInstance";
-import { DownloadIcon, X } from "lucide-react";
-import DataGrid from "../components/DataGrid";
-import CustomerDropdown, { type Customer } from "../components/dropdown/CustomerDropdown";
+
+type CustomerOption = {
+  id: number | string;
+  code?: string | null;
+  name?: string | null;
+};
 
 type ImportRow = {
   NO_BILL: string;
   REFERENCE: string;
-  SEND_DATE: string | number;
+  SEND_DATE: string;
   SHIPPER_CODE: string;
   RECIPIENT_CODE: string;
-
   RECIPIENT_NAME: string;
   RECIPIENT_TEL: string;
   RECIPIENT_ADDRESS: string;
@@ -22,588 +26,660 @@ type ImportRow = {
   RECIPIENT_DISTRICT: string;
   RECIPIENT_PROVINCE: string;
   RECIPIENT_ZIPCODE: string;
-
-  PACKAGE_CODE?: string;
-  WEIGHT?: number | string;
-  WIDTH?: number | string;
-  HEIGHT?: number | string;
-  LENGTH?: number | string;
-  Q?: number | string;
-
-  subdistrict_id?: number | string | null;
-
+  IS_DOCUMENT_RETURN: string;
+  DOCUMENT_RETURN_CODE: string;
+  PAYMENT_TYPE_ID: string;
+  IS_COD: string;
+  COD: string;
+  PICKUP: string;
+  NOTE: string;
+  URL: string;
+  PACKAGE_CODE: string;
+  WEIGHT: string;
+  WIDTH: string;
+  HEIGHT: string;
+  LENGTH: string;
+  Q: string;
+  IS_SERIAL_NO: string;
   SERIAL_NO: string;
+  subdistrict_id: string;
 };
 
-export default function ImportSTD() {
-  const [fileName, setFileName] = useState<string>("");
-  const [rows, setRows] = useState<ImportRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [duplicates, setDuplicates] = useState<Record<string, number>>({});
+type ImportResponse = {
+  success?: boolean;
+  message?: string;
+  total_rows?: number;
+  inserted_rows?: number;
 
-  const [customerId, setCustomerId] = useState<string>("");
-  const [customerKeyword, setCustomerKeyword] = useState<string>("");
+  // เผื่อ backend เก่า/อนาคต
+  receive_count?: number;
+  detail_count?: number;
+  error?: string;
+};
 
+const excelColumns: Array<keyof ImportRow> = [
+  "NO_BILL",
+  "REFERENCE",
+  "SEND_DATE",
+  "SHIPPER_CODE",
+  "RECIPIENT_CODE",
+  "RECIPIENT_NAME",
+  "RECIPIENT_TEL",
+  "RECIPIENT_ADDRESS",
+  "RECIPIENT_SUBDISTRICT",
+  "RECIPIENT_DISTRICT",
+  "RECIPIENT_PROVINCE",
+  "RECIPIENT_ZIPCODE",
+  "IS_DOCUMENT_RETURN",
+  "DOCUMENT_RETURN_CODE",
+  "PAYMENT_TYPE_ID",
+  "IS_COD",
+  "COD",
+  "PICKUP",
+  "NOTE",
+  "URL",
+  "PACKAGE_CODE",
+  "WEIGHT",
+  "WIDTH",
+  "HEIGHT",
+  "LENGTH",
+  "Q",
+  "IS_SERIAL_NO",
+  "SERIAL_NO",
+  "subdistrict_id",
+];
+
+const headers = ["ลำดับ", ...excelColumns];
+
+const normalizeCell = (value: unknown) => {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+};
+
+const normalizeRow = (row: Record<string, unknown>): ImportRow => {
+  const normalized: Partial<ImportRow> = {};
+
+  excelColumns.forEach((column) => {
+    normalized[column] = normalizeCell(row[column]);
+  });
+
+  return normalized as ImportRow;
+};
+
+const formatPreviewDate = (value: string) => {
+  if (!value) return "-";
+
+  const serial = Number(value);
+
+  if (Number.isFinite(serial) && serial > 20000) {
+    const date = new Date((serial - 25569) * 86400 * 1000);
+
+    if (!Number.isNaN(date.getTime())) {
+      const dd = String(date.getDate()).padStart(2, "0");
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const yyyy = date.getFullYear();
+
+      return `${dd}/${mm}/${yyyy}`;
+    }
+  }
+
+  return value;
+};
+
+const cleanPhoneDigits = (value: string) => {
+  return String(value || "").replace(/\D/g, "");
+};
+
+const isValidThaiPhone = (value: string) => {
+  const tel = cleanPhoneDigits(value);
+
+  if (!tel) return false;
+
+  return tel.startsWith("0") && (tel.length === 9 || tel.length === 10);
+};
+
+const findDuplicateSerials = (rows: ImportRow[]) => {
+  const count: Record<string, number> = {};
+
+  rows.forEach((row) => {
+    const serialNo = row.SERIAL_NO?.trim();
+
+    if (!serialNo) return;
+
+    count[serialNo] = (count[serialNo] || 0) + 1;
+  });
+
+  return count;
+};
+
+const findInvalidPhoneRows = (rows: ImportRow[]) => {
+  const invalid: Record<number, boolean> = {};
+
+  rows.forEach((row, index) => {
+    if (!isValidThaiPhone(row.RECIPIENT_TEL)) {
+      invalid[index] = true;
+    }
+  });
+
+  return invalid;
+};
+
+const buildDuplicateSerialRowMap = (rows: ImportRow[], duplicates: Record<string, number>) => {
+  const map: Record<number, boolean> = {};
+
+  rows.forEach((row, index) => {
+    const serialNo = row.SERIAL_NO?.trim();
+
+    if (serialNo && duplicates[serialNo] > 1) {
+      map[index] = true;
+    }
+  });
+
+  return map;
+};
+
+export default function BillImport() {
   const { user } = useAuth();
 
-  const cleanText = (value: unknown) => {
-    const text = String(value ?? "").trim();
-    return text || null;
+  const authUser = user as
+    | {
+        user_id?: number | string;
+        id?: number | string;
+        role_id?: number | string;
+        customer_id?: number | string | null;
+        first_name?: string;
+        username?: string;
+      }
+    | null
+    | undefined;
+
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [customerId, setCustomerId] = useState("");
+
+  const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [rows, setRows] = useState<ImportRow[]>([]);
+
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [loadingFile, setLoadingFile] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const selectedCustomerId = String(authUser?.customer_id || customerId || "");
+
+  const isCustomerUser = Number(authUser?.role_id) === 2;
+
+  const duplicates = useMemo(() => findDuplicateSerials(rows), [rows]);
+
+  const duplicateSerialRows = useMemo(() => {
+    return buildDuplicateSerialRowMap(rows, duplicates);
+  }, [rows, duplicates]);
+
+  const invalidPhoneRows = useMemo(() => findInvalidPhoneRows(rows), [rows]);
+
+  const duplicateSerialValueCount = useMemo(() => {
+    return Object.values(duplicates).filter((count) => count > 1).length;
+  }, [duplicates]);
+
+  const duplicateSerialRowCount = useMemo(() => {
+    return Object.values(duplicateSerialRows).filter(Boolean).length;
+  }, [duplicateSerialRows]);
+
+  const invalidPhoneCount = useMemo(() => {
+    return Object.values(invalidPhoneRows).filter(Boolean).length;
+  }, [invalidPhoneRows]);
+
+  const hasDuplicateSerial = duplicateSerialRowCount > 0;
+  const hasInvalidPhone = invalidPhoneCount > 0;
+
+  const billCount = useMemo(() => {
+    const set = new Set<string>();
+
+    rows.forEach((row) => {
+      if (row.NO_BILL) set.add(row.NO_BILL);
+    });
+
+    return set.size;
+  }, [rows]);
+
+  const disabledReason = !selectedCustomerId
+    ? "ยังไม่ได้เลือกเจ้าของงาน"
+    : !file
+      ? "ยังไม่ได้เลือกไฟล์ Excel"
+      : loadingFile
+        ? "กำลังอ่านไฟล์"
+        : saving
+          ? "กำลังบันทึก"
+          : !rows.length
+            ? "อ่านข้อมูล Excel ไม่ได้ / ไม่มี rows"
+            : hasDuplicateSerial
+              ? "มี SERIAL_NO ซ้ำ"
+              : hasInvalidPhone
+                ? "มีเบอร์โทรไม่ถูกต้อง"
+                : "";
+
+  const loadCustomers = async () => {
+    if (isCustomerUser) return;
+
+    setLoadingCustomers(true);
+
+    try {
+      const res = await AxiosInstance.get("/customers");
+      setCustomers(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("LOAD CUSTOMERS ERROR:", err);
+
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "โหลดข้อมูล Customer ไม่สำเร็จ");
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("โหลดข้อมูล Customer ไม่สำเร็จ");
+      }
+    } finally {
+      setLoadingCustomers(false);
+    }
   };
 
-  const toNumberOrNull = (value: unknown) => {
-    if (value === undefined || value === null || value === "") return null;
-
-    const n = Number(value);
-    return Number.isFinite(n) ? n : null;
-  };
-
-  const buildPayloadRows = () => {
-    return rows.map((r) => ({
-      NO_BILL: cleanText(r.NO_BILL),
-      SERIAL_NO: cleanText(r.SERIAL_NO),
-      REFERENCE: cleanText(r.REFERENCE),
-      SEND_DATE: r.SEND_DATE || null,
-
-      SHIPPER_CODE: cleanText(r.SHIPPER_CODE),
-      RECIPIENT_CODE: cleanText(r.RECIPIENT_CODE),
-
-      RECIPIENT_NAME: cleanText(r.RECIPIENT_NAME),
-      RECIPIENT_TEL: cleanText(r.RECIPIENT_TEL),
-      RECIPIENT_ADDRESS: cleanText(r.RECIPIENT_ADDRESS),
-      RECIPIENT_SUBDISTRICT: cleanText(r.RECIPIENT_SUBDISTRICT),
-      RECIPIENT_DISTRICT: cleanText(r.RECIPIENT_DISTRICT),
-      RECIPIENT_PROVINCE: cleanText(r.RECIPIENT_PROVINCE),
-      RECIPIENT_ZIPCODE: cleanText(r.RECIPIENT_ZIPCODE),
-
-      PACKAGE_CODE: cleanText(r.PACKAGE_CODE),
-
-      WEIGHT: toNumberOrNull(r.WEIGHT),
-      WIDTH: toNumberOrNull(r.WIDTH),
-      HEIGHT: toNumberOrNull(r.HEIGHT),
-      LENGTH: toNumberOrNull(r.LENGTH),
-      Q: toNumberOrNull(r.Q),
-
-      subdistrict_id: toNumberOrNull(r.subdistrict_id),
-
-      from_warehouse: null,
-      to_warehouse: null,
-
-      receive_code: null,
-      shipper_id: null,
-      recipient_id: null,
-      package_id: null,
-      price: null,
-    }));
-  };
-
-  const findDuplicates = (rows: ImportRow[]) => {
-    const count: Record<string, number> = {};
-
-    for (let i = 0; i < rows.length; i++) {
-      const sn = rows[i].SERIAL_NO;
-      if (!sn) continue;
-      count[sn] = (count[sn] || 0) + 1;
+  useEffect(() => {
+    if (authUser?.customer_id) {
+      setCustomerId(String(authUser.customer_id));
     }
 
-    return count;
-  };
+    loadCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.customer_id, authUser?.role_id]);
 
-  const isInvalidTel = (tel: string) => {
-    if (!tel) return false;
-
-    const clean = tel.replace(/\D/g, "");
-
-    return !(clean.startsWith("0") && (clean.length === 9 || clean.length === 10));
-  };
-
-  const excelDateToJSDate = (value: string | number): Date | null => {
-    if (!value) return null;
-
-    if (!isNaN(Number(value))) {
-      return new Date((Number(value) - 25569) * 86400 * 1000);
-    }
-
-    if (typeof value === "string" && value.includes("/")) {
-      const [d, m, y] = value.split("/");
-      const date = new Date(`${y}-${m}-${d}`);
-      return isNaN(date.getTime()) ? null : date;
-    }
-
-    const d = new Date(value);
-    return isNaN(d.getTime()) ? null : d;
-  };
-
-  const handleCustomerChange = (customer: Customer | null, inputText?: string) => {
-    if (!customer) {
-      setCustomerId("");
-      setCustomerKeyword(inputText || "");
-      return;
-    }
-
-    setCustomerId(String(customer.id));
-    setCustomerKeyword(customer.name || "");
+  const clearFile = () => {
+    setFile(null);
+    setFileName("");
+    setRows([]);
+    setError(null);
+    setSuccess(null);
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const selectedFile = e.target.files?.[0] || null;
 
+    setFile(null);
+    setFileName("");
+    setRows([]);
     setError(null);
     setSuccess(null);
-    setRows([]);
 
-    if (!file) return;
+    if (!selectedFile) return;
 
-    setFileName(file.name);
-    setLoading(true);
+    setFile(selectedFile);
+    setFileName(selectedFile.name);
+    setLoadingFile(true);
 
     const reader = new FileReader();
 
-    reader.onload = (evt) => {
+    reader.onload = (event) => {
       try {
-        const data = evt.target?.result;
+        const data = event.target?.result;
 
         if (!data) {
           setError("ไม่สามารถอ่านไฟล์ได้");
-          setLoading(false);
           return;
         }
 
-        const workbook = XLSX.read(data, { type: "array" });
+        const workbook = XLSX.read(data, {
+          type: "array",
+          cellDates: false,
+          raw: false,
+        });
+
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
 
-        const json: ImportRow[] = XLSX.utils.sheet_to_json(worksheet, {
+        if (!worksheet) {
+          setFile(null);
+          setFileName("");
+          setRows([]);
+          setError("ไม่พบ Sheet ในไฟล์ Excel");
+          return;
+        }
+
+        const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
           defval: "",
           raw: false,
-        }) as ImportRow[];
+        });
 
-        const cleaned = json.filter((r) => r.SERIAL_NO && r.SERIAL_NO !== "");
+        const normalizedRows = json.map(normalizeRow).filter((row) => excelColumns.some((column) => row[column]));
 
-        setRows(cleaned);
-        setDuplicates(findDuplicates(cleaned));
+        setRows(normalizedRows);
+
+        const duplicateMap = findDuplicateSerials(normalizedRows);
+        const duplicateRows = buildDuplicateSerialRowMap(normalizedRows, duplicateMap);
+        const invalidPhones = findInvalidPhoneRows(normalizedRows);
+
+        const hasDuplicate = Object.values(duplicateRows).some(Boolean);
+        const hasInvalidTel = Object.values(invalidPhones).some(Boolean);
+
+        if (hasDuplicate && hasInvalidTel) {
+          setError("พบ SERIAL_NO ซ้ำ และพบเบอร์โทรไม่ถูกต้อง กรุณาแก้ Excel แล้วเลือกไฟล์ใหม่");
+        } else if (hasDuplicate) {
+          setError("พบ SERIAL_NO ซ้ำ กรุณาแก้ Excel แล้วเลือกไฟล์ใหม่");
+        } else if (hasInvalidTel) {
+          setError("พบเบอร์โทรไม่ถูกต้อง ต้องขึ้นต้นด้วย 0 และมี 9 หรือ 10 หลัก");
+        }
       } catch (err) {
         console.error(err);
+        setFile(null);
+        setFileName("");
+        setRows([]);
         setError("ไฟล์ไม่ถูกต้องหรืออ่านไม่สำเร็จ");
       } finally {
-        setLoading(false);
+        setLoadingFile(false);
       }
     };
 
     reader.onerror = () => {
+      setFile(null);
+      setFileName("");
+      setRows([]);
       setError("เกิดข้อผิดพลาดในการอ่านไฟล์");
-      setLoading(false);
+      setLoadingFile(false);
     };
 
-    reader.readAsArrayBuffer(file);
-  };
-
-  const handleDeleteRow = (index: number) => {
-    setRows((prev) => {
-      const next = prev.filter((_, i) => i !== index);
-      setDuplicates(findDuplicates(next));
-      return next;
-    });
+    reader.readAsArrayBuffer(selectedFile);
   };
 
   const handleSave = async () => {
-    if (!customerId) {
-      setError("กรุณาเลือกลูกค้าก่อนบันทึก");
+    if (!selectedCustomerId) {
+      setError("กรุณาเลือก Customer ก่อนนำเข้า");
+      return;
+    }
+
+    if (!file) {
+      setError("กรุณาเลือกไฟล์ Excel");
       return;
     }
 
     if (!rows.length) {
-      setError("ยังไม่มีข้อมูลให้นำเข้าฐานข้อมูล");
+      setError("ไม่พบข้อมูลในไฟล์ Excel");
       return;
     }
 
-    const payloadRows = buildPayloadRows();
+    if (hasDuplicateSerial) {
+      setError("พบ SERIAL_NO ซ้ำ กรุณาแก้ Excel แล้วเลือกไฟล์ใหม่");
+      return;
+    }
+
+    if (hasInvalidPhone) {
+      setError("พบเบอร์โทรไม่ถูกต้อง ต้องขึ้นต้นด้วย 0 และมี 9 หรือ 10 หลัก");
+      return;
+    }
 
     setSaving(true);
     setError(null);
     setSuccess(null);
 
-    console.log("IMPORT PAYLOAD =", {
-      customer_id: Number(customerId),
-      customerId,
-      rows_count: payloadRows.length,
-      file_name: fileName,
-      first_row: payloadRows[0],
-    });
-
     try {
-      const res = await AxiosInstance.post("/import/std", {
-        customer_id: Number(customerId),
-        rows: payloadRows,
-        file_name: fileName || null,
+      const formData = new FormData();
+
+      formData.append("file", file);
+      formData.append("customer_id", String(selectedCustomerId));
+
+      const res = await AxiosInstance.post<ImportResponse>("/create/receives/import", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      console.log("IMPORT RESPONSE =", res.data);
+      setSuccess(`นำเข้าสำเร็จ: ทั้งหมด ${res.data?.total_rows ?? rows.length} แถว, บันทึกแล้ว ${res.data?.inserted_rows ?? rows.length} แถว`);
 
-      if (res.data?.failed > 0 || res.data?.total === 0) {
-        setError(res.data?.message || "นำเข้าไม่สำเร็จ");
-        return;
-      }
-
-      setSuccess(res.data?.message || "บันทึกข้อมูลสำเร็จ");
-      setRows([]);
+      setFile(null);
       setFileName("");
-      setDuplicates({});
+      setRows([]);
     } catch (err) {
       console.error(err);
 
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูลลงฐานข้อมูล");
+      if (axios.isAxiosError<ImportResponse>(err)) {
+        setError(err.response?.data?.message || err.response?.data?.error || "นำเข้า Excel ไม่สำเร็จ");
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("เกิดข้อผิดพลาดในการบันทึกข้อมูลลงฐานข้อมูล");
+        setError("นำเข้า Excel ไม่สำเร็จ");
       }
     } finally {
       setSaving(false);
     }
   };
 
-  const hasDuplicate = Object.values(duplicates).some((c) => c > 1);
-  const hasInvalidTel = rows.some((r) => isInvalidTel(r.RECIPIENT_TEL));
-  const isInvalidData = hasDuplicate || hasInvalidTel;
-
-  const gridRows = useMemo(() => {
-    return rows.map((row, index) => {
-      const sendDate = excelDateToJSDate(row.SEND_DATE);
-
-      return {
-        ...row,
-        id: index + 1,
-        row_index: index,
-        no: index + 1,
-        SEND_DATE_DISPLAY: sendDate ? format(sendDate, "dd/MM/yyyy") : "-",
-      };
-    });
-  }, [rows]);
-
-  const importColumns = useMemo(
-    () => [
-      {
-        field: "no",
-        headerName: "#",
-        width: 60,
-        minWidth: 60,
-        sortable: false,
-        filterable: false,
-        resizable: false,
-        align: "center" as const,
-        headerAlign: "center" as const,
-      },
-      {
-        field: "actions",
-        headerName: "จัดการ",
-        width: 100,
-        minWidth: 90,
-        sortable: false,
-        filterable: false,
-        resizable: false,
-        align: "center" as const,
-        headerAlign: "center" as const,
-        renderCell: (params: any) => (
-          <div className="flex h-full w-full items-center justify-center">
-            <button
-              type="button"
-              onClick={() => handleDeleteRow(params.row.row_index)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-              title="ลบ"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ),
-      },
-      {
-        field: "NO_BILL",
-        headerName: "NO_BILL",
-        width: 100,
-        minWidth: 80,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "SERIAL_NO",
-        headerName: "SERIAL_NO",
-        width: 160,
-        minWidth: 140,
-        renderCell: (params: any) => {
-          const isDuplicate = duplicates[params.value] > 1;
-
-          return (
-            <div
-              title={params.value || ""}
-              className={`flex h-full w-full items-center px-2 truncate ${isDuplicate ? "bg-red-100 text-red-700 font-semibold" : ""}`}
-            >
-              {params.value || "-"}
-            </div>
-          );
-        },
-      },
-      {
-        field: "REFERENCE",
-        headerName: "REFERENCE",
-        width: 150,
-        minWidth: 130,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "SEND_DATE_DISPLAY",
-        headerName: "SEND_DATE",
-        width: 130,
-        minWidth: 120,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "SHIPPER_CODE",
-        headerName: "SHIPPER_CODE",
-        width: 150,
-        minWidth: 130,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "RECIPIENT_CODE",
-        headerName: "RECIPIENT_CODE",
-        width: 160,
-        minWidth: 140,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "RECIPIENT_NAME",
-        headerName: "RECIPIENT_NAME",
-        width: 220,
-        minWidth: 180,
-        renderCell: (params: any) => (
-          <div title={params.value || ""} className="truncate">
-            {params.value || "-"}
-          </div>
-        ),
-      },
-      {
-        field: "RECIPIENT_TEL",
-        headerName: "RECIPIENT_TEL",
-        width: 150,
-        minWidth: 130,
-        renderCell: (params: any) => {
-          const invalid = isInvalidTel(params.value);
-
-          return (
-            <div className={`flex h-full w-full items-center px-2 truncate ${invalid ? "bg-red-100 text-red-700 font-semibold" : ""}`}>
-              {params.value || "-"}
-            </div>
-          );
-        },
-      },
-      {
-        field: "RECIPIENT_ADDRESS",
-        headerName: "RECIPIENT_ADDRESS",
-        width: 320,
-        minWidth: 240,
-        renderCell: (params: any) => (
-          <div title={params.value || ""} className="truncate">
-            {params.value || "-"}
-          </div>
-        ),
-      },
-      {
-        field: "RECIPIENT_SUBDISTRICT",
-        headerName: "RECIPIENT_SUBDISTRICT",
-        width: 190,
-        minWidth: 160,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "RECIPIENT_DISTRICT",
-        headerName: "RECIPIENT_DISTRICT",
-        width: 180,
-        minWidth: 150,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "RECIPIENT_PROVINCE",
-        headerName: "RECIPIENT_PROVINCE",
-        width: 180,
-        minWidth: 150,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "RECIPIENT_ZIPCODE",
-        headerName: "RECIPIENT_ZIPCODE",
-        width: 170,
-        minWidth: 150,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "PACKAGE_CODE",
-        headerName: "PACKAGE_CODE",
-        width: 150,
-        minWidth: 130,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "WEIGHT",
-        headerName: "WEIGHT",
-        width: 110,
-        minWidth: 90,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "WIDTH",
-        headerName: "WIDTH",
-        width: 100,
-        minWidth: 90,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "HEIGHT",
-        headerName: "HEIGHT",
-        width: 100,
-        minWidth: 90,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "LENGTH",
-        headerName: "LENGTH",
-        width: 110,
-        minWidth: 90,
-        renderCell: (params: any) => params.value || "-",
-      },
-      {
-        field: "Q",
-        headerName: "Q",
-        width: 90,
-        minWidth: 80,
-        renderCell: (params: any) => params.value || "-",
-      },
-    ],
-    [duplicates],
-  );
-
   return (
-    <div
-      className={`font-thai w-full h-[calc(100vh-61px)] bg-slate-50 px-4 py-4 overflow-hidden flex flex-col ${
-        loading || saving ? "cursor-wait" : ""
-      }`}
-    >
-      {/* Header */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-800">นำเข้าข้อมูลบิลจาก Excel</h2>
+    <div className={`font-thai min-h-[80vh] w-full bg-slate-50 px-2 py-2 ${loadingFile || saving ? "cursor-wait" : ""}`}>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-base font-bold tracking-tight text-slate-800">นำเข้าบิลจาก Excel</h2>
         </div>
 
-        <div className="flex items-end gap-4 text-sm">
-          <div className="flex flex-col items-end text-slate-600">
-            <span className="uppercase tracking-wide text-slate-500">ผู้ใช้งาน</span>
-            <span className="font-medium">{user?.first_name || user?.username || "-"}</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="rounded-md border border-slate-200 bg-white px-2 py-1 text-slate-600">
+            ผู้ใช้: <span className="font-semibold text-slate-800">{authUser?.first_name || authUser?.username || "-"}</span>
           </div>
 
-          <div className="flex flex-col items-end text-slate-600">
-            <span className="uppercase tracking-wide text-slate-500">จำนวนแถวในไฟล์</span>
-            <span className="font-semibold text-slate-800">{rows.length.toLocaleString("th-TH")}</span>
+          <div className="rounded-md border border-slate-200 bg-white px-2 py-1 text-slate-600">
+            บิล: <span className="font-semibold text-slate-800">{billCount.toLocaleString("th-TH")}</span>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-white px-2 py-1 text-slate-600">
+            แถว: <span className="font-semibold text-slate-800">{rows.length.toLocaleString("th-TH")}</span>
           </div>
         </div>
       </div>
 
-      {/* Upload Panel */}
-      <div className="mb-3 bg-white/90 border border-slate-200 rounded-xl shadow-sm px-4 py-3 flex flex-col gap-3 shrink-0">
-        <div className="flex flex-col xl:flex-row xl:items-end gap-3">
-          <div className="flex flex-col">
-            <span className="text-[11px] text-slate-600 mb-1 font-medium">เลือกไฟล์ Excel</span>
+      <div className="mb-2 rounded-md border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[320px_1fr_auto] xl:items-end">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-slate-700">Customer</label>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full cursor-pointer hover:bg-blue-100">
-                <span className="text-blue-700 font-medium">เลือกไฟล์</span>
-                <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="hidden" />
-              </label>
-
-              <a
-                href="/templates/import-std.xlsx"
-                download
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100"
+            {isCustomerUser ? (
+              <input
+                className="h-8 w-full rounded-md border border-slate-300 bg-slate-100 px-2 text-xs text-slate-700"
+                value={selectedCustomerId || "-"}
+                disabled
+              />
+            ) : (
+              <select
+                value={customerId}
+                disabled={loadingCustomers || saving}
+                onChange={(e) => {
+                  setCustomerId(e.target.value);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none focus:border-blue-400"
               >
-                <DownloadIcon className="w-4 h-4 text-blue-700" /> Template
-              </a>
+                <option value="">{loadingCustomers ? "กำลังโหลด..." : "เลือก Customer"}</option>
 
-              {fileName ? (
-                <span className="inline-flex items-center max-w-[260px] rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700 truncate">
-                  📄 <span className="ml-1 truncate">{fileName}</span>
-                </span>
-              ) : (
-                <span className="text-[11px] text-slate-400">ยังไม่ได้เลือกไฟล์</span>
-              )}
-
-              <div className="w-full md:w-[420px] xl:w-[520px]">
-                <CustomerDropdown value={customerKeyword} onChange={handleCustomerChange} />
-              </div>
-
-              {/* {!customerId && (
-                <span className="text-[11px] text-red-500">
-                  เลือกเจ้าของงาน
-                </span>
-              )} */}
-            </div>
-
-            <span className="mt-1 text-[11px] text-slate-500">รองรับไฟล์ .xlsx, .xls, .csv เท่านั้น</span>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={String(customer.id)}>
+                    {customer.code ? `${customer.code} - ${customer.name || ""}` : customer.name || customer.id}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
-          <div className="flex-1 flex flex-col md:flex-row md:items-center justify-end gap-3 mt-1">
-            {rows.length > 0 && (
-              <span className="text-slate-600">
-                พบข้อมูล <span className="font-semibold">{rows.length.toLocaleString("th-TH")}</span> แถว
-                {hasDuplicate && (
-                  <span className="ml-2 inline-flex items-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-[1px]">
-                    มี SERIAL_NO ซ้ำในไฟล์
-                  </span>
-                )}
-                {hasInvalidTel && (
-                  <span className="ml-2 inline-flex items-center rounded-full bg-red-50 text-red-700 border border-red-200 px-2 py-[1px]">
-                    พบเบอร์โทรไม่ถูกต้อง
-                  </span>
-                )}
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-slate-700">ไฟล์ Excel</label>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+                เลือกไฟล์
+                <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="hidden" />
+              </label>
+
+              <span className="h-8 max-w-[420px] truncate rounded-md border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-600">
+                {fileName || "ยังไม่ได้เลือกไฟล์"}
+              </span>
+
+              {file && (
+                <button
+                  type="button"
+                  onClick={clearFile}
+                  disabled={saving || loadingFile}
+                  className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-600 hover:bg-slate-50"
+                >
+                  ล้างไฟล์
+                </button>
+              )}
+
+              {loadingFile && <span className="text-xs text-slate-500">กำลังอ่านไฟล์...</span>}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {hasDuplicateSerial && (
+              <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+                SERIAL_NO ซ้ำ {duplicateSerialValueCount} ค่า / {duplicateSerialRowCount} แถว
+              </span>
+            )}
+
+            {hasInvalidPhone && (
+              <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+                เบอร์โทรผิด {invalidPhoneCount} แถว
               </span>
             )}
 
             <button
               type="button"
               onClick={handleSave}
-              disabled={!customerId || !rows.length || saving || isInvalidData}
-              className={`px-4 py-1.5 rounded-full font-medium transition ${
-                !customerId || !rows.length || saving || isInvalidData
-                  ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-                  : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"
+              disabled={Boolean(disabledReason)}
+              title={disabledReason}
+              className={`h-8 rounded-md px-4 text-xs font-semibold ${
+                disabledReason ? "cursor-not-allowed bg-slate-300 text-slate-500" : "bg-emerald-600 text-white hover:bg-emerald-700"
               }`}
             >
               {saving ? "กำลังบันทึก..." : "บันทึก"}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Alerts */}
-      {error && <div className="mb-3 text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg shrink-0">{error}</div>}
+        {disabledReason && (
+          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700">{disabledReason}</div>
+        )}
 
-      {success && <div className="mb-3 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg shrink-0">{success}</div>}
-
-      {/* DataGrid */}
-      <div className="flex-1 min-h-0 overflow-hidden bg-white rounded-xl border border-slate-200 shadow-sm">
-        {rows.length === 0 && !loading ? (
-          <div className="p-4 text-center text-sm text-slate-500">ยังไม่มีข้อมูลตัวอย่าง กรุณาเลือกไฟล์ Excel</div>
-        ) : (
-          <DataGrid rows={gridRows} columns={importColumns} loading={loading} getRowId={(row: any) => row.id} height="100%" pageSize={100} />
+        {(hasDuplicateSerial || hasInvalidPhone) && (
+          <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+            แถวสีแดงคือข้อมูลผิด ต้องแก้ในไฟล์ Excel แล้วเลือกไฟล์ใหม่ก่อนนำเข้า
+          </div>
         )}
       </div>
 
-      {loading && (
-        <div className="flex justify-center mt-4 shrink-0">
-          <div className="h-6 w-6 rounded-full border border-slate-300 border-t-blue-500 animate-spin" />
+      {error && <div className="mb-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{error}</div>}
+
+      {success && <div className="mb-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-700">{success}</div>}
+
+      <div className="rounded-md border border-slate-200 bg-white shadow-sm">
+        <div className="max-h-[72vh] overflow-auto rounded-md">
+          {!rows.length && !loadingFile && <div className="p-4 text-center text-sm text-slate-500">ยังไม่มีข้อมูล กรุณาเลือกไฟล์ Excel</div>}
+
+          {rows.length > 0 && (
+            <table className="min-w-max border-collapse text-[12px]">
+              <ResizableColumns
+                headers={headers}
+                pageKey="bill-import-v2"
+                minWidths={{
+                  0: 56,
+                  1: 90,
+                  2: 130,
+                  3: 100,
+                  4: 110,
+                  5: 120,
+                  6: 120,
+                  7: 220,
+                  8: 120,
+                  9: 260,
+                  10: 130,
+                  11: 130,
+                  12: 130,
+                  13: 110,
+                  14: 130,
+                  15: 160,
+                  16: 120,
+                  17: 80,
+                  18: 80,
+                  19: 110,
+                  20: 180,
+                  21: 160,
+                  22: 120,
+                  23: 80,
+                  24: 80,
+                  25: 80,
+                  26: 80,
+                  27: 80,
+                  28: 120,
+                  29: 240,
+                  30: 120,
+                }}
+              />
+
+              <tbody>
+                {rows.map((row, index) => {
+                  const serialNo = row.SERIAL_NO?.trim();
+
+                  const isDuplicateSerial = Boolean(serialNo && duplicates[serialNo] > 1);
+
+                  const isInvalidPhone = Boolean(invalidPhoneRows[index]);
+
+                  const isErrorRow = isDuplicateSerial || isInvalidPhone;
+
+                  return (
+                    <tr
+                      key={`${row.NO_BILL}-${row.SERIAL_NO}-${index}`}
+                      className={
+                        isErrorRow ? "bg-red-200 hover:bg-red-300" : index % 2 === 0 ? "bg-white hover:bg-blue-50" : "bg-slate-50 hover:bg-blue-50"
+                      }
+                    >
+                      <td
+                        className={
+                          isErrorRow
+                            ? "sticky left-0 z-10 border-b border-red-300 bg-red-300 px-2 py-1.5 text-center font-bold text-red-900"
+                            : "sticky left-0 z-10 border-b border-slate-200 bg-gray-100 px-2 py-1.5 text-center font-semibold text-slate-700"
+                        }
+                      >
+                        {index + 1}
+                      </td>
+
+                      {excelColumns.map((column) => {
+                        const rawValue = row[column];
+
+                        const value = column === "SEND_DATE" ? formatPreviewDate(rawValue) : rawValue || "-";
+
+                        const isSerialColumn = column === "SERIAL_NO";
+                        const isTelColumn = column === "RECIPIENT_TEL";
+
+                        const isBadCell = (isDuplicateSerial && isSerialColumn) || (isInvalidPhone && isTelColumn);
+
+                        return (
+                          <td
+                            key={column}
+                            className={
+                              isBadCell
+                                ? "max-w-[300px] truncate border-b border-red-300 bg-red-400 px-2 py-1.5 font-bold text-white"
+                                : isErrorRow
+                                  ? "max-w-[300px] truncate border-b border-red-300 bg-red-200 px-2 py-1.5 text-red-950"
+                                  : "max-w-[300px] truncate border-b border-slate-200 px-2 py-1.5 text-slate-700"
+                            }
+                            title={String(value)}
+                          >
+                            {value}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

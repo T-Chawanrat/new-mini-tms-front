@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import DatePicker from "../../components/form/DatePicker";
 import RequiredLabel from "../../components/form/RequiredLabel";
 import {
@@ -29,6 +30,12 @@ type ReceiveHeaderFormProps = {
   onOpenCustomerModal: () => void;
   onOpenShipperModal: () => void;
   onOpenRecipientModal: () => void;
+
+  // ใช้กับ DatePicker วันที่ส่ง
+  // optional ไว้ก่อน เพื่อไม่ให้ parent อื่นที่ยังไม่ได้ส่ง props นี้พัง
+  recipientServiceDayIds?: number[];
+  recipientTransitDays?: number | null;
+  holidayDates?: string[];
 };
 
 export default function ReceiveHeaderForm({
@@ -43,7 +50,17 @@ export default function ReceiveHeaderForm({
   onOpenCustomerModal,
   onOpenShipperModal,
   onOpenRecipientModal,
+  recipientServiceDayIds = [],
+  recipientTransitDays = null,
+  holidayDates = [],
 }: ReceiveHeaderFormProps) {
+  const deliveryMinDate =
+    recipientTransitDays === null || recipientTransitDays === undefined
+      ? undefined
+      : dayjs().add(Number(recipientTransitDays || 0), "day").format("YYYY-MM-DD");
+
+  const normalizedRecipientServiceDayIds = recipientServiceDayIds.map(Number).filter((value) => Number.isFinite(value));
+
   return (
     <div className="space-y-2">
       {/* แถวบน */}
@@ -87,6 +104,24 @@ export default function ReceiveHeaderForm({
                 value={form.delivery_date}
                 onChange={(value) => updateForm("delivery_date", value)}
                 placeholder="วันที่ส่ง"
+                disabled={!form.recipient_detail_id}
+                minDate={deliveryMinDate}
+                shouldDisableDate={(day) => {
+                  if (!form.recipient_detail_id) return true;
+
+                  const dateKey = day.format("YYYY-MM-DD");
+
+                  // วันหยุดจาก mm_holidays เลือกไม่ได้
+                  if (holidayDates.includes(dateKey)) return true;
+
+                  // ถ้ายังไม่มีข้อมูล calendar อย่า block ทุกวัน
+                  // เพราะบางจังหวะ API อาจยังโหลดไม่ทัน
+                  if (normalizedRecipientServiceDayIds.length === 0) return false;
+
+                  const dayId = day.day();
+
+                  return !normalizedRecipientServiceDayIds.includes(dayId);
+                }}
               />
             </div>
           </div>

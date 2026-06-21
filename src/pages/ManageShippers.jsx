@@ -950,7 +950,7 @@ export default function ManageShippers() {
                 <div className="w-full sm:w-[180px] shrink-0">
                   <RequiredLabel required>RO Code</RequiredLabel>
                   <input
-                    className="input-modern w-full h-9 text-sm"
+                    className="input-modern w-full h-9 text-sm bg-white"
                     placeholder="รหัสเอกสารรับกลับ"
                     value={roCode}
                     onChange={(e) => setRoCode(cleanCodeInput(e.target.value))}
@@ -960,7 +960,7 @@ export default function ManageShippers() {
                 <div className="w-full sm:flex-1 sm:min-w-[220px]">
                   <RequiredLabel required>ชื่อ RO</RequiredLabel>
                   <input
-                    className="input-modern w-full h-9 text-sm"
+                    className="input-modern w-full h-9 text-sm bg-white"
                     placeholder="ชื่อเอกสารรับกลับ"
                     value={roName}
                     onChange={(e) => setRoName(e.target.value)}

@@ -30,6 +30,9 @@ const actionButtonClass = (disabled: boolean) =>
   }`;
 
 export default function PackageSection({ packageRows, totalPrice, packageTotal, onAdd, onDelete, disabled = false }: PackageSectionProps) {
+  const totalQty = packageRows.reduce((sum, row) => {
+    return sum + safeQty(row.qty);
+  }, 0);
   return (
     <div className="mt-2 border border-slate-200">
       <div className="flex items-center justify-end border-b border-slate-200 px-2 py-1.5">
@@ -123,11 +126,15 @@ export default function PackageSection({ packageRows, totalPrice, packageTotal, 
 
           <tfoot>
             <tr>
-              <td colSpan={7} className="px-2 py-2 text-right text-sm font-semibold text-slate-800">
-                รวม:
+              <td colSpan={5} className="px-2 py-2 text-right text-sm font-semibold text-slate-800">
+                รวมจำนวน:
               </td>
 
-              <td className="px-2 py-2 text-right text-base font-bold text-slate-900 tabular-nums">{money(totalPrice)}</td>
+              <td className="px-2 py-2 text-center text-sm font-bold text-slate-900 tabular-nums">{totalQty}</td>
+
+              <td className="px-2 py-2 text-right text-sm font-semibold text-slate-800">รวม:</td>
+
+              <td className="px-2 py-2 text-right text-base font-bold text-slate-900 tabular-nums">{money(totalPrice)} บาท</td>
 
               <td />
             </tr>
