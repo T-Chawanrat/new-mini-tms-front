@@ -6,12 +6,7 @@ import axios from "axios";
 import ResizableColumns from "../components/ResizableColumns";
 import { useAuth } from "../context/AuthContext";
 import AxiosInstance from "../utils/AxiosInstance";
-
-type CustomerOption = {
-  id: number | string;
-  code?: string | null;
-  name?: string | null;
-};
+import CustomerDropdown, { type Customer } from "../components/dropdown/CustomerDropdown";
 
 type ImportRow = {
   NO_BILL: string;
@@ -193,14 +188,13 @@ export default function BillImport() {
     | null
     | undefined;
 
-  const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [customerId, setCustomerId] = useState("");
+  const [customerText, setCustomerText] = useState("");
 
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
   const [rows, setRows] = useState<ImportRow[]>([]);
 
-  const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [loadingFile, setLoadingFile] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -260,37 +254,14 @@ export default function BillImport() {
                 ? "มีเบอร์โทรไม่ถูกต้อง"
                 : "";
 
-  const loadCustomers = async () => {
-    if (isCustomerUser) return;
-
-    setLoadingCustomers(true);
-
-    try {
-      const res = await AxiosInstance.get("/customers");
-      setCustomers(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error("LOAD CUSTOMERS ERROR:", err);
-
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "โหลดข้อมูล Customer ไม่สำเร็จ");
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("โหลดข้อมูล Customer ไม่สำเร็จ");
-      }
-    } finally {
-      setLoadingCustomers(false);
-    }
-  };
-
   useEffect(() => {
     if (authUser?.customer_id) {
-      setCustomerId(String(authUser.customer_id));
-    }
+      const customerIdText = String(authUser.customer_id);
 
-    loadCustomers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authUser?.customer_id, authUser?.role_id]);
+      setCustomerId(customerIdText);
+      setCustomerText(customerIdText);
+    }
+  }, [authUser?.customer_id]);
 
   const clearFile = () => {
     setFile(null);
@@ -473,7 +444,7 @@ export default function BillImport() {
       </div>
 
       <div className="mb-2 rounded-md border border-slate-200 bg-white p-2 shadow-sm">
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[320px_1fr_auto] xl:items-end">
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[480px_1fr_auto] xl:items-end">
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-700">Customer</label>
 
@@ -484,24 +455,23 @@ export default function BillImport() {
                 disabled
               />
             ) : (
-              <select
-                value={customerId}
-                disabled={loadingCustomers || saving}
-                onChange={(e) => {
-                  setCustomerId(e.target.value);
-                  setError(null);
-                  setSuccess(null);
-                }}
-                className="h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none focus:border-blue-400"
-              >
-                <option value="">{loadingCustomers ? "กำลังโหลด..." : "เลือก Customer"}</option>
+              <div className={saving ? "pointer-events-none opacity-70" : ""}>
+                <CustomerDropdown
+                  value={customerText}
+                  onChange={(customer: Customer | null, inputText?: string) => {
+                    setCustomerText(inputText || "");
 
-                {customers.map((customer) => (
-                  <option key={customer.id} value={String(customer.id)}>
-                    {customer.code ? `${customer.code} - ${customer.name || ""}` : customer.name || customer.id}
-                  </option>
-                ))}
-              </select>
+                    if (customer) {
+                      setCustomerId(String(customer.id));
+                    } else {
+                      setCustomerId("");
+                    }
+
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                />
+              </div>
             )}
           </div>
 
@@ -564,11 +534,11 @@ export default function BillImport() {
           <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700">{disabledReason}</div>
         )}
 
-        {(hasDuplicateSerial || hasInvalidPhone) && (
+        {/* {(hasDuplicateSerial || hasInvalidPhone) && (
           <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
             แถวสีแดงคือข้อมูลผิด ต้องแก้ในไฟล์ Excel แล้วเลือกไฟล์ใหม่ก่อนนำเข้า
           </div>
-        )}
+        )} */}
       </div>
 
       {error && <div className="mb-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{error}</div>}

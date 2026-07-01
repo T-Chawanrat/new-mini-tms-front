@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
 import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
@@ -7,6 +7,132 @@ import { cleanCodeInput, cleanNameInput, cleanNumberInput } from "../utils/textS
 import DataGrid from "../components/DataGrid";
 import RequiredLabel from "../components/form/RequiredLabel";
 
+type Id = string | number;
+type StatusValue = "ACTIVE" | "INACTIVE";
+type YesNo = "Y" | "N" | string;
+
+type Customer = {
+  id: Id;
+  code?: string;
+  name?: string;
+};
+
+type AddressSearchRow = {
+  subdistrict_id?: Id;
+  district_id?: Id;
+  province_id?: Id;
+  subdistrict_name?: string;
+  district_name?: string;
+  province_name?: string;
+  zip_code?: string;
+};
+
+type ShipperForm = {
+  shipper_code: string;
+  shipper_type_id: string;
+  shipper_name: string;
+  address: string;
+
+  subdistrict_id: string;
+  district_id: string;
+  province_id: string;
+
+  subdistrict_name: string;
+  district_name: string;
+  province_name: string;
+
+  zip_code: string;
+  tel: string;
+  fax: string;
+};
+
+type ShipperRow = {
+  shipper_id: Id;
+  shipper_code?: string;
+  shipper_type_id?: Id | string;
+  shipper_name?: string;
+  address?: string;
+
+  subdistrict_id?: Id | string;
+  district_id?: Id | string;
+  province_id?: Id | string;
+
+  subdistrict_name?: string;
+  district_name?: string;
+  province_name?: string;
+
+  zip_code?: string;
+  tel?: string;
+  fax?: string;
+  is_deleted?: YesNo;
+};
+
+type ShipperGridRow = ShipperRow & {
+  id: Id;
+  no: number;
+};
+
+type ROImage = {
+  ro_image_id?: Id;
+  image_url: string;
+  image_order?: number;
+};
+
+type RORow = {
+  ro_code_id: Id;
+  ro_code?: string;
+  ro_name?: string;
+  images?: ROImage[];
+};
+
+type ROGridRow = RORow & {
+  id: Id;
+  no: number;
+  image_count: number;
+};
+
+type SelectedStatus = {
+  shipper_id: Id;
+  current: StatusValue;
+};
+
+type GridCellParams<T> = {
+  value?: string | number | null;
+  row: T;
+};
+
+type ColumnDef<T> = {
+  field: string;
+  headerName: string;
+  width?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  sortable?: boolean;
+  filterable?: boolean;
+  resizable?: boolean;
+  align?: "left" | "right" | "center";
+  headerAlign?: "left" | "right" | "center";
+  renderCell?: (params: GridCellParams<T>) => ReactNode;
+};
+
+type AxiosLikeError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+};
+
+const getErrorMessage = (err: unknown, fallback: string) => {
+  if (typeof err === "object" && err !== null) {
+    const error = err as AxiosLikeError;
+    return error.response?.data?.message || error.message || fallback;
+  }
+
+  return fallback;
+};
+
 export default function ManageShippers() {
   const { user } = useAuth();
 
@@ -14,33 +140,33 @@ export default function ManageShippers() {
   const isCustomer = roleId === 2;
   const canSelectCustomer = roleId === 1 || roleId === 11;
 
-  const [customers, setCustomers] = useState([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerId, setCustomerId] = useState("");
 
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState<ShipperRow[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [statusModal, setStatusModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState<SelectedStatus | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [editing, setEditing] = useState<ShipperRow | null>(null);
 
   const [roModal, setRoModal] = useState(false);
-  const [selectedShipper, setSelectedShipper] = useState(null);
+  const [selectedShipper, setSelectedShipper] = useState<ShipperRow | null>(null);
 
-  const [roEditing, setRoEditing] = useState(null);
+  const [roEditing, setRoEditing] = useState<RORow | null>(null);
   const [roCode, setRoCode] = useState("");
   const [roName, setRoName] = useState("");
-  const [roImages, setRoImages] = useState([]);
+  const [roImages, setRoImages] = useState<File[]>([]);
 
-  const [roRows, setRoRows] = useState([]);
+  const [roRows, setRoRows] = useState<RORow[]>([]);
   const [roLoading, setRoLoading] = useState(false);
   const [roSaving, setRoSaving] = useState(false);
 
-  const roFileInputRef = useRef(null);
+  const roFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const emptyForm = {
+  const emptyForm: ShipperForm = {
     shipper_code: "",
     shipper_type_id: "1",
     shipper_name: "",
@@ -59,11 +185,11 @@ export default function ManageShippers() {
     fax: "",
   };
 
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<ShipperForm>(emptyForm);
 
   const selectedCustomer = customers.find((c) => String(c.id) === String(customerId));
 
-  const handleChange = (key, value) => {
+  const handleChange = (key: keyof ShipperForm, value: string) => {
     setForm((prev) => ({
       ...prev,
       [key]: value,
@@ -106,13 +232,13 @@ export default function ManageShippers() {
     }));
   };
 
-  const handleSelectAddress = (row) => {
+  const handleSelectAddress = (row: AddressSearchRow) => {
     setForm((prev) => ({
       ...prev,
 
-      subdistrict_id: row.subdistrict_id || "",
-      district_id: row.district_id || "",
-      province_id: row.province_id || "",
+      subdistrict_id: row.subdistrict_id ? String(row.subdistrict_id) : "",
+      district_id: row.district_id ? String(row.district_id) : "",
+      province_id: row.province_id ? String(row.province_id) : "",
 
       subdistrict_name: row.subdistrict_name || "",
       district_name: row.district_name || "",
@@ -125,14 +251,15 @@ export default function ManageShippers() {
   const fetchCustomers = async () => {
     try {
       const res = await AxiosInstance.get("/customers");
+      const data: Customer[] = res.data || [];
 
-      setCustomers(res.data || []);
+      setCustomers(data);
 
-      if (res.data?.length > 0) {
-        setCustomerId((prev) => prev || String(res.data[0].id));
+      if (data.length > 0) {
+        setCustomerId((prev) => prev || String(data[0].id));
       }
     } catch (err) {
-      alert(err?.response?.data?.message || "fetch customers failed");
+      alert(getErrorMessage(err, "fetch customers failed"));
     }
   };
 
@@ -150,13 +277,13 @@ export default function ManageShippers() {
 
       setRows(res.data || []);
     } catch (err) {
-      alert(err?.response?.data?.message || "fetch shippers failed");
+      alert(getErrorMessage(err, "fetch shippers failed"));
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchRODocuments = async (shipperId) => {
+  const fetchRODocuments = async (shipperId: Id) => {
     if (!customerId || !shipperId) return;
 
     try {
@@ -166,7 +293,7 @@ export default function ManageShippers() {
 
       setRoRows(res.data || []);
     } catch (err) {
-      alert(err?.response?.data?.message || "fetch ro documents failed");
+      alert(getErrorMessage(err, "fetch ro documents failed"));
       setRoRows([]);
     } finally {
       setRoLoading(false);
@@ -204,18 +331,18 @@ export default function ManageShippers() {
     setShowModal(true);
   };
 
-  const openEdit = (row) => {
+  const openEdit = (row: ShipperRow) => {
     setEditing(row);
 
     setForm({
       shipper_code: row.shipper_code || "",
-      shipper_type_id: row.shipper_type_id || "1",
+      shipper_type_id: row.shipper_type_id ? String(row.shipper_type_id) : "1",
       shipper_name: row.shipper_name || "",
       address: row.address || "",
 
-      subdistrict_id: row.subdistrict_id || "",
-      district_id: row.district_id || "",
-      province_id: row.province_id || "",
+      subdistrict_id: row.subdistrict_id ? String(row.subdistrict_id) : "",
+      district_id: row.district_id ? String(row.district_id) : "",
+      province_id: row.province_id ? String(row.province_id) : "",
 
       subdistrict_name: row.subdistrict_name || "",
       district_name: row.district_name || "",
@@ -229,7 +356,7 @@ export default function ManageShippers() {
     setShowModal(true);
   };
 
-  const openROModal = (row) => {
+  const openROModal = (row: ShipperRow) => {
     if (!customerId) {
       alert("กรุณาเลือก customer ก่อน");
       return;
@@ -242,12 +369,12 @@ export default function ManageShippers() {
     fetchRODocuments(row.shipper_id);
   };
 
-  const handleROImageChange = (e) => {
-    const files = Array.from(e.target.files || []);
+  const handleROImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.currentTarget.files || []);
 
     if (files.length > 5) {
       alert("อัปโหลดรูปได้สูงสุด 5 รูป");
-      e.target.value = "";
+      e.currentTarget.value = "";
       setRoImages([]);
       return;
     }
@@ -257,7 +384,7 @@ export default function ManageShippers() {
 
       if (oldCount + files.length > 5) {
         alert(`RO นี้มีรูปเดิม ${oldCount} รูป เพิ่มได้อีกไม่เกิน ${5 - oldCount} รูป`);
-        e.target.value = "";
+        e.currentTarget.value = "";
         setRoImages([]);
         return;
       }
@@ -266,7 +393,7 @@ export default function ManageShippers() {
     setRoImages(files);
   };
 
-  const getImageSrc = (url) => {
+  const getImageSrc = (url?: string | null) => {
     if (!url) return "";
 
     if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -278,8 +405,8 @@ export default function ManageShippers() {
     return `${baseURL}${url}`;
   };
 
-  const uploadROImages = async (roCodeId) => {
-    if (roImages.length === 0) return;
+  const uploadROImages = async (roCodeId: Id) => {
+    if (roImages.length === 0 || !selectedShipper) return;
 
     const formData = new FormData();
 
@@ -362,13 +489,13 @@ export default function ManageShippers() {
       resetROForm();
       await fetchRODocuments(selectedShipper.shipper_id);
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || "save ro failed");
+      alert(getErrorMessage(err, "save ro failed"));
     } finally {
       setRoSaving(false);
     }
   };
 
-  const handleEditRO = (row) => {
+  const handleEditRO = (row: RORow) => {
     setRoEditing(row);
     setRoCode(row.ro_code || "");
     setRoName(row.ro_name || "");
@@ -383,7 +510,7 @@ export default function ManageShippers() {
     resetROForm();
   };
 
-  const handleDeleteRO = async (row) => {
+  const handleDeleteRO = async (row: RORow) => {
     if (!customerId || !selectedShipper?.shipper_id || !row?.ro_code_id) return;
 
     const ok = window.confirm(`ต้องการลบ RO "${row.ro_code}" ใช่ไหม?`);
@@ -401,7 +528,7 @@ export default function ManageShippers() {
 
       alert("ลบ RO สำเร็จ");
     } catch (err) {
-      alert(err?.response?.data?.message || "delete ro failed");
+      alert(getErrorMessage(err, "delete ro failed"));
     }
   };
 
@@ -452,11 +579,11 @@ export default function ManageShippers() {
       resetForm();
       fetchData();
     } catch (err) {
-      alert(err?.response?.data?.message || "save shipper failed");
+      alert(getErrorMessage(err, "save shipper failed"));
     }
   };
 
-  const openStatusModal = (row) => {
+  const openStatusModal = (row: ShipperRow) => {
     setSelectedStatus({
       shipper_id: row.shipper_id,
       current: row.is_deleted === "N" ? "ACTIVE" : "INACTIVE",
@@ -465,7 +592,7 @@ export default function ManageShippers() {
     setStatusModal(true);
   };
 
-  const changeStatus = async (status) => {
+  const changeStatus = async (status: StatusValue) => {
     if (!selectedStatus || !customerId) return;
 
     try {
@@ -477,11 +604,11 @@ export default function ManageShippers() {
       setSelectedStatus(null);
       fetchData();
     } catch (err) {
-      alert(err?.response?.data?.message || "update status failed");
+      alert(getErrorMessage(err, "update status failed"));
     }
   };
 
-  const gridRows = useMemo(() => {
+  const gridRows = useMemo<ShipperGridRow[]>(() => {
     return rows.map((r, i) => ({
       ...r,
       id: r.shipper_id,
@@ -489,7 +616,7 @@ export default function ManageShippers() {
     }));
   }, [rows]);
 
-  const roGridRows = useMemo(() => {
+  const roGridRows = useMemo<ROGridRow[]>(() => {
     return roRows.map((r, i) => ({
       ...r,
       id: r.ro_code_id,
@@ -498,7 +625,7 @@ export default function ManageShippers() {
     }));
   }, [roRows]);
 
-  const shipperColumns = useMemo(
+  const shipperColumns = useMemo<ColumnDef<ShipperGridRow>[]>(
     () => [
       {
         field: "no",
@@ -523,7 +650,7 @@ export default function ManageShippers() {
         width: 240,
         minWidth: 180,
         renderCell: (params) => (
-          <div title={params.value || ""} className="truncate">
+          <div title={String(params.value || "")} className="truncate">
             {params.value || "-"}
           </div>
         ),
@@ -542,7 +669,7 @@ export default function ManageShippers() {
         minWidth: 240,
         maxWidth: 3000,
         renderCell: (params) => (
-          <div title={params.value || ""} className="truncate">
+          <div title={String(params.value || "")} className="truncate">
             {params.value || "-"}
           </div>
         ),
@@ -630,7 +757,7 @@ export default function ManageShippers() {
     [customerId],
   );
 
-  const roColumns = useMemo(
+  const roColumns = useMemo<ColumnDef<ROGridRow>[]>(
     () => [
       {
         field: "no",
@@ -651,7 +778,7 @@ export default function ManageShippers() {
         minWidth: 105,
         renderCell: (params) => (
           <div className="h-full w-full flex items-center">
-            <span title={params.value || ""} className="truncate text-sm">
+            <span title={String(params.value || "")} className="truncate text-sm">
               {params.value || "-"}
             </span>
           </div>
@@ -664,7 +791,7 @@ export default function ManageShippers() {
         minWidth: 145,
         renderCell: (params) => (
           <div className="h-full w-full flex items-center">
-            <span title={params.value || ""} className="truncate text-sm">
+            <span title={String(params.value || "")} className="truncate text-sm">
               {params.value || "-"}
             </span>
           </div>
@@ -792,7 +919,14 @@ export default function ManageShippers() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
-        <DataGrid rows={gridRows} columns={shipperColumns} loading={loading} getRowId={(row) => row.shipper_id} height="100%" pageSize={100} />
+        <DataGrid
+          rows={gridRows}
+          columns={shipperColumns}
+          loading={loading}
+          getRowId={(row: ShipperGridRow) => row.shipper_id}
+          height="100%"
+          pageSize={100}
+        />
       </div>
 
       {showModal && (
@@ -909,12 +1043,12 @@ export default function ManageShippers() {
         </div>
       )}
 
-   {roModal && (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-    <div
-      className="bg-white p-4 rounded-2xl shadow-xl w-[760px] max-h-[88vh] overflow-auto animate-scaleIn"
-      onClick={(e) => e.stopPropagation()}
-    >
+      {roModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div
+            className="bg-white p-4 rounded-2xl shadow-xl w-[760px] max-h-[88vh] overflow-auto animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-800">เอกสารรับกลับ</h3>
@@ -1043,7 +1177,6 @@ export default function ManageShippers() {
                     getRowId={(row) => row.ro_code_id}
                     height="100%"
                     pageSize={10}
-                    rowHeight={38}
                   />
                 </div>
               )}

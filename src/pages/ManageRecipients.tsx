@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { ChevronDown, ChevronRight, Pencil, Plus } from "lucide-react";
 
 import AxiosInstance from "../utils/AxiosInstance";
@@ -7,26 +7,159 @@ import { useAuth } from "../context/AuthContext";
 import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
 import RequiredLabel from "../components/form/RequiredLabel";
 
-function RecipientDetailsInlinePanel({
-  recipient,
-  onCreateDetail,
-  onEditDetail,
-  onOpenStatus,
-}) {
+type Id = string | number;
+type YesNo = "Y" | "N" | string;
+
+type Customer = {
+  id: Id;
+  code?: string;
+  name?: string;
+};
+
+type RecipientType = {
+  id: Id;
+  name: string;
+};
+
+type RecipientDetail = {
+  recipient_detail_id: Id;
+  recipient_detail_name?: string;
+  address?: string;
+  subdistrict_id?: Id | "";
+  district_id?: Id | "";
+  province_id?: Id | "";
+  subdistrict_name?: string;
+  district_name?: string;
+  province_name?: string;
+  zip_code?: string;
+  tel1?: string;
+  line_id?: string;
+  detail_is_deleted?: YesNo;
+};
+
+type ApiRecipientRow = {
+  recipient_id?: Id;
+  recipient_code?: string;
+  recipient_type_id?: Id | "";
+  recipient_type_name?: string;
+  recipient_name?: string;
+  customer_id?: Id;
+  recipient_customer_id?: Id;
+  customer_code?: string;
+  customer_name?: string;
+  recipient_is_deleted?: YesNo;
+  address_count?: number | string;
+  recipient_detail_id?: Id;
+  recipient_detail_name?: string;
+  address?: string;
+  subdistrict_id?: Id | "";
+  district_id?: Id | "";
+  province_id?: Id | "";
+  subdistrict_name?: string;
+  district_name?: string;
+  province_name?: string;
+  zip_code?: string;
+  tel1?: string;
+  line_id?: string;
+  detail_is_deleted?: YesNo;
+};
+
+type Recipient = {
+  recipient_id: Id;
+  recipient_code?: string;
+  recipient_type_id?: Id | "";
+  recipient_type_name?: string;
+  recipient_name?: string;
+  customer_id?: Id;
+  recipient_customer_id?: Id;
+  customer_code?: string;
+  customer_name?: string;
+  recipient_is_deleted?: YesNo;
+  address_count?: number;
+  details: RecipientDetail[];
+};
+
+type DisplayRow =
+  | (Recipient & {
+      id: string;
+      rowType: "recipient";
+    })
+  | {
+      id: string;
+      rowType: "detail";
+      recipient: Recipient;
+    };
+
+type ModalMode = "createRecipient" | "editRecipient" | "createDetail" | "editDetail";
+
+type RecipientForm = {
+  recipient_code: string;
+  recipient_type_id: string;
+  recipient_name: string;
+  recipient_detail_id: string;
+  recipient_detail_name: string;
+  address: string;
+  address_search: string;
+  subdistrict_id: string;
+  district_id: string;
+  province_id: string;
+  zip_code: string;
+  tel1: string;
+  line_id: string;
+};
+
+type AddressSearchRow = {
+  subdistrict_id?: Id;
+  district_id?: Id;
+  province_id?: Id;
+  subdistrict_name?: string;
+  district_name?: string;
+  province_name?: string;
+  zip_code?: string;
+};
+
+type StatusValue = "ACTIVE" | "INACTIVE";
+
+type SelectedStatus = {
+  recipient_id: Id;
+  recipient_detail_id: Id;
+  current: StatusValue;
+};
+
+type RecipientDetailsInlinePanelProps = {
+  recipient: Recipient;
+  onCreateDetail: (recipient: Recipient) => void;
+  onEditDetail: (recipient: Recipient, detail: RecipientDetail) => void;
+  onOpenStatus: (recipient: Recipient, detail: RecipientDetail) => void;
+};
+
+const getErrorMessage = (err: unknown, fallback: string) => {
+  if (typeof err === "object" && err !== null && "response" in err) {
+    const axiosError = err as {
+      response?: {
+        data?: {
+          message?: string;
+        };
+      };
+    };
+
+    return axiosError.response?.data?.message || fallback;
+  }
+
+  return fallback;
+};
+
+function RecipientDetailsInlinePanel({ recipient, onCreateDetail, onEditDetail, onOpenStatus }: RecipientDetailsInlinePanelProps) {
   return (
     <div className="w-full bg-slate-50 px-6 py-4">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="font-semibold text-slate-800 truncate">
-              รายละเอียดที่อยู่ของ {recipient.recipient_code || "-"} -{" "}
-              {recipient.recipient_name || "-"}
+              รายละเอียดที่อยู่ของ {recipient.recipient_code || "-"} - {recipient.recipient_name || "-"}
             </div>
 
-            <div className="text-xs text-slate-500 mt-0.5">
-              ทั้งหมด{" "}
-              {recipient.address_count || recipient.details?.length || 0} ที่อยู่
-            </div>
+            <div className="text-xs text-slate-500 mt-0.5">ทั้งหมด {recipient.address_count || recipient.details?.length || 0} ที่อยู่</div>
           </div>
 
           <button
@@ -58,34 +191,24 @@ function RecipientDetailsInlinePanel({
             </div>
 
             {!recipient.details?.length ? (
-              <div className="px-4 py-5 text-sm text-slate-400">
-                ยังไม่มีที่อยู่ของผู้รับนี้ กดปุ่ม “เพิ่มที่อยู่” เพื่อเพิ่ม
-              </div>
+              <div className="px-4 py-5 text-sm text-slate-400">ยังไม่มีที่อยู่ของผู้รับนี้ กดปุ่ม “เพิ่มที่อยู่” เพื่อเพิ่ม</div>
             ) : (
-              recipient.details.map((detail) => (
+              recipient.details.map((detail: RecipientDetail) => (
                 <div
                   key={detail.recipient_detail_id}
                   className="grid grid-cols-[220px_320px_140px_140px_140px_100px_130px_150px_110px_90px] items-center gap-3 px-4 py-3 text-sm text-slate-700 border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
                 >
-                  <div className="truncate font-medium">
-                    {detail.recipient_detail_name || "-"}
-                  </div>
+                  <div className="truncate font-medium">{detail.recipient_detail_name || "-"}</div>
 
                   <div className="truncate" title={detail.address || ""}>
                     {detail.address || "-"}
                   </div>
 
-                  <div className="truncate">
-                    {detail.subdistrict_name || detail.subdistrict_id || "-"}
-                  </div>
+                  <div className="truncate">{detail.subdistrict_name || detail.subdistrict_id || "-"}</div>
 
-                  <div className="truncate">
-                    {detail.district_name || detail.district_id || "-"}
-                  </div>
+                  <div className="truncate">{detail.district_name || detail.district_id || "-"}</div>
 
-                  <div className="truncate">
-                    {detail.province_name || detail.province_id || "-"}
-                  </div>
+                  <div className="truncate">{detail.province_name || detail.province_id || "-"}</div>
 
                   <div className="truncate">{detail.zip_code || "-"}</div>
 
@@ -144,35 +267,33 @@ export default function ManageRecipients() {
   const isCustomer = Number(user?.role_id) === 2;
   const canSelectCustomer = !isCustomer;
 
-  const [customers, setCustomers] = useState([]);
-  const [recipientTypes, setRecipientTypes] = useState([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [recipientTypes, setRecipientTypes] = useState<RecipientType[]>([]);
   const [customerId, setCustomerId] = useState("");
 
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState<ApiRecipientRow[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // DataGrid ใช้ page เริ่มจาก 0 แต่ backend util ใช้ page เริ่มจาก 1
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 100,
   });
 
   const [rowCount, setRowCount] = useState(0);
-  const [expandedRecipientId, setExpandedRecipientId] = useState(null);
+  const [expandedRecipientId, setExpandedRecipientId] = useState<Id | null>(null);
 
   const [showModal, setShowModal] = useState(false);
 
-  // createRecipient | editRecipient | createDetail | editDetail
-  const [modalMode, setModalMode] = useState("createRecipient");
+  const [modalMode, setModalMode] = useState<ModalMode>("createRecipient");
 
-  const [editingRecipient, setEditingRecipient] = useState(null);
-  const [editingDetail, setEditingDetail] = useState(null);
+  const [editingRecipient, setEditingRecipient] = useState<Recipient | null>(null);
+  const [editingDetail, setEditingDetail] = useState<RecipientDetail | null>(null);
 
   const [statusModal, setStatusModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState<SelectedStatus | null>(null);
 
-  const emptyForm = {
+  const emptyForm: RecipientForm = {
     recipient_code: "",
     recipient_type_id: "",
     recipient_name: "",
@@ -189,14 +310,12 @@ export default function ManageRecipients() {
     line_id: "",
   };
 
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<RecipientForm>(emptyForm);
 
-  const selectedCustomer = customers.find(
-    (customer) => String(customer.id) === String(customerId),
-  );
+  const selectedCustomer = customers.find((customer) => String(customer.id) === String(customerId));
 
-  const groupedRows = useMemo(() => {
-    const map = new Map();
+  const groupedRows = useMemo<Recipient[]>(() => {
+    const map = new Map<Id, Recipient>();
 
     rows.forEach((row) => {
       if (!row.recipient_id) return;
@@ -224,7 +343,7 @@ export default function ManageRecipients() {
       }
 
       if (row.recipient_detail_id) {
-        map.get(key).details.push({
+        map.get(key)?.details.push({
           recipient_detail_id: row.recipient_detail_id,
           recipient_detail_name: row.recipient_detail_name,
           address: row.address,
@@ -249,8 +368,8 @@ export default function ManageRecipients() {
     return Array.from(map.values());
   }, [rows]);
 
-  const displayRows = useMemo(() => {
-    const result = [];
+  const displayRows = useMemo<DisplayRow[]>(() => {
+    const result: DisplayRow[] = [];
 
     groupedRows.forEach((recipient) => {
       result.push({
@@ -271,15 +390,10 @@ export default function ManageRecipients() {
     return result;
   }, [groupedRows, expandedRecipientId]);
 
-  const getAddressLabel = (detail) => {
+  const getAddressLabel = (detail: RecipientDetail | null) => {
     if (!detail) return "";
 
-    const parts = [
-      detail.subdistrict_name,
-      detail.district_name,
-      detail.province_name,
-      detail.zip_code,
-    ].filter(Boolean);
+    const parts = [detail.subdistrict_name, detail.district_name, detail.province_name, detail.zip_code].filter(Boolean);
 
     return parts.join(" • ");
   };
@@ -292,23 +406,21 @@ export default function ManageRecipients() {
     return "ผู้รับ";
   };
 
-  const isRecipientMode =
-    modalMode === "createRecipient" || modalMode === "editRecipient";
+  const isRecipientMode = modalMode === "createRecipient" || modalMode === "editRecipient";
 
-  const isDetailMode =
-    modalMode === "createDetail" || modalMode === "editDetail";
+  const isDetailMode = modalMode === "createDetail" || modalMode === "editDetail";
 
-  const handleChange = (key, value) => {
+  const handleChange = (key: keyof RecipientForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSelectAddress = (row) => {
+  const handleSelectAddress = (row: AddressSearchRow) => {
     setForm((prev) => ({
       ...prev,
       address_search: `${row.subdistrict_name} • ${row.district_name} • ${row.province_name} • ${row.zip_code}`,
-      subdistrict_id: row.subdistrict_id || "",
-      district_id: row.district_id || "",
-      province_id: row.province_id || "",
+      subdistrict_id: row.subdistrict_id ? String(row.subdistrict_id) : "",
+      district_id: row.district_id ? String(row.district_id) : "",
+      province_id: row.province_id ? String(row.province_id) : "",
       zip_code: row.zip_code || "",
     }));
   };
@@ -341,7 +453,7 @@ export default function ManageRecipients() {
         setCustomerId((prev) => prev || String(data[0].id));
       }
     } catch (err) {
-      alert(err?.response?.data?.message || "fetch customers failed");
+      alert(getErrorMessage(err, "fetch customers failed"));
     }
   };
 
@@ -350,11 +462,11 @@ export default function ManageRecipients() {
       const res = await AxiosInstance.get("/recipient-types");
       setRecipientTypes(res.data || []);
     } catch (err) {
-      alert(err?.response?.data?.message || "fetch recipient types failed");
+      alert(getErrorMessage(err, "fetch recipient types failed"));
     }
   };
 
-  const fetchData = async (searchValue = search, model = paginationModel) => {
+  const fetchData = async (searchValue: string = search, model: GridPaginationModel = paginationModel) => {
     if (!customerId) return;
 
     try {
@@ -379,7 +491,7 @@ export default function ManageRecipients() {
       setRows(responseData?.data || []);
       setRowCount(Number(responseData?.pagination?.total || 0));
     } catch (err) {
-      alert(err?.response?.data?.message || "fetch recipients failed");
+      alert(getErrorMessage(err, "fetch recipients failed"));
     } finally {
       setLoading(false);
     }
@@ -424,7 +536,7 @@ export default function ManageRecipients() {
     setShowModal(true);
   };
 
-  const openEditRecipient = (recipient) => {
+  const openEditRecipient = (recipient: Recipient) => {
     setModalMode("editRecipient");
     setEditingRecipient(recipient);
     setEditingDetail(null);
@@ -432,14 +544,14 @@ export default function ManageRecipients() {
     setForm({
       ...emptyForm,
       recipient_code: recipient.recipient_code || "",
-      recipient_type_id: recipient.recipient_type_id || "",
+      recipient_type_id: recipient.recipient_type_id ? String(recipient.recipient_type_id) : "",
       recipient_name: recipient.recipient_name || "",
     });
 
     setShowModal(true);
   };
 
-  const openCreateDetail = (recipient) => {
+  const openCreateDetail = (recipient: Recipient) => {
     setModalMode("createDetail");
     setEditingRecipient(recipient);
     setEditingDetail(null);
@@ -460,20 +572,20 @@ export default function ManageRecipients() {
     setShowModal(true);
   };
 
-  const openEditDetail = (recipient, detail) => {
+  const openEditDetail = (recipient: Recipient, detail: RecipientDetail) => {
     setModalMode("editDetail");
     setEditingRecipient(recipient);
     setEditingDetail(detail);
 
     setForm({
       ...emptyForm,
-      recipient_detail_id: detail.recipient_detail_id || "",
+      recipient_detail_id: detail.recipient_detail_id ? String(detail.recipient_detail_id) : "",
       recipient_detail_name: detail.recipient_detail_name || "",
       address: detail.address || "",
       address_search: getAddressLabel(detail),
-      subdistrict_id: detail.subdistrict_id || "",
-      district_id: detail.district_id || "",
-      province_id: detail.province_id || "",
+      subdistrict_id: detail.subdistrict_id ? String(detail.subdistrict_id) : "",
+      district_id: detail.district_id ? String(detail.district_id) : "",
+      province_id: detail.province_id ? String(detail.province_id) : "",
       zip_code: detail.zip_code || "",
       tel1: detail.tel1 || "",
       line_id: detail.line_id || "",
@@ -482,7 +594,7 @@ export default function ManageRecipients() {
     setShowModal(true);
   };
 
-  const openDetailStatusModal = (recipient, detail) => {
+  const openDetailStatusModal = (recipient: Recipient, detail: RecipientDetail) => {
     setSelectedStatus({
       recipient_id: recipient.recipient_id,
       recipient_detail_id: detail.recipient_detail_id,
@@ -549,10 +661,7 @@ export default function ManageRecipients() {
           recipient_name: form.recipient_name,
         };
 
-        await AxiosInstance.patch(
-          `/manage/recipients/${customerId}/${editingRecipient.recipient_id}`,
-          payload,
-        );
+        await AxiosInstance.patch(`/manage/recipients/${customerId}/${editingRecipient.recipient_id}`, payload);
       }
 
       if (modalMode === "createDetail") {
@@ -574,10 +683,7 @@ export default function ManageRecipients() {
           line_id: form.line_id || null,
         };
 
-        await AxiosInstance.post(
-          `/manage/recipients/${customerId}/${editingRecipient.recipient_id}/details`,
-          payload,
-        );
+        await AxiosInstance.post(`/manage/recipients/${customerId}/${editingRecipient.recipient_id}/details`, payload);
       }
 
       if (modalMode === "editDetail") {
@@ -603,20 +709,17 @@ export default function ManageRecipients() {
           },
         };
 
-        await AxiosInstance.patch(
-          `/manage/recipients/${customerId}/${editingRecipient.recipient_id}`,
-          payload,
-        );
+        await AxiosInstance.patch(`/manage/recipients/${customerId}/${editingRecipient.recipient_id}`, payload);
       }
 
       closeModal();
       fetchData(search, paginationModel);
     } catch (err) {
-      alert(err?.response?.data?.message || "save recipient failed");
+      alert(getErrorMessage(err, "save recipient failed"));
     }
   };
 
-  const changeStatus = async (status) => {
+  const changeStatus = async (status: StatusValue) => {
     if (!selectedStatus || !customerId) return;
 
     try {
@@ -630,23 +733,17 @@ export default function ManageRecipients() {
       closeStatusModal();
       fetchData(search, paginationModel);
     } catch (err) {
-      alert(
-        err?.response?.data?.message || "update recipient detail status failed",
-      );
+      alert(getErrorMessage(err, "update recipient detail status failed"));
     }
   };
 
-  const toggleExpandedRecipient = (recipient) => {
+  const toggleExpandedRecipient = (recipient: DisplayRow) => {
     if (!recipient || recipient.rowType === "detail") return;
 
-    setExpandedRecipientId((prev) =>
-      String(prev) === String(recipient.recipient_id)
-        ? null
-        : recipient.recipient_id,
-    );
+    setExpandedRecipientId((prev) => (String(prev) === String(recipient.recipient_id) ? null : recipient.recipient_id));
   };
 
-  const columns = useMemo(
+  const columns = useMemo<GridColDef<DisplayRow>[]>(
     () => [
       {
         field: "detailPanel",
@@ -655,11 +752,11 @@ export default function ManageRecipients() {
         sortable: false,
         filterable: false,
         disableColumnMenu: true,
-        colSpan: (...args) => {
+        colSpan: (...args: any[]) => {
           const row = args[1] || args[0]?.row;
           return row?.rowType === "detail" ? 999 : undefined;
         },
-        renderCell: (params) => {
+        renderCell: (params: any) => {
           if (params.row.rowType === "detail") {
             return (
               <div className="w-full">
@@ -673,8 +770,7 @@ export default function ManageRecipients() {
             );
           }
 
-          const isExpanded =
-            String(expandedRecipientId) === String(params.row.recipient_id);
+          const isExpanded = String(expandedRecipientId) === String(params.row.recipient_id);
 
           return (
             <div className="w-full h-full flex items-center justify-center">
@@ -687,11 +783,7 @@ export default function ManageRecipients() {
                 className="w-8 h-8 inline-flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600"
                 title={isExpanded ? "ปิดรายละเอียด" : "ดูรายละเอียดที่อยู่"}
               >
-                {isExpanded ? (
-                  <ChevronDown size={18} />
-                ) : (
-                  <ChevronRight size={18} />
-                )}
+                {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
               </button>
             </div>
           );
@@ -702,14 +794,12 @@ export default function ManageRecipients() {
         headerName: "รหัสผู้รับ",
         width: 170,
         minWidth: 150,
-        renderCell: (params) => {
+        renderCell: (params: any) => {
           if (params.row.rowType === "detail") return null;
 
           return (
             <div className="w-full h-full flex items-center">
-              <span className="font-semibold text-slate-800">
-                {params.value || "-"}
-              </span>
+              <span className="font-semibold text-slate-800">{params.value || "-"}</span>
             </div>
           );
         },
@@ -719,14 +809,11 @@ export default function ManageRecipients() {
         headerName: "ชื่อผู้รับ",
         flex: 1,
         minWidth: 260,
-        renderCell: (params) => {
+        renderCell: (params: any) => {
           if (params.row.rowType === "detail") return null;
 
           return (
-            <div
-              className="w-full h-full flex items-center truncate"
-              title={params.value || ""}
-            >
+            <div className="w-full h-full flex items-center truncate" title={params.value || ""}>
               {params.value || "-"}
             </div>
           );
@@ -737,14 +824,12 @@ export default function ManageRecipients() {
         headerName: "ประเภท",
         width: 160,
         minWidth: 140,
-        renderCell: (params) => {
+        renderCell: (params: any) => {
           if (params.row.rowType === "detail") return null;
 
           return (
             <div className="w-full h-full flex items-center">
-              <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-600">
-                {params.value || "-"}
-              </span>
+              <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-600">{params.value || "-"}</span>
             </div>
           );
         },
@@ -755,7 +840,7 @@ export default function ManageRecipients() {
         width: 120,
         align: "center",
         headerAlign: "center",
-        renderCell: (params) => {
+        renderCell: (params: any) => {
           if (params.row.rowType === "detail") return null;
 
           return (
@@ -777,7 +862,7 @@ export default function ManageRecipients() {
         disableColumnMenu: true,
         align: "center",
         headerAlign: "center",
-        renderCell: (params) => {
+        renderCell: (params: any) => {
           if (params.row.rowType === "detail") return null;
 
           return (
@@ -818,9 +903,7 @@ export default function ManageRecipients() {
     <div className="w-full h-[calc(100vh-61px)] px-1 py-4 bg-slate-50 overflow-hidden flex flex-col">
       <div className="flex justify-between items-center mt-[-15px] mb-2 shrink-0">
         <div>
-          <h2 className="text-xl font-semibold mb-1 text-slate-800">
-            Recipient Management
-          </h2>
+          <h2 className="text-xl font-semibold mb-1 text-slate-800">Recipient Management</h2>
 
           <p className="text-sm text-slate-500">
             {isCustomer ? (
@@ -868,7 +951,7 @@ export default function ManageRecipients() {
               }}
               className="input-modern"
             >
-              {customers.map((customer) => (
+              {customers.map((customer: Customer) => (
                 <option key={customer.id} value={customer.id}>
                   {customer.id} {customer.code} - {customer.name}
                 </option>
@@ -890,7 +973,7 @@ export default function ManageRecipients() {
 
                 setPaginationModel(firstPage);
                 setExpandedRecipientId(null);
-                fetchData(e.target.value, firstPage);
+                fetchData(e.currentTarget.value, firstPage);
               }
             }}
           />
@@ -918,31 +1001,28 @@ export default function ManageRecipients() {
         <DataGrid
           rows={displayRows}
           columns={columns}
-          getRowId={(row) => row.id}
+          getRowId={(row: DisplayRow) => row.id}
           loading={loading}
           rowCount={rowCount}
           paginationMode="server"
           paginationModel={paginationModel}
-          onPaginationModelChange={(model) => {
+          onPaginationModelChange={(model: GridPaginationModel) => {
             setPaginationModel(model);
             setExpandedRecipientId(null);
             fetchData(search, model);
           }}
           pageSizeOptions={[10, 25, 50, 100]}
           disableRowSelectionOnClick
-          getRowHeight={(params) => {
+          columnHeaderHeight={48}
+          getRowHeight={(params: any) => {
             if (String(params.id).startsWith("detail-")) {
               return "auto";
             }
 
             return 52;
           }}
-          getRowClassName={(params) =>
-            String(params.id).startsWith("detail-")
-              ? "recipient-detail-row"
-              : ""
-          }
-          onRowClick={(params) => {
+          getRowClassName={(params: any) => (String(params.id).startsWith("detail-") ? "recipient-detail-row" : "")}
+          onRowClick={(params: any) => {
             if (params.row.rowType === "detail") return;
             toggleExpandedRecipient(params.row);
           }}
@@ -952,8 +1032,20 @@ export default function ManageRecipients() {
 
             "& .MuiDataGrid-columnHeaders": {
               backgroundColor: "#f8fafc",
-              color: "#475569",
-              fontWeight: 700,
+              borderBottom: "1px solid #e2e8f0",
+            },
+
+            "& .MuiDataGrid-columnHeader": {
+              backgroundColor: "#f8fafc",
+              paddingLeft: "12px",
+              paddingRight: "12px",
+            },
+
+            "& .MuiDataGrid-columnHeaderTitle": {
+              color: "#64748b",
+              fontSize: "12px",
+              fontWeight: 600,
+              lineHeight: "18px",
             },
 
             "& .MuiDataGrid-cell": {
@@ -1005,24 +1097,18 @@ export default function ManageRecipients() {
       </div>
 
       {showModal && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={closeModal}
-        >
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeModal}>
           <div
             className="bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-slate-800 mb-5">
-              {getModalTitle()}
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-5">{getModalTitle()}</h3>
 
             {isDetailMode && editingRecipient && (
               <div className="mb-4 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-600">
                 เพิ่ม/แก้ไขที่อยู่ของ{" "}
                 <span className="font-semibold text-slate-800">
-                  {editingRecipient.recipient_code} -{" "}
-                  {editingRecipient.recipient_name}
+                  {editingRecipient.recipient_code} - {editingRecipient.recipient_name}
                 </span>
               </div>
             )}
@@ -1037,9 +1123,7 @@ export default function ManageRecipients() {
                         className="input-modern w-full"
                         placeholder="Recipient Code"
                         value={form.recipient_code}
-                        onChange={(e) =>
-                          handleChange("recipient_code", e.target.value)
-                        }
+                        onChange={(e) => handleChange("recipient_code", e.target.value)}
                       />
                     </div>
 
@@ -1048,12 +1132,10 @@ export default function ManageRecipients() {
                       <select
                         className="input-modern w-full"
                         value={form.recipient_type_id}
-                        onChange={(e) =>
-                          handleChange("recipient_type_id", e.target.value)
-                        }
+                        onChange={(e) => handleChange("recipient_type_id", e.target.value)}
                       >
                         <option value="">เลือกประเภทผู้รับ</option>
-                        {recipientTypes.map((type) => (
+                        {recipientTypes.map((type: RecipientType) => (
                           <option key={type.id} value={type.id}>
                             {type.name}
                           </option>
@@ -1068,9 +1150,7 @@ export default function ManageRecipients() {
                       className="input-modern w-full"
                       placeholder="Recipient Name"
                       value={form.recipient_name}
-                      onChange={(e) =>
-                        handleChange("recipient_name", e.target.value)
-                      }
+                      onChange={(e) => handleChange("recipient_name", e.target.value)}
                     />
                   </div>
                 </>
@@ -1084,9 +1164,7 @@ export default function ManageRecipients() {
                       className="input-modern w-full"
                       placeholder="เช่น สำนักงานใหญ่ / สาขา"
                       value={form.recipient_detail_name}
-                      onChange={(e) =>
-                        handleChange("recipient_detail_name", e.target.value)
-                      }
+                      onChange={(e) => handleChange("recipient_detail_name", e.target.value)}
                     />
                   </div>
 
@@ -1101,9 +1179,7 @@ export default function ManageRecipients() {
                   </div>
 
                   <div>
-                    <RequiredLabel required>
-                      ค้นหาตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์
-                    </RequiredLabel>
+                    <RequiredLabel required>ค้นหาตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์</RequiredLabel>
 
                     <AddressSearchDropdown
                       value={form.address_search || ""}
@@ -1138,9 +1214,7 @@ export default function ManageRecipients() {
                         className="input-modern w-full"
                         placeholder="Line ID"
                         value={form.line_id}
-                        onChange={(e) =>
-                          handleChange("line_id", e.target.value)
-                        }
+                        onChange={(e) => handleChange("line_id", e.target.value)}
                       />
                     </div>
                   </div>
@@ -1149,19 +1223,11 @@ export default function ManageRecipients() {
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200"
-              >
+              <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
                 ยกเลิก
               </button>
 
-              <button
-                type="button"
-                onClick={handleSave}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-              >
+              <button type="button" onClick={handleSave} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                 บันทึก
               </button>
             </div>
@@ -1177,13 +1243,8 @@ export default function ManageRecipients() {
             setSelectedStatus(null);
           }}
         >
-          <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[300px]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">
-              สถานะ
-            </h3>
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
 
             <div className="flex flex-col gap-3">
               <button
@@ -1204,9 +1265,7 @@ export default function ManageRecipients() {
                 disabled={selectedStatus?.current === "INACTIVE"}
                 onClick={() => changeStatus("INACTIVE")}
                 className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "INACTIVE"
-                    ? "bg-red-50 text-red-300 cursor-not-allowed"
-                    : "bg-red-100 text-red-500 hover:bg-red-200"
+                  selectedStatus?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
                 }`}
               >
                 Inactive

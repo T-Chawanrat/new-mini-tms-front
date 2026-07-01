@@ -10,15 +10,23 @@ export interface Customer {
 
 interface CustomerDropdownProps {
   value?: string;
+  disabled?: boolean;
   onChange: (customer: Customer | null, inputText?: string) => void;
 }
 
-const CustomerDropdown: React.FC<CustomerDropdownProps> = ({ value, onChange }) => {
+const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
+  value,
+  disabled = false,
+  onChange,
+}) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>(value || "");
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const latestSearchRef = useRef("");
 
   useEffect(() => {
     setSearchTerm(value || "");
@@ -26,15 +34,24 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({ value, onChange }) 
 
   const fetchCustomers = async (keyword = "") => {
     try {
+      const currentKeyword = keyword.trim();
+      latestSearchRef.current = currentKeyword;
+
+      setLoading(true);
+
       const response = await AxiosInstance.get("/customers", {
-        params: keyword ? { search: keyword } : {},
+        params: currentKeyword ? { search: currentKeyword } : {},
       });
 
-      const data: Customer[] = response.data || [];
+      if (latestSearchRef.current !== currentKeyword) return;
+
+      const data: Customer[] = Array.isArray(response.data) ? response.data : [];
       setCustomers(data);
     } catch (error) {
       console.error("Error fetching customers:", error);
       setCustomers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,25 +60,17 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({ value, onChange }) 
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = window.setTimeout(() => {
       fetchCustomers(searchTerm.trim());
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => window.clearTimeout(timer);
   }, [searchTerm]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
-
-        if (!searchTerm && selectedCustomerId) {
-          const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
-
-          if (selectedCustomer) {
-            setSearchTerm(selectedCustomer.name);
-          }
-        }
       }
     };
 
@@ -70,7 +79,7 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({ value, onChange }) 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [searchTerm, selectedCustomerId, customers]);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -83,50 +92,65 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({ value, onChange }) 
   };
 
   const handleSelectChange = (customer: Customer) => {
+    const label = customer.code ? `${customer.code} - ${customer.name}` : customer.name;
+
     setSelectedCustomerId(customer.id);
-    setSearchTerm(customer.name);
+    setSearchTerm(label);
     setIsDropdownOpen(false);
 
-    onChange(customer, customer.name);
+    onChange(customer, label);
   };
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div
-        className="flex items-center w-full border border-slate-300 rounded-lg px-2.5 py-1.5 
-       text-sm cursor-text bg-white
-       focus-within:ring-0 focus-within:border-slate-300"
-        onClick={() => setIsDropdownOpen(true)}
+        className={`flex h-8 w-full items-center rounded-md border border-slate-300 px-2 text-xs text-slate-700 ${
+          disabled
+            ? "cursor-not-allowed bg-slate-100 opacity-70"
+            : "cursor-text bg-white focus-within:border-blue-400"
+        }`}
+        onClick={() => {
+          if (!disabled) setIsDropdownOpen(true);
+        }}
       >
         <input
           type="text"
-          placeholder="ค้นหาลูกค้า"
+          placeholder="ค้นหา Customer"
           value={searchTerm}
+          disabled={disabled}
           onChange={handleInputChange}
-          onFocus={() => setIsDropdownOpen(true)}
-          className="flex-grow bg-transparent outline-none ring-0 border-none shadow-none focus:outline-none focus:ring-0 focus:border-none text-xs sm:text-sm placeholder-slate-400"
+          onFocus={() => {
+            if (!disabled) setIsDropdownOpen(true);
+          }}
+          className="w-full flex-grow border-none bg-transparent text-xs outline-none placeholder-slate-400 disabled:cursor-not-allowed"
         />
 
-        <ChevronDownIcon className="h-4 w-4 text-slate-400 ml-1" />
+        <ChevronDownIcon className="ml-1 h-4 w-4 shrink-0 text-slate-400" />
       </div>
 
-      {isDropdownOpen && (
-        <ul className="absolute z-20 left-0 bg-white border border-slate-200 rounded-xl mt-1 w-full min-w-[420px] max-h-52 overflow-y-auto shadow-lg text-xs sm:text-sm">
-          {customers.length > 0 ? (
+      {isDropdownOpen && !disabled && (
+        <ul className="absolute left-0 z-30 mt-1 max-h-56 w-full min-w-[420px] overflow-y-auto rounded-md border border-slate-200 bg-white text-xs shadow-lg">
+          {loading && <li className="px-3 py-2 text-slate-400">กำลังโหลด...</li>}
+
+          {!loading && customers.length > 0 ? (
             customers.map((customer) => (
               <li
                 key={customer.id}
-                className={`px-3 py-1.5 cursor-pointer truncate hover:bg-blue-50 ${
-                  customer.id === selectedCustomerId ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700"
+                className={`cursor-pointer truncate px-3 py-1.5 hover:bg-blue-50 ${
+                  customer.id === selectedCustomerId
+                    ? "bg-blue-50 font-medium text-blue-700"
+                    : "text-slate-700"
                 }`}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelectChange(customer)}
+                title={`${customer.code || ""} ${customer.name || ""}`}
               >
-                {customer.id} {customer.code} {customer.name}
+                {customer.code ? `${customer.code} - ${customer.name}` : customer.name}
               </li>
             ))
-          ) : (
-            <li className="px-3 py-2 text-slate-400 text-xs sm:text-sm">ไม่พบข้อมูล</li>
-          )}
+          ) : !loading ? (
+            <li className="px-3 py-2 text-slate-400">ไม่พบข้อมูล</li>
+          ) : null}
         </ul>
       )}
     </div>
