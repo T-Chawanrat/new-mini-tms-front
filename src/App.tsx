@@ -26,6 +26,7 @@ import ImportManual from "./pages/ImportManual";
 import ChangePassword from "./pages/ChangePassword";
 import CreateReceivePage from "./pages/CreateReceivePage/CreateReceivePage";
 import ManageHolidays from "./pages/ManageHolidays";
+import ReceiveReport from "./pages/ReceiveReport";
 // import ImportVGT from "./pages/ImportVGT";
 // import ImportADV from "./pages/ImportADV";
 
@@ -136,6 +137,7 @@ export default function App() {
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/create-do" element={<CreateReceivePage />} />
               <Route path="/manage-holidays" element={<ManageHolidays />} />
+              <Route path="/receive-report" element={<ReceiveReport />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>
