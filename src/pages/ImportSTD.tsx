@@ -7,6 +7,7 @@ import ResizableColumns from "../components/ResizableColumns";
 import { useAuth } from "../context/AuthContext";
 import AxiosInstance from "../utils/AxiosInstance";
 import CustomerDropdown, { type Customer } from "../components/dropdown/CustomerDropdown";
+import { normalizeText, isBlankText, isValidThaiPhone, isPositiveNumberText, formatExcelPreviewDate } from "../utils/textSanitizer";
 
 type ImportRow = {
   NO_BILL: string;
@@ -86,51 +87,14 @@ const excelColumns: Array<keyof ImportRow> = [
 
 const headers = ["ลำดับ", ...excelColumns];
 
-const normalizeCell = (value: unknown) => {
-  if (value === null || value === undefined) return "";
-  return String(value).trim();
-};
-
 const normalizeRow = (row: Record<string, unknown>): ImportRow => {
   const normalized: Partial<ImportRow> = {};
 
   excelColumns.forEach((column) => {
-    normalized[column] = normalizeCell(row[column]);
+    normalized[column] = normalizeText(row[column]);
   });
 
   return normalized as ImportRow;
-};
-
-const formatPreviewDate = (value: string) => {
-  if (!value) return "-";
-
-  const serial = Number(value);
-
-  if (Number.isFinite(serial) && serial > 20000) {
-    const date = new Date((serial - 25569) * 86400 * 1000);
-
-    if (!Number.isNaN(date.getTime())) {
-      const dd = String(date.getDate()).padStart(2, "0");
-      const mm = String(date.getMonth() + 1).padStart(2, "0");
-      const yyyy = date.getFullYear();
-
-      return `${dd}/${mm}/${yyyy}`;
-    }
-  }
-
-  return value;
-};
-
-const cleanPhoneDigits = (value: string) => {
-  return String(value || "").replace(/\D/g, "");
-};
-
-const isValidThaiPhone = (value: string) => {
-  const tel = cleanPhoneDigits(value);
-
-  if (!tel) return false;
-
-  return tel.startsWith("0") && (tel.length === 9 || tel.length === 10);
 };
 
 const findDuplicateSerials = (rows: ImportRow[]) => {
@@ -152,6 +116,31 @@ const findInvalidPhoneRows = (rows: ImportRow[]) => {
 
   rows.forEach((row, index) => {
     if (!isValidThaiPhone(row.RECIPIENT_TEL)) {
+      invalid[index] = true;
+    }
+  });
+
+  return invalid;
+};
+
+const findBlankShipperCodeRows = (rows: ImportRow[]) => {
+  const invalid: Record<number, boolean> = {};
+
+  rows.forEach((row, index) => {
+    if (isBlankText(row.SHIPPER_CODE)) {
+      invalid[index] = true;
+    }
+  });
+
+  return invalid;
+};
+
+const findInvalidSubdistrictRows = (rows: ImportRow[]) => {
+  const invalid: Record<number, boolean> = {};
+
+  rows.forEach((row, index) => {
+    // invalid ฝั่ง frontend = ว่าง / ไม่ใช่ตัวเลข / <= 0
+    if (!isPositiveNumberText(row.subdistrict_id)) {
       invalid[index] = true;
     }
   });
@@ -213,6 +202,10 @@ export default function BillImport() {
 
   const invalidPhoneRows = useMemo(() => findInvalidPhoneRows(rows), [rows]);
 
+  const blankShipperCodeRows = useMemo(() => findBlankShipperCodeRows(rows), [rows]);
+
+  const invalidSubdistrictRows = useMemo(() => findInvalidSubdistrictRows(rows), [rows]);
+
   const duplicateSerialValueCount = useMemo(() => {
     return Object.values(duplicates).filter((count) => count > 1).length;
   }, [duplicates]);
@@ -225,8 +218,20 @@ export default function BillImport() {
     return Object.values(invalidPhoneRows).filter(Boolean).length;
   }, [invalidPhoneRows]);
 
+  const blankShipperCodeCount = useMemo(() => {
+    return Object.values(blankShipperCodeRows).filter(Boolean).length;
+  }, [blankShipperCodeRows]);
+
+  const invalidSubdistrictCount = useMemo(() => {
+    return Object.values(invalidSubdistrictRows).filter(Boolean).length;
+  }, [invalidSubdistrictRows]);
+
   const hasDuplicateSerial = duplicateSerialRowCount > 0;
   const hasInvalidPhone = invalidPhoneCount > 0;
+  const hasBlankShipperCode = blankShipperCodeCount > 0;
+  const hasInvalidSubdistrict = invalidSubdistrictCount > 0;
+
+  const hasValidationError = hasDuplicateSerial || hasInvalidPhone || hasBlankShipperCode || hasInvalidSubdistrict;
 
   const billCount = useMemo(() => {
     const set = new Set<string>();
@@ -248,11 +253,7 @@ export default function BillImport() {
           ? "กำลังบันทึก"
           : !rows.length
             ? "อ่านข้อมูล Excel ไม่ได้ / ไม่มี rows"
-            : hasDuplicateSerial
-              ? "มี SERIAL_NO ซ้ำ"
-              : hasInvalidPhone
-                ? "มีเบอร์โทรไม่ถูกต้อง"
-                : "";
+            : "";
 
   useEffect(() => {
     if (authUser?.customer_id) {
@@ -323,20 +324,9 @@ export default function BillImport() {
 
         setRows(normalizedRows);
 
-        const duplicateMap = findDuplicateSerials(normalizedRows);
-        const duplicateRows = buildDuplicateSerialRowMap(normalizedRows, duplicateMap);
-        const invalidPhones = findInvalidPhoneRows(normalizedRows);
-
-        const hasDuplicate = Object.values(duplicateRows).some(Boolean);
-        const hasInvalidTel = Object.values(invalidPhones).some(Boolean);
-
-        if (hasDuplicate && hasInvalidTel) {
-          setError("พบ SERIAL_NO ซ้ำ และพบเบอร์โทรไม่ถูกต้อง กรุณาแก้ Excel แล้วเลือกไฟล์ใหม่");
-        } else if (hasDuplicate) {
-          setError("พบ SERIAL_NO ซ้ำ กรุณาแก้ Excel แล้วเลือกไฟล์ใหม่");
-        } else if (hasInvalidTel) {
-          setError("พบเบอร์โทรไม่ถูกต้อง ต้องขึ้นต้นด้วย 0 และมี 9 หรือ 10 หลัก");
-        }
+        // ไม่ setError สำหรับ validation จากข้อมูล Excel ตรงนี้
+        // เพราะมี badge + แถบสีในตารางแสดงอยู่แล้ว
+        // setError จะใช้เฉพาะกรณีอ่านไฟล์พัง / ไม่มี sheet / import backend fail เท่านั้น
       } catch (err) {
         console.error(err);
         setFile(null);
@@ -375,13 +365,7 @@ export default function BillImport() {
       return;
     }
 
-    if (hasDuplicateSerial) {
-      setError("พบ SERIAL_NO ซ้ำ กรุณาแก้ Excel แล้วเลือกไฟล์ใหม่");
-      return;
-    }
-
-    if (hasInvalidPhone) {
-      setError("พบเบอร์โทรไม่ถูกต้อง ต้องขึ้นต้นด้วย 0 และมี 9 หรือ 10 หลัก");
+    if (hasDuplicateSerial || hasInvalidPhone || hasBlankShipperCode || hasInvalidSubdistrict) {
       return;
     }
 
@@ -484,6 +468,14 @@ export default function BillImport() {
                 <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="hidden" />
               </label>
 
+              <a
+                href="/tamplates/import.xlsx"
+                download
+                className="inline-flex h-8 items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+              >
+                โหลด Template Excel
+              </a>
+
               <span className="h-8 max-w-[420px] truncate rounded-md border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-600">
                 {fileName || "ยังไม่ได้เลือกไฟล์"}
               </span>
@@ -503,7 +495,25 @@ export default function BillImport() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex items-end justify-end">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={Boolean(disabledReason) || hasValidationError}
+              title={disabledReason}
+              className={`h-8 rounded-md px-4 text-xs font-semibold ${
+                Boolean(disabledReason) || hasValidationError
+                  ? "cursor-not-allowed bg-slate-300 text-slate-500"
+                  : "bg-emerald-600 text-white hover:bg-emerald-700"
+              }`}
+            >
+              {saving ? "กำลังบันทึก..." : "บันทึก"}
+            </button>
+          </div>
+        </div>
+
+        {hasValidationError && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {hasDuplicateSerial && (
               <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
                 SERIAL_NO ซ้ำ {duplicateSerialValueCount} ค่า / {duplicateSerialRowCount} แถว
@@ -516,29 +526,23 @@ export default function BillImport() {
               </span>
             )}
 
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={Boolean(disabledReason)}
-              title={disabledReason}
-              className={`h-8 rounded-md px-4 text-xs font-semibold ${
-                disabledReason ? "cursor-not-allowed bg-slate-300 text-slate-500" : "bg-emerald-600 text-white hover:bg-emerald-700"
-              }`}
-            >
-              {saving ? "กำลังบันทึก..." : "บันทึก"}
-            </button>
+            {hasBlankShipperCode && (
+              <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+                SHIPPER_CODE ว่าง {blankShipperCodeCount} แถว
+              </span>
+            )}
+
+            {hasInvalidSubdistrict && (
+              <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+                subdistrict_id ผิด {invalidSubdistrictCount} แถว
+              </span>
+            )}
           </div>
-        </div>
+        )}
 
         {disabledReason && (
           <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700">{disabledReason}</div>
         )}
-
-        {/* {(hasDuplicateSerial || hasInvalidPhone) && (
-          <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
-            แถวสีแดงคือข้อมูลผิด ต้องแก้ในไฟล์ Excel แล้วเลือกไฟล์ใหม่ก่อนนำเข้า
-          </div>
-        )} */}
       </div>
 
       {error && <div className="mb-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{error}</div>}
@@ -594,10 +598,11 @@ export default function BillImport() {
                   const serialNo = row.SERIAL_NO?.trim();
 
                   const isDuplicateSerial = Boolean(serialNo && duplicates[serialNo] > 1);
-
                   const isInvalidPhone = Boolean(invalidPhoneRows[index]);
+                  const isBlankShipperCode = Boolean(blankShipperCodeRows[index]);
+                  const isInvalidSubdistrict = Boolean(invalidSubdistrictRows[index]);
 
-                  const isErrorRow = isDuplicateSerial || isInvalidPhone;
+                  const isErrorRow = isDuplicateSerial || isInvalidPhone || isBlankShipperCode || isInvalidSubdistrict;
 
                   return (
                     <tr
@@ -619,12 +624,23 @@ export default function BillImport() {
                       {excelColumns.map((column) => {
                         const rawValue = row[column];
 
-                        const value = column === "SEND_DATE" ? formatPreviewDate(rawValue) : rawValue || "-";
+                        const value = column === "SEND_DATE" ? formatExcelPreviewDate(rawValue) : rawValue || "-";
 
                         const isSerialColumn = column === "SERIAL_NO";
                         const isTelColumn = column === "RECIPIENT_TEL";
+                        const isShipperCodeColumn = column === "SHIPPER_CODE";
 
-                        const isBadCell = (isDuplicateSerial && isSerialColumn) || (isInvalidPhone && isTelColumn);
+                        const isRecipientAddressColumn =
+                          column === "RECIPIENT_SUBDISTRICT" ||
+                          column === "RECIPIENT_DISTRICT" ||
+                          column === "RECIPIENT_PROVINCE" ||
+                          column === "subdistrict_id";
+
+                        const isBadCell =
+                          (isDuplicateSerial && isSerialColumn) ||
+                          (isInvalidPhone && isTelColumn) ||
+                          (isBlankShipperCode && isShipperCodeColumn) ||
+                          (isInvalidSubdistrict && isRecipientAddressColumn);
 
                         return (
                           <td
