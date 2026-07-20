@@ -8,7 +8,7 @@ import { ColumnWidthsProvider } from "./context/ColumnWidths";
 import "react-datepicker/dist/react-datepicker.css";
 import BillImport from "./pages/BillImport";
 // import BillManual from "./pages/ImportManual";
-import BillScanWarehouse from "./pages/BillScanWarehouse";
+// import BillScanWarehouse from "./pages/BillScanWarehouse";
 import BillScanDc from "./pages/BillScanDc";
 import BillImportADV from "./pages/BillImportADV";
 import BillImportVGT from "./pages/BillImportVGT";
@@ -27,6 +27,8 @@ import ChangePassword from "./pages/ChangePassword";
 import CreateReceivePage from "./pages/CreateReceivePage/CreateReceivePage";
 import ManageHolidays from "./pages/ManageHolidays";
 import ReceiveReport from "./pages/ReceiveReport";
+import LabelPrintPage from "./pages/LabelPrintPage";
+import WarehouseReceivePage from "./pages/WarehouseReceivePage";
 // import ImportVGT from "./pages/ImportVGT";
 // import ImportADV from "./pages/ImportADV";
 
@@ -94,14 +96,14 @@ export default function App() {
                   </ProtectedRoute>
                 }
               /> */}
-              <Route
+              {/* <Route
                 path="/warehouse-scan"
                 element={
                   <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <BillScanWarehouse />
                   </ProtectedRoute>
                 }
-              />
+              /> */}
               <Route
                 path="/dc-scan"
                 element={
@@ -138,6 +140,8 @@ export default function App() {
               <Route path="/create-do" element={<CreateReceivePage />} />
               <Route path="/manage-holidays" element={<ManageHolidays />} />
               <Route path="/receive-report" element={<ReceiveReport />} />
+             <Route path="/label-print" element={<LabelPrintPage />} />
+             <Route path="/warehouse-scan" element={<WarehouseReceivePage />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>

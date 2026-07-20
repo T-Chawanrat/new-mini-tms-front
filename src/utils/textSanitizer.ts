@@ -79,3 +79,49 @@ export const formatExcelPreviewDate = (value: string) => {
 
   return value;
 };
+
+export const formatDate = (
+value: string | Date | null | undefined,
+fallback = "-",
+) => {
+if (!value) {
+return fallback;
+}
+
+const date = value instanceof Date ? value : new Date(value);
+
+if (Number.isNaN(date.getTime())) {
+return fallback;
+}
+
+return new Intl.DateTimeFormat("th-TH", {
+day: "2-digit",
+month: "2-digit",
+year: "numeric",
+}).format(date);
+};
+
+
+export const getText = (
+  value: string | number | null | undefined,
+  fallback = "-",
+) => {
+  const text = String(value ?? "").trim();
+
+  return text || fallback;
+};
+
+export const formatCod = (
+  value: string | number | null | undefined,
+) => {
+  const amount = Number(value ?? 0);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return "";
+  }
+
+  return `COD ${amount.toLocaleString("th-TH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} บาท`;
+};

@@ -52,12 +52,12 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },
-      {
-        name: "Warehouse Scan",
-        path: "/warehouse-scan",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
+      // {
+      //   name: "Warehouse Scan",
+      //   path: "/warehouse-scan",
+      //   icon: <File size={20} />,
+      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      // },
       {
         name: "DC Scan",
         path: "/dc-scan",
@@ -134,6 +134,18 @@ const navItems: NavItem[] = [
       {
         name: "Receive Report",
         path: "/receive-report",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 10, 11],
+      },
+      {
+        name: "Label Print",
+        path: "/label-print",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 10, 11],
+      },
+      {
+        name: "Warehouse Scan",
+        path: "/warehouse-scan",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 10, 11],
       },
@@ -314,15 +326,15 @@ const AppSidebar: React.FC = () => {
     lg:translate-x-0
   `}
     >
-      <div className={`py-8 flex ${!isExpanded ? "lg:justify-center" : "justify-start"}`}>
+      <div className={`py-8 px-4 flex ${!isExpanded ? "lg:justify-center" : "justify-start"}`}>
         {/* <Link to="/"> */}
         {isExpanded || isMobileOpen ? (
           <>
-            <img className="dark:hidden" src="/images/logo/logo.png" alt="Logo" width={130} height={40} />
-            <img className="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" width={130} height={40} />
+            <img className="dark:hidden" src="/tms/images/logo/logo.png" alt="Logo" width={130} height={40} />
+            <img className="hidden dark:block" src="/tms/images/logo/logo-dark.svg" alt="Logo" width={130} height={40} />
           </>
         ) : (
-          <img src="/images/logo/logo-icon.png" alt="Logo" width={32} height={32} />
+          <img src="/tms/images/logo/logo-icon.png" alt="Logo" width={32} height={32} />
         )}
         {/* </Link> */}
       </div>
