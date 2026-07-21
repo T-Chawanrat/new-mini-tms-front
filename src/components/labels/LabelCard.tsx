@@ -4,10 +4,28 @@ import bwipjs from "bwip-js";
 import QRCode from "qrcode";
 
 import type { LabelRow } from "../../types/label";
-import { formatCod, formatDate, getText } from "../../utils/textSanitizer";
+import { formatDate, getText } from "../../utils/textSanitizer";
 
 type LabelCardProps = {
   item: LabelRow;
+};
+
+const getCodAmount = (value: unknown) => {
+  if (value === undefined || value === null || value === "") {
+    return 0;
+  }
+
+  const normalizedValue = String(value)
+    .replace(/,/g, "")
+    .replace(/[^\d.-]/g, "");
+
+  const amount = Number(normalizedValue);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return 0;
+  }
+
+  return amount;
 };
 
 export default function LabelCard({ item }: LabelCardProps) {
@@ -15,10 +33,25 @@ export default function LabelCard({ item }: LabelCardProps) {
   const qrRef = useRef<HTMLCanvasElement | null>(null);
 
   const serialNo = getText(item.serial_no, "");
-  const codText = formatCod(item.cod);
+
+  const codAmount = getCodAmount(item.cod);
+  const hasCod = codAmount > 0;
+
+  const codText = hasCod
+    ? `เก็บเงินค่าสินค้า ${codAmount.toLocaleString("th-TH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })} บาท`
+    : "ไม่ต้องเก็บเงินค่าสินค้า";
 
   const addressText = getText(
-    [item.address, item.subdistrict_name, item.district_name, item.province_name, item.zip_code]
+    [
+      item.address,
+      item.subdistrict_name,
+      item.district_name,
+      item.province_name,
+      item.zip_code,
+    ]
       .map((part) => getText(part, ""))
       .filter(Boolean)
       .join(" "),
@@ -30,11 +63,15 @@ export default function LabelCard({ item }: LabelCardProps) {
 
     if (!serialNo) {
       if (barcodeCanvas) {
-        barcodeCanvas.getContext("2d")?.clearRect(0, 0, barcodeCanvas.width, barcodeCanvas.height);
+        barcodeCanvas
+          .getContext("2d")
+          ?.clearRect(0, 0, barcodeCanvas.width, barcodeCanvas.height);
       }
 
       if (qrCanvas) {
-        qrCanvas.getContext("2d")?.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+        qrCanvas
+          .getContext("2d")
+          ?.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
       }
 
       return;
@@ -81,7 +118,9 @@ export default function LabelCard({ item }: LabelCardProps) {
         <div className="barcode-box">
           <canvas ref={barcodeRef} aria-hidden="true" />
 
-          <div className="barcode-text">{getText(item.serial_no)}</div>
+          <div className="barcode-text">
+            {getText(item.serial_no)}
+          </div>
         </div>
 
         <div className="label-reference">
@@ -123,7 +162,13 @@ export default function LabelCard({ item }: LabelCardProps) {
             <strong>{addressText}</strong>
           </div>
 
-          {codText && <div className="label-cod">{codText}</div>}
+          <div
+            className={`label-cod ${
+              hasCod ? "label-cod-has-value" : "label-cod-no-value"
+            }`}
+          >
+            {codText}
+          </div>
         </div>
 
         <div className="label-qr">
@@ -158,13 +203,21 @@ export default function LabelCard({ item }: LabelCardProps) {
       </section>
 
       <footer className="label-footer">
-        <img src="/tms/logotrachtech.png" alt="Trantech Logo" className="label-company-logo" />
+        <img
+          src="/tms/logotrachtech.png"
+          alt="Trantech Logo"
+          className="label-company-logo"
+        />
 
         <div className="label-company-content">
-          <p className="label-company-name">จัดส่งโดย บริษัท ทรานเทค แมนเนจเม้นส์ กรุ๊ป จำกัด</p>
+          <p className="label-company-name">
+            จัดส่งโดย บริษัท ทรานเทค แมนเนจเม้นส์ กรุ๊ป จำกัด
+          </p>
 
           <div className="label-footer-bottom">
-            <strong className="label-company-tel">โทร 065-005-2555</strong>
+            <strong className="label-company-tel">
+              โทร 065-005-2555
+            </strong>
 
             <div className="label-print-date">
               <span>Delivery date</span>

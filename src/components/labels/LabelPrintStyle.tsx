@@ -176,14 +176,15 @@ export default function LabelPrintStyle() {
             margin-bottom: 0;
           }
 
-          .label-cod {
-            margin-top: 1.2mm;
-            padding: 0.9mm 1.4mm;
-            border: 0.35mm solid #000000;
-            font-size: 7.4pt;
-            font-weight: 800;
-            line-height: 1.1;
-            text-align: center;
+         .label-cod {
+          margin-top: 16mm;
+          padding: 0.9mm 1.4mm;
+          border: 0.35mm solid #000000;
+          font-size: 7.4pt;
+          font-weight: 800;
+          line-height: 1.1;
+          text-align: center;
+          white-space: nowrap;
           }
 
           .label-qr {
