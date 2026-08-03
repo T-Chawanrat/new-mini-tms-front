@@ -234,7 +234,7 @@ export default function ReceiveReport() {
   }, [appliedFilters, page, limit]);
 
   return (
-    <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 p-3 text-slate-800">
+    <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
       <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-base font-semibold text-slate-900">Receive Report</h1>

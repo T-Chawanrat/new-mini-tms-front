@@ -51,10 +51,14 @@ export type LabelRow = {
   serial_id: number | string | null;
   serial_no: string;
 
+  serial_index?: number;
+  serial_total?: number;
+
   customer_name: string | null;
 
   recipient_name: string | null;
   address: string | null;
+  remark: string | null;
 
   district_name: string | null;
   subdistrict_name: string | null;

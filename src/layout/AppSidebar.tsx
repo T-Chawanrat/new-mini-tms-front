@@ -46,37 +46,31 @@ const navItems: NavItem[] = [
       //   icon: <File size={20} />,
       //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       // },
-      {
-        name: "Label",
-        path: "/labels",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
+      // {
+      //   name: "Label",
+      //   path: "/labels",
+      //   icon: <File size={20} />,
+      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      // },
       // {
       //   name: "Warehouse Scan",
       //   path: "/warehouse-scan",
       //   icon: <File size={20} />,
       //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       // },
-      {
-        name: "DC Scan",
-        path: "/dc-scan",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
+      // {
+      //   name: "DC Scan",
+      //   path: "/dc-scan",
+      //   icon: <File size={20} />,
+      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      // },
 
-      {
-        name: "report",
-        path: "/report",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
-      {
-        name: "import std",
-        path: "/std",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      },
+      // {
+      //   name: "report",
+      //   path: "/report",
+      //   icon: <File size={20} />,
+      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      // },
       // {
       //   name: "import manual",
       //   path: "/manual",
@@ -132,6 +126,12 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 10, 11],
       },
       {
+        name: "Import Delivery Order",
+        path: "/std",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      },
+      {
         name: "Receive Report",
         path: "/receive-report",
         icon: <File size={20} />,
@@ -146,6 +146,18 @@ const navItems: NavItem[] = [
       {
         name: "Warehouse Scan",
         path: "/warehouse-scan",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 10, 11],
+      },
+      {
+        name: "Truck Scan",
+        path: "/truck-scan",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 10, 11],
+      },
+      {
+        name: "Truck Create",
+        path: "/truck-create",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 10, 11],
       },

@@ -34,6 +34,11 @@ export default function LabelCard({ item }: LabelCardProps) {
 
   const serialNo = getText(item.serial_no, "");
 
+  const serialIndex = Number(item.serial_index) || 0;
+  const serialTotal = Number(item.serial_total) || 0;
+
+  const serialSequence = serialIndex > 0 && serialTotal > 0 ? `${serialIndex} OF ${serialTotal}` : "";
+
   const codAmount = getCodAmount(item.cod);
   const hasCod = codAmount > 0;
 
@@ -45,17 +50,13 @@ export default function LabelCard({ item }: LabelCardProps) {
     : "ไม่ต้องเก็บเงินค่าสินค้า";
 
   const addressText = getText(
-    [
-      item.address,
-      item.subdistrict_name,
-      item.district_name,
-      item.province_name,
-      item.zip_code,
-    ]
+    [item.address, item.subdistrict_name, item.district_name, item.province_name, item.zip_code]
       .map((part) => getText(part, ""))
       .filter(Boolean)
       .join(" "),
   );
+
+  const remarkText = getText(item.remark, "");
 
   useEffect(() => {
     const barcodeCanvas = barcodeRef.current;
@@ -63,15 +64,11 @@ export default function LabelCard({ item }: LabelCardProps) {
 
     if (!serialNo) {
       if (barcodeCanvas) {
-        barcodeCanvas
-          .getContext("2d")
-          ?.clearRect(0, 0, barcodeCanvas.width, barcodeCanvas.height);
+        barcodeCanvas.getContext("2d")?.clearRect(0, 0, barcodeCanvas.width, barcodeCanvas.height);
       }
 
       if (qrCanvas) {
-        qrCanvas
-          .getContext("2d")
-          ?.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+        qrCanvas.getContext("2d")?.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
       }
 
       return;
@@ -118,9 +115,7 @@ export default function LabelCard({ item }: LabelCardProps) {
         <div className="barcode-box">
           <canvas ref={barcodeRef} aria-hidden="true" />
 
-          <div className="barcode-text">
-            {getText(item.serial_no)}
-          </div>
+          <div className="barcode-text">{getText(item.serial_no)}</div>
         </div>
 
         <div className="label-reference">
@@ -162,17 +157,21 @@ export default function LabelCard({ item }: LabelCardProps) {
             <strong>{addressText}</strong>
           </div>
 
-          <div
-            className={`label-cod ${
-              hasCod ? "label-cod-has-value" : "label-cod-no-value"
-            }`}
-          >
-            {codText}
-          </div>
+          {remarkText && (
+            <div className="label-remark">
+              <span className="label-title">หมายเหตุ</span>
+
+              <strong>{remarkText}</strong>
+            </div>
+          )}
+
+          <div className={`label-cod ${hasCod ? "label-cod-has-value" : "label-cod-no-value"}`}>{codText}</div>
         </div>
 
         <div className="label-qr">
           <canvas ref={qrRef} aria-hidden="true" />
+
+          {serialSequence && <strong className="label-qr-sequence">{serialSequence}</strong>}
         </div>
       </section>
 
@@ -203,21 +202,13 @@ export default function LabelCard({ item }: LabelCardProps) {
       </section>
 
       <footer className="label-footer">
-        <img
-          src="/tms/logotrachtech.png"
-          alt="Trantech Logo"
-          className="label-company-logo"
-        />
+        <img src="/tms/logotrachtech.png" alt="Trantech Logo" className="label-company-logo" />
 
         <div className="label-company-content">
-          <p className="label-company-name">
-            จัดส่งโดย บริษัท ทรานเทค แมนเนจเม้นส์ กรุ๊ป จำกัด
-          </p>
+          <p className="label-company-name">จัดส่งโดย บริษัท ทรานเทค แมนเนจเม้นส์ กรุ๊ป จำกัด</p>
 
           <div className="label-footer-bottom">
-            <strong className="label-company-tel">
-              โทร 065-005-2555
-            </strong>
+            <strong className="label-company-tel">โทร 065-005-2555</strong>
 
             <div className="label-print-date">
               <span>Delivery date</span>

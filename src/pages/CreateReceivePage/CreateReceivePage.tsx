@@ -662,7 +662,7 @@ export default function CreateReceivePage() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <div className={`font-thai min-h-[80vh] w-full bg-slate-50 px-2 py-2 ${saving ? "cursor-wait" : ""}`}>
+    <div className={`font-thai min-h-[80vh] w-full bg-slate-50 px-1 py-2 ${saving ? "cursor-wait" : ""}`}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-bold tracking-tight text-slate-800">สร้างบิล / DO</h2>

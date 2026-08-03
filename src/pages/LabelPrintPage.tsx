@@ -50,6 +50,7 @@ const PRINTED_BY_USER_ID = 1;
 const RECEIVE_HEADERS = [
   <span key="expand-column" />,
   "#",
+  <span key="select-receive-column" />,
   "Receive Code",
   "Receive Date",
   "Customer",
@@ -63,40 +64,43 @@ const RECEIVE_HEADERS = [
 const RECEIVE_MIN_WIDTHS: Record<number, number> = {
   0: 42,
   1: 56,
-  2: 170,
-  3: 120,
-  4: 220,
-  5: 180,
-  6: 65,
-  7: 70,
-  8: 75,
-  9: 150,
+  2: 42,
+  3: 170,
+  4: 120,
+  5: 220,
+  6: 180,
+  7: 65,
+  8: 70,
+  9: 75,
+  10: 150,
 };
 
 const RECEIVE_DEFAULT_WIDTHS: Record<number, number> = {
   0: 42,
   1: 56,
-  2: 220,
-  3: 140,
-  4: 360,
-  5: 260,
-  6: 75,
-  7: 85,
-  8: 90,
-  9: 180,
+  2: 42,
+  3: 220,
+  4: 140,
+  5: 360,
+  6: 260,
+  7: 75,
+  8: 85,
+  9: 90,
+  10: 180,
 };
 
 const RECEIVE_MAX_WIDTHS: Record<number, number> = {
   0: 42,
   1: 70,
-  2: 380,
-  3: 180,
-  4: 600,
-  5: 480,
-  6: 110,
-  7: 120,
-  8: 130,
-  9: 260,
+  2: 42,
+  3: 380,
+  4: 180,
+  5: 600,
+  6: 480,
+  7: 110,
+  8: 120,
+  9: 130,
+  10: 260,
 };
 
 export default function LabelPrintPage() {
@@ -115,6 +119,7 @@ export default function LabelPrintPage() {
   const [serialSearch, setSerialSearch] = useState("");
   const [appliedSerialSearch, setAppliedSerialSearch] = useState("");
 
+  const [selectedReceiveCodes, setSelectedReceiveCodes] = useState<string[]>([]);
   const [selectedSerialNos, setSelectedSerialNos] = useState<string[]>([]);
   const [printItems, setPrintItems] = useState<LabelRow[]>([]);
 
@@ -159,6 +164,14 @@ export default function LabelPrintPage() {
   const someSerialChecked =
     serialRows.some((row) => selectedSerialNos.includes(row.serial_no)) &&
     !allSerialChecked;
+
+  const allReceivesChecked =
+    receiveRows.length > 0 &&
+    receiveRows.every((row) => selectedReceiveCodes.includes(row.receive_code));
+
+  const someReceivesChecked =
+    receiveRows.some((row) => selectedReceiveCodes.includes(row.receive_code)) &&
+    !allReceivesChecked;
 
   const updateFilter = (name: keyof LabelFilters, value: string) => {
     setFilters((prev) => ({
@@ -208,6 +221,12 @@ export default function LabelPrintPage() {
       const nextRows = res.data?.data || [];
 
       setReceiveRows(nextRows);
+
+      setSelectedReceiveCodes((prev) =>
+        prev.filter((receiveCode) =>
+          nextRows.some((row) => row.receive_code === receiveCode),
+        ),
+      );
 
       setPagination(
         res.data?.pagination || {
@@ -294,6 +313,7 @@ export default function LabelPrintPage() {
 
     setActiveReceiveCode("");
     setSerialRows([]);
+    setSelectedReceiveCodes([]);
     setSelectedSerialNos([]);
 
     setAppliedFilters(filters);
@@ -308,6 +328,7 @@ export default function LabelPrintPage() {
 
     setActiveReceiveCode("");
     setSerialRows([]);
+    setSelectedReceiveCodes([]);
     setSelectedSerialNos([]);
     setSerialSearch("");
     setAppliedSerialSearch("");
@@ -330,8 +351,28 @@ export default function LabelPrintPage() {
 
     setActiveReceiveCode("");
     setSerialRows([]);
+    setSelectedReceiveCodes([]);
     setSelectedSerialNos([]);
     setSerialSearch("");
+  };
+
+  const toggleAllReceives = () => {
+    if (allReceivesChecked) {
+      setSelectedReceiveCodes([]);
+      return;
+    }
+
+    setSelectedReceiveCodes(receiveRows.map((row) => row.receive_code));
+  };
+
+  const toggleOneReceive = (receiveCode: string) => {
+    setSelectedReceiveCodes((prev) => {
+      if (prev.includes(receiveCode)) {
+        return prev.filter((item) => item !== receiveCode);
+      }
+
+      return [...prev, receiveCode];
+    });
   };
 
   const toggleAllSerials = () => {
@@ -352,6 +393,28 @@ export default function LabelPrintPage() {
 
       return [...prev, serialNo];
     });
+  };
+
+  const fetchSelectedReceiveItems = async () => {
+    const responses = await Promise.all(
+      selectedReceiveCodes.map((receiveCode) => {
+        const params = buildLabelSerialQueryParams(receiveCode, "");
+
+        return AxiosInstance.get<LabelSerialsResponse>(
+          `${LABEL_API_PATH}/serials?${params.toString()}`,
+        );
+      }),
+    );
+
+    const itemMap = new Map<string, LabelRow>();
+
+    responses.forEach((response) => {
+      (response.data?.data || []).forEach((item) => {
+        itemMap.set(item.serial_no, item);
+      });
+    });
+
+    return Array.from(itemMap.values());
   };
 
   const markPrinted = async (items: LabelRow[]) => {
@@ -409,26 +472,45 @@ const finishPrint = async () => {
   }
 };
 
-  const handlePrint = () => {
-    if (!selectedItems.length) {
-      alert("กรุณาเลือก Serial No ที่ต้องการปริ้น");
-
+  const handlePrint = async () => {
+    if (!selectedReceiveCodes.length && !selectedItems.length) {
+      alert("กรุณาเลือก Receive Code หรือ Serial No ที่ต้องการปริ้น");
       return;
     }
 
-    const snapshotItems = [...selectedItems];
+    try {
+      setPrinting(true);
 
-    pendingPrintItemsRef.current = snapshotItems;
+      const receiveItems = selectedReceiveCodes.length
+        ? await fetchSelectedReceiveItems()
+        : [];
 
-    afterPrintHandledRef.current = false;
+      const itemMap = new Map<string, LabelRow>();
 
-    setPrintItems(snapshotItems);
+      [...receiveItems, ...selectedItems].forEach((item) => {
+        itemMap.set(item.serial_no, item);
+      });
 
-    setPrinting(true);
+      const snapshotItems = Array.from(itemMap.values());
 
-    window.setTimeout(() => {
-      window.print();
-    }, 300);
+      if (!snapshotItems.length) {
+        alert("ไม่พบ Serial No สำหรับปริ้น");
+        setPrinting(false);
+        return;
+      }
+
+      pendingPrintItemsRef.current = snapshotItems;
+      afterPrintHandledRef.current = false;
+      setPrintItems(snapshotItems);
+
+      window.setTimeout(() => {
+        window.print();
+      }, 300);
+    } catch (err) {
+      console.error("prepare print labels error:", err);
+      alert("โหลด Serial No สำหรับปริ้นไม่สำเร็จ");
+      setPrinting(false);
+    }
   };
 
   useEffect(() => {
@@ -456,7 +538,7 @@ const finishPrint = async () => {
   }, [appliedFilters, appliedSerialSearch, page, limit]);
 
   return (
-    <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 p-3 text-slate-800">
+    <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
       <LabelPrintStyle />
 
       <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2">
@@ -474,14 +556,19 @@ const finishPrint = async () => {
           <button
             type="button"
             onClick={handlePrint}
-            disabled={printing || selectedItems.length === 0}
+            disabled={
+              printing ||
+              (selectedReceiveCodes.length === 0 && selectedItems.length === 0)
+            }
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
           >
             <Printer size={13} />
 
             {printing
               ? "กำลังปริ้น..."
-              : `Print ${formatNumber(selectedItems.length)} Label`}
+              : selectedReceiveCodes.length > 0
+                ? `Print ${formatNumber(selectedReceiveCodes.length)} Receive`
+                : `Print ${formatNumber(selectedItems.length)} Label`}
           </button>
 
           <button
@@ -579,7 +666,24 @@ const finishPrint = async () => {
           <div className="h-[calc(100%-46px)] overflow-auto">
             <table className="w-max min-w-full table-fixed border-collapse text-left text-xs">
               <ResizableColumns
-                headers={RECEIVE_HEADERS}
+                headers={RECEIVE_HEADERS.map((header, headerIndex) =>
+                  headerIndex === 2 ? (
+                    <input
+                      key="select-all-receives"
+                      type="checkbox"
+                      checked={allReceivesChecked}
+                      ref={(input) => {
+                        if (input) {
+                          input.indeterminate = someReceivesChecked;
+                        }
+                      }}
+                      onChange={toggleAllReceives}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  ) : (
+                    header
+                  ),
+                )}
                 pageKey="label-print-receive"
                 minWidths={RECEIVE_MIN_WIDTHS}
                 defaultWidths={RECEIVE_DEFAULT_WIDTHS}
@@ -590,7 +694,7 @@ const finishPrint = async () => {
                 {receiveLoading ? (
                   <tr>
                     <td
-                      colSpan={10}
+                      colSpan={11}
                       className="px-3 py-10 text-center text-sm text-slate-500"
                     >
                       กำลังโหลด Receive...
@@ -599,7 +703,7 @@ const finishPrint = async () => {
                 ) : receiveRows.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={10}
+                      colSpan={11}
                       className="px-3 py-10 text-center text-sm text-slate-500"
                     >
                       ไม่พบ Receive Code
@@ -619,10 +723,14 @@ const finishPrint = async () => {
                         serialRows={expanded ? serialRows : []}
                         serialLoading={serialLoading}
                         serialError={serialError}
+                        receiveChecked={selectedReceiveCodes.includes(
+                          row.receive_code,
+                        )}
                         selectedSerialNos={selectedSerialNos}
                         allSerialChecked={allSerialChecked}
                         someSerialChecked={someSerialChecked}
                         onChoose={() => handleChooseReceive(row.receive_code)}
+                        onToggleReceive={() => toggleOneReceive(row.receive_code)}
                         onToggleAll={toggleAllSerials}
                         onToggleOne={toggleOneSerial}
                       />
@@ -670,6 +778,8 @@ type ReceiveWithSerialRowProps = {
 
   serialError: string | null;
 
+  receiveChecked: boolean;
+
   selectedSerialNos: string[];
 
   allSerialChecked: boolean;
@@ -677,6 +787,8 @@ type ReceiveWithSerialRowProps = {
   someSerialChecked: boolean;
 
   onChoose: () => void;
+
+  onToggleReceive: () => void;
 
   onToggleAll: () => void;
 
@@ -698,6 +810,8 @@ function ReceiveWithSerialRow({
 
   serialError,
 
+  receiveChecked,
+
   selectedSerialNos,
 
   allSerialChecked,
@@ -705,6 +819,8 @@ function ReceiveWithSerialRow({
   someSerialChecked,
 
   onChoose,
+
+  onToggleReceive,
 
   onToggleAll,
 
@@ -728,6 +844,18 @@ function ReceiveWithSerialRow({
 
         <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2 text-center font-semibold text-slate-500">
           {formatNumber((pagination.page - 1) * pagination.limit + index + 1)}
+        </td>
+
+        <td
+          onClick={(event) => event.stopPropagation()}
+          className="border-b border-slate-100 px-2 py-2 text-center"
+        >
+          <input
+            type="checkbox"
+            checked={receiveChecked}
+            onChange={onToggleReceive}
+            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          />
         </td>
 
         <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2">
@@ -777,7 +905,7 @@ function ReceiveWithSerialRow({
 
       {expanded ? (
         <tr>
-          <td colSpan={10} className="bg-slate-50 px-3 py-3">
+          <td colSpan={11} className="bg-slate-50 px-3 py-3">
             <SerialInlineTable
               rows={serialRows}
               loading={serialLoading}

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import errorSound from "../../assets/sounds/error.mp3";
+import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../utils/AxiosInstance";
+import CustomerDropdown, { type Customer } from "../components/dropdown/CustomerDropdown";
 
 type Option = {
   id: number | string;
@@ -32,14 +35,20 @@ const normalizeSerial = (value: string | number | null | undefined) => {
     .toLowerCase();
 };
 
+const getOptionLabel = (option: Option) => {
+  return option.code ? `${option.code} - ${option.name}` : option.name;
+};
+
 export default function WarehouseReceivePage() {
   const receiveInputRef = useRef<HTMLInputElement | null>(null);
   const removeInputRef = useRef<HTMLInputElement | null>(null);
+  const successAudioRef = useRef<HTMLAudioElement | null>(null);
+  const errorAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  const [customers, setCustomers] = useState<Option[]>([]);
   const [warehouses, setWarehouses] = useState<Option[]>([]);
 
   const [customerFilter, setCustomerFilter] = useState("");
+  const [customerText, setCustomerText] = useState("");
   const [warehouseFilter, setWarehouseFilter] = useState("");
   const [receiveSerialInput, setReceiveSerialInput] = useState("");
   const [removeSerialInput, setRemoveSerialInput] = useState("");
@@ -51,6 +60,36 @@ export default function WarehouseReceivePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  useEffect(() => {
+    successAudioRef.current = new Audio(successSound);
+    errorAudioRef.current = new Audio(errorSound);
+
+    successAudioRef.current.preload = "auto";
+    errorAudioRef.current.preload = "auto";
+
+    return () => {
+      successAudioRef.current?.pause();
+      errorAudioRef.current?.pause();
+      successAudioRef.current = null;
+      errorAudioRef.current = null;
+    };
+  }, []);
+
+  const playSound = useCallback((type: "success" | "error") => {
+    const audio = type === "success" ? successAudioRef.current : errorAudioRef.current;
+
+    if (!audio) {
+      return;
+    }
+
+    audio.pause();
+    audio.currentTime = 0;
+
+    void audio.play().catch((playError) => {
+      console.warn(`unable to play ${type} sound:`, playError);
+    });
+  }, []);
 
   const focusReceiveInput = useCallback(() => {
     window.setTimeout(() => {
@@ -66,17 +105,11 @@ export default function WarehouseReceivePage() {
 
   const fetchFilterOptions = useCallback(async () => {
     try {
-      const [customersResponse, warehousesResponse] = await Promise.all([
-        AxiosInstance.get<Option[]>("/customers"),
-        AxiosInstance.get<Option[]>("/warehouses"),
-      ]);
-
-      setCustomers(Array.isArray(customersResponse.data) ? customersResponse.data : []);
+      const warehousesResponse = await AxiosInstance.get<Option[]>("/warehouses");
 
       setWarehouses(Array.isArray(warehousesResponse.data) ? warehousesResponse.data : []);
     } catch (err) {
-      console.error("fetch filter options error:", err);
-      setCustomers([]);
+      console.error("fetch warehouse options error:", err);
       setWarehouses([]);
     }
   }, []);
@@ -134,6 +167,7 @@ export default function WarehouseReceivePage() {
     const alreadyScanned = scannedRows.some((row) => normalizeSerial(row.serial_no) === serial);
 
     if (alreadyScanned) {
+      playSound("error");
       setError(`SN ${rawSerial} อยู่ในรายการที่ยิงแล้ว`);
       setReceiveSerialInput("");
       focusReceiveInput();
@@ -143,6 +177,7 @@ export default function WarehouseReceivePage() {
     const targetIndex = pendingRows.findIndex((row) => normalizeSerial(row.serial_no) === serial);
 
     if (targetIndex === -1) {
+      playSound("error");
       setError(`ไม่พบ Serial No ${rawSerial} ในรายการรอยิง`);
       setReceiveSerialInput("");
       focusReceiveInput();
@@ -151,6 +186,7 @@ export default function WarehouseReceivePage() {
 
     const targetRow = pendingRows[targetIndex];
 
+    playSound("success");
     setPendingRows((previousRows) => previousRows.filter((_, index) => index !== targetIndex));
     setScannedRows((previousRows) => [targetRow, ...previousRows]);
 
@@ -174,6 +210,7 @@ export default function WarehouseReceivePage() {
     const targetIndex = scannedRows.findIndex((row) => normalizeSerial(row.serial_no) === serial);
 
     if (targetIndex === -1) {
+      playSound("error");
       setError(`ไม่พบ SN ${rawSerial} ในรายการที่ยิงแล้ว`);
       setRemoveSerialInput("");
       focusRemoveInput();
@@ -182,6 +219,7 @@ export default function WarehouseReceivePage() {
 
     const targetRow = scannedRows[targetIndex];
 
+    playSound("success");
     setScannedRows((previousRows) => previousRows.filter((_, index) => index !== targetIndex));
     setPendingRows((previousRows) => [targetRow, ...previousRows]);
 
@@ -204,20 +242,22 @@ export default function WarehouseReceivePage() {
 
       const receivedCount = scannedRows.length;
 
-      const response = await AxiosInstance.post("/warehouse-receives/receive", {
-        items: scannedRows.map((row) => ({
-          serial_no: row.serial_no,
-          customer_id: row.customer_id,
-          to_warehouse_id: row.to_warehouse_id,
-        })),
+      const response = await AxiosInstance.post("/warehouse-receives", {
+        serial_nos: scannedRows.map((row) => row.serial_no),
+        resend_date: null,
       });
 
       await fetchSerials();
 
       setInfo(response.data?.message || `บันทึกรับเข้าคลังสำเร็จ ${formatNumber(receivedCount)} รายการ`);
-    } catch (err) {
+
+      playSound("success");
+    } catch (err: any) {
       console.error("save warehouse receive error:", err);
-      setError("ไม่สามารถบันทึกรับเข้าคลังได้");
+
+      setError(err?.response?.data?.message || "ไม่สามารถบันทึกรับเข้าคลังได้");
+
+      playSound("error");
     } finally {
       setSaving(false);
       focusReceiveInput();
@@ -226,7 +266,7 @@ export default function WarehouseReceivePage() {
 
   return (
     <div
-      className={`flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-4 py-3 text-slate-800 ${
+      className={`flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800 ${
         loading || saving ? "cursor-wait" : ""
       }`}
     >
@@ -244,21 +284,20 @@ export default function WarehouseReceivePage() {
 
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="w-full sm:w-60">
+          <div className="w-full sm:w-[420px] lg:w-[520px]">
             <label className="mb-1 block text-xs font-medium text-slate-600">Customer</label>
-            <select
-              value={customerFilter}
-              onChange={(event) => setCustomerFilter(event.target.value)}
-              disabled={loading || saving}
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-            >
-              <option value="">Customer ทั้งหมด</option>
-              {customers.map((customer) => (
-                <option key={`customer-${customer.id}`} value={customer.id}>
-                  {customer.code ? `${customer.code} - ${customer.name}` : customer.name}
-                </option>
-              ))}
-            </select>
+
+            <div className={loading || saving ? "pointer-events-none opacity-70" : ""}>
+              <CustomerDropdown
+                value={customerText}
+                onChange={(customer: Customer | null, inputText?: string) => {
+                  setCustomerText(inputText || "");
+                  setCustomerFilter(customer ? String(customer.id) : "");
+                  setError(null);
+                  setInfo(null);
+                }}
+              />
+            </div>
           </div>
 
           <div className="w-full sm:w-60">
@@ -272,7 +311,7 @@ export default function WarehouseReceivePage() {
               <option value="">To Warehouse ทั้งหมด</option>
               {warehouses.map((warehouse) => (
                 <option key={`warehouse-${warehouse.id}`} value={warehouse.id}>
-                  {warehouse.code ? `${warehouse.code} - ${warehouse.name}` : warehouse.name}
+                  {getOptionLabel(warehouse)}
                 </option>
               ))}
             </select>
@@ -352,9 +391,9 @@ export default function WarehouseReceivePage() {
             <table className="w-full table-fixed border-collapse text-xs">
               <thead className="sticky top-0 z-10 bg-slate-100 text-slate-600">
                 <tr>
-                  <th className="w-[36%] border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
-                  <th className="w-[40%] border-b border-slate-200 px-3 py-2 text-left">CUSTOMER</th>
-                  <th className="w-[24%] border-b border-slate-200 px-3 py-2 text-right">TO WAREHOUSE</th>
+                  <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
+                  <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">CUSTOMER</th>
+                  <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">TO WAREHOUSE</th>
                 </tr>
               </thead>
 
@@ -377,9 +416,9 @@ export default function WarehouseReceivePage() {
                       key={`pending-${row.serial_no}-${index}`}
                       className={index % 2 === 0 ? "bg-white hover:bg-blue-50/50" : "bg-slate-50/70 hover:bg-blue-50/50"}
                     >
-                      <td title={row.serial_no} className="border-b border-slate-100 px-3 py-2">
-                        <span className="inline-flex max-w-full rounded-lg border border-red-300 bg-red-50 px-2.5 py-1 font-mono text-sm font-semibold text-red-600">
-                          <span className="truncate">{row.serial_no}</span>
+                      <td title={row.serial_no} className="border-b border-slate-100 px-3 py-2 align-top">
+                        <span className="inline-block max-w-full break-all whitespace-normal rounded-lg border border-red-300 bg-red-50 px-2.5 py-1 font-mono text-sm font-semibold leading-5 text-red-600">
+                          {row.serial_no}
                         </span>
                       </td>
                       <td title={row.customer_name || "-"} className="truncate border-b border-slate-100 px-3 py-2">
@@ -408,9 +447,9 @@ export default function WarehouseReceivePage() {
             <table className="w-full table-fixed border-collapse text-xs">
               <thead className="sticky top-0 z-10 bg-slate-100 text-slate-600">
                 <tr>
-                  <th className="w-[36%] border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
-                  <th className="w-[40%] border-b border-slate-200 px-3 py-2 text-left">CUSTOMER</th>
-                  <th className="w-[24%] border-b border-slate-200 px-3 py-2 text-right">TO WAREHOUSE</th>
+                  <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
+                  <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">CUSTOMER</th>
+                  <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">TO WAREHOUSE</th>
                 </tr>
               </thead>
 
@@ -427,9 +466,9 @@ export default function WarehouseReceivePage() {
                       key={`scanned-${row.serial_no}-${index}`}
                       className={index % 2 === 0 ? "bg-white hover:bg-emerald-50/50" : "bg-slate-50/70 hover:bg-emerald-50/50"}
                     >
-                      <td title={row.serial_no} className="border-b border-slate-100 px-3 py-2">
-                        <span className="inline-flex max-w-full rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 font-mono text-sm font-semibold text-emerald-700">
-                          <span className="truncate">{row.serial_no}</span>
+                      <td title={row.serial_no} className="border-b border-slate-100 px-3 py-2 align-top">
+                        <span className="inline-block max-w-full break-all whitespace-normal rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 font-mono text-sm font-semibold leading-5 text-emerald-700">
+                          {row.serial_no}
                         </span>
                       </td>
                       <td title={row.customer_name || "-"} className="truncate border-b border-slate-100 px-3 py-2">

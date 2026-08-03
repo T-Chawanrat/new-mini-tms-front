@@ -127,7 +127,7 @@ export default function LabelPrintStyle() {
           }
 
           .label-main {
-            flex: 1 1 auto;
+            flex: 1 1 0;
             min-height: 0;
             display: grid;
             grid-template-columns: minmax(0, 1fr) 22mm;
@@ -137,7 +137,8 @@ export default function LabelPrintStyle() {
           }
 
           .label-information {
-            align-self: start;
+            align-self: stretch;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -176,27 +177,63 @@ export default function LabelPrintStyle() {
             margin-bottom: 0;
           }
 
-         .label-cod {
-          margin-top: 16mm;
-          padding: 0.9mm 1.4mm;
-          border: 0.35mm solid #000000;
-          font-size: 7.4pt;
-          font-weight: 800;
-          line-height: 1.1;
-          text-align: center;
-          white-space: nowrap;
+            .label-remark {
+            display: grid;
+            grid-template-columns: 13mm minmax(0, 1fr);
+            gap: 1.2mm;
+
+            margin-top: auto;
+            margin-bottom: 1mm;
+
+            font-size: 6.2pt;
+            line-height: 1.15;
+          }
+
+          .label-remark strong {
+            min-width: 0;
+            overflow: hidden;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+          }
+
+          .label-cod {
+            position: static;
+            margin-top: 0;
+
+            padding: 0.9mm 1.4mm;
+            border: 0.35mm solid #000000;
+            font-size: 7.4pt;
+            font-weight: 800;
+            line-height: 1.1;
+            text-align: center;
+            white-space: nowrap;
           }
 
           .label-qr {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 1mm;
           }
 
           .label-qr canvas {
             display: block;
             width: 20mm !important;
             height: 20mm !important;
+          }
+
+         .label-qr-sequence {
+            display: block;
+            font-size: 6pt;
+            font-weight: 600;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
           }
 
           .label-route {
