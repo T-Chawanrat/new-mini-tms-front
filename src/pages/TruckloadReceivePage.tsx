@@ -6,6 +6,7 @@ import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../utils/AxiosInstance";
 
 type VehicleLoadRow = {
+  serial_id: string;
   serial_no: string;
   customer_id: number | null;
   customer_name: string | null;
@@ -16,6 +17,7 @@ type VehicleLoadRow = {
 type VehicleLoadResponse = {
   success?: boolean;
   data: VehicleLoadRow[];
+  loaded?: VehicleLoadRow[];
   total?: number;
 };
 
@@ -31,6 +33,8 @@ type TruckLoadDetail = {
   license_province: string | null;
   model: string | null;
   to_warehouse_name: string | null;
+  is_close: string | null;
+  is_go: string | null;
 };
 
 type TruckLoadDetailResponse = {
@@ -85,6 +89,8 @@ export default function TruckloadReceivePage() {
 
   const [removeSerialInput, setRemoveSerialInput] =
     useState("");
+
+  const [activeScanSide, setActiveScanSide] = useState<"load" | "remove">("load");
 
   const [pendingRows, setPendingRows] = useState<
     VehicleLoadRow[]
@@ -225,7 +231,7 @@ export default function TruckloadReceivePage() {
         : [];
 
       setPendingRows(rows);
-      setScannedRows([]);
+      setScannedRows(Array.isArray(response.data?.loaded) ? response.data.loaded : []);
       setLoadSerialInput("");
       setRemoveSerialInput("");
     } catch (err) {
@@ -254,7 +260,17 @@ export default function TruckloadReceivePage() {
     void fetchSerials();
   }, [fetchSerials]);
 
-  const handleLoadScan = (value?: string) => {
+  useEffect(() => {
+    if (loading || loadingOptions || saving || truckLoad?.is_close === "Y") return;
+
+    if (activeScanSide === "remove" && scannedRows.length > 0) {
+      focusRemoveInput();
+    } else {
+      focusLoadInput();
+    }
+  }, [activeScanSide, focusLoadInput, focusRemoveInput, loading, loadingOptions, saving, scannedRows.length, truckLoad?.is_close]);
+
+  const handleLoadScan = async (value?: string) => {
     const rawSerial = (
       value ?? loadSerialInput
     ).trim();
@@ -307,6 +323,24 @@ export default function TruckloadReceivePage() {
 
     const targetRow = pendingRows[targetIndex];
 
+    try {
+      setSaving(true);
+
+      await AxiosInstance.post(`/truck-loads/${truckLoadId}/load-product`, {
+        serial_id: targetRow.serial_id,
+        serial_no: targetRow.serial_no,
+      });
+    } catch (err) {
+      console.error("load truck product error:", err);
+      playSound("error");
+      setError("ไม่สามารถยิงพัสดุขึ้นรถได้");
+      setLoadSerialInput("");
+      focusLoadInput();
+      return;
+    } finally {
+      setSaving(false);
+    }
+
     playSound("success");
 
     setPendingRows((previousRows) =>
@@ -328,7 +362,7 @@ export default function TruckloadReceivePage() {
     focusLoadInput();
   };
 
-  const handleRemoveScan = (value?: string) => {
+  const handleRemoveScan = async (value?: string) => {
     const rawSerial = (
       value ?? removeSerialInput
     ).trim();
@@ -363,6 +397,23 @@ export default function TruckloadReceivePage() {
 
     const targetRow = scannedRows[targetIndex];
 
+    try {
+      setSaving(true);
+
+      await AxiosInstance.post(`/truck-loads/${truckLoadId}/unload-product`, {
+        serial_no: targetRow.serial_no,
+      });
+    } catch (err) {
+      console.error("unload truck product error:", err);
+      playSound("error");
+      setError("ไม่สามารถนำพัสดุกลับรายการรอยิงได้");
+      setRemoveSerialInput("");
+      focusRemoveInput();
+      return;
+    } finally {
+      setSaving(false);
+    }
+
     playSound("success");
 
     setScannedRows((previousRows) =>
@@ -384,86 +435,6 @@ export default function TruckloadReceivePage() {
     focusRemoveInput();
   };
 
-  const handleSave = async () => {
-    if (!selectedDriverEmployeeCode) {
-      setError("กรุณาเลือกพนักงานขับรถ");
-      return;
-    }
-
-    if (!selectedVehicleLicensePlate) {
-      setError("กรุณาเลือกรถ");
-      return;
-    }
-
-    if (!warehouseFilter) {
-      setError("กรุณาเลือกคลังปลายทาง");
-      return;
-    }
-
-    if (scannedRows.length === 0) {
-      setError(
-        "ยังไม่มีรายการที่ยิงขึ้นรถสำหรับบันทึก",
-      );
-
-      focusLoadInput();
-
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError(null);
-      setInfo(null);
-
-      const loadedCount = scannedRows.length;
-
-      /*
-       * เปลี่ยนเฉพาะ path ด้านล่าง
-       * ให้ตรงกับ route บันทึกยิงขึ้นรถจริง
-       */
-      const response = await AxiosInstance.post(
-        "/vehicle-loads/load",
-        {
-          employee_code:
-            selectedDriverEmployeeCode,
-
-          license_plate:
-            selectedVehicleLicensePlate,
-
-          to_warehouse_id: warehouseFilter,
-
-          items: scannedRows.map((row) => ({
-            serial_no: row.serial_no,
-            customer_id: row.customer_id,
-            to_warehouse_id:
-              row.to_warehouse_id,
-          })),
-        },
-      );
-
-      await fetchSerials();
-
-      setInfo(
-        response.data?.message ||
-          `สร้างใบปิดบรรทุกสำเร็จ ${formatNumber(
-            loadedCount,
-          )} รายการ`,
-      );
-    } catch (err) {
-      console.error(
-        "save vehicle load error:",
-        err,
-      );
-
-      setError(
-        "ไม่สามารถสร้างใบปิดบรรทุกได้",
-      );
-    } finally {
-      setSaving(false);
-      focusLoadInput();
-    }
-  };
-
   const disabled =
     loading || loadingOptions || saving;
 
@@ -475,19 +446,16 @@ export default function TruckloadReceivePage() {
     >
       <header className="mb-3 shrink-0">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold text-slate-900">
-            สร้างใบปิดบรรทุก
-          </h1>
+          <h1 className="text-lg font-bold text-slate-900">ขนของขึ้นรถ</h1>
 
           <p className="mt-0.5 text-xs text-slate-500">
-            เลือกพนักงานขับรถ รถ และคลังปลายทาง
-            จากนั้นยิง Barcode เพื่อเพิ่มสินค้าในใบปิดบรรทุก
+            ยิง Barcode เพื่อตรวจสอบและนำพัสดุขึ้นรถตามใบปิดบรรทุกที่เลือกไว้
           </p>
         </div>
       </header>
 
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 xl:items-end">
           <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-slate-600">
               Driver
@@ -582,24 +550,6 @@ export default function TruckloadReceivePage() {
             </select>
           </div>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={
-              disabled ||
-              !selectedDriverEmployeeCode ||
-              !selectedVehicleLicensePlate ||
-              !warehouseFilter ||
-              scannedRows.length === 0
-            }
-            className="inline-flex h-9 w-full items-center justify-center rounded-md bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 md:col-span-2 xl:col-span-1 xl:w-auto"
-          >
-            {saving
-              ? "กำลังสร้าง..."
-              : `สร้างใบปิดบรรทุก (${formatNumber(
-                  scannedRows.length,
-                )})`}
-          </button>
         </div>
 
         <div className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-slate-100 pt-2.5 lg:grid-cols-2">
@@ -612,6 +562,7 @@ export default function TruckloadReceivePage() {
               ref={loadInputRef}
               type="text"
               value={loadSerialInput}
+              onFocus={() => setActiveScanSide("load")}
               onChange={(event) =>
                 setLoadSerialInput(
                   event.target.value,
@@ -626,8 +577,8 @@ export default function TruckloadReceivePage() {
                   );
                 }
               }}
-              disabled={disabled}
-              placeholder="ยิง SN เพื่อย้ายไปฝั่งขวา"
+              disabled={disabled || truckLoad?.is_close === "Y"}
+              placeholder={truckLoad?.is_close === "Y" ? "ปิดบรรทุกแล้ว" : "ยิง SN เพื่อย้ายไปฝั่งขวา"}
               className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 font-mono text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
             />
           </div>
@@ -641,6 +592,7 @@ export default function TruckloadReceivePage() {
               ref={removeInputRef}
               type="text"
               value={removeSerialInput}
+              onFocus={() => setActiveScanSide("remove")}
               onChange={(event) =>
                 setRemoveSerialInput(
                   event.target.value,
@@ -657,6 +609,7 @@ export default function TruckloadReceivePage() {
               }}
               disabled={
                 disabled ||
+                truckLoad?.is_close === "Y" ||
                 scannedRows.length === 0
               }
               placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย"
@@ -665,6 +618,12 @@ export default function TruckloadReceivePage() {
           </div>
         </div>
       </section>
+
+      {truckLoad?.is_close === "Y" && (
+        <div className="mb-3 shrink-0 rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">
+          ปิดบรรทุกแล้ว ไม่สามารถยิงเพิ่มหรือนำรายการออกได้
+        </div>
+      )}
 
       {error && (
         <div className="mb-3 shrink-0 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -743,15 +702,15 @@ function SerialTable({
       <table className="w-full table-fixed border-collapse text-xs">
         <thead className="sticky top-0 z-10 bg-slate-100 text-slate-600">
           <tr>
-            <th className="w-[36%] border-b border-slate-200 px-3 py-2 text-left">
+            <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">
               SERIAL NO
             </th>
 
-            <th className="w-[40%] border-b border-slate-200 px-3 py-2 text-left">
+            <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">
               CUSTOMER
             </th>
 
-            <th className="w-[24%] border-b border-slate-200 px-3 py-2 text-right">
+            <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">
               TO WAREHOUSE
             </th>
           </tr>

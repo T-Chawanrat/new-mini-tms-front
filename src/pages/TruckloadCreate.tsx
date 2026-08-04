@@ -18,7 +18,7 @@ type Option = {
 type DriverUser = {
   id?: number;
   user_id?: number;
-  employee_code: string;
+  employee_code: string | null;
   first_name: string | null;
   last_name: string | null;
 };
@@ -153,8 +153,9 @@ const getOptionLabel = (option: Option) => {
 
 const getDriverLabel = (driver: DriverUser) => {
   const fullName = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
+  const userCode = driver.employee_code || driver.id || driver.user_id || "User";
 
-  return fullName ? `${driver.employee_code} - ${fullName}` : driver.employee_code;
+  return fullName ? `${userCode} - ${fullName}` : String(userCode);
 };
 
 const getVehicleLabel = (vehicle: Vehicle) => {
@@ -192,6 +193,8 @@ export default function TruckLoadCreate() {
 
   const [drivers, setDrivers] = useState<DriverUser[]>([]);
 
+  const [dummyUsers, setDummyUsers] = useState<DriverUser[]>([]);
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   const [rows, setRows] = useState<TruckLoadRow[]>([]);
@@ -201,6 +204,8 @@ export default function TruckLoadCreate() {
   const [truckType, setTruckType] = useState<TruckType>("MAIN");
 
   const [selectedDriver, setSelectedDriver] = useState("");
+
+  const [selectedDummyUser, setSelectedDummyUser] = useState("");
 
   const [selectedVehicle, setSelectedVehicle] = useState("");
 
@@ -226,6 +231,7 @@ export default function TruckLoadCreate() {
 
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -235,6 +241,7 @@ export default function TruckLoadCreate() {
     setTruckType("MAIN");
 
     setSelectedDriver("");
+    setSelectedDummyUser("");
     setSelectedVehicle("");
     setSelectedToWarehouse("");
 
@@ -248,10 +255,12 @@ export default function TruckLoadCreate() {
       setLoadingOptions(true);
       setError(null);
 
-      const [warehouseResponse, driverResponse, vehicleResponse] = await Promise.all([
+      const [warehouseResponse, driverResponse, dummyUserResponse, vehicleResponse] = await Promise.all([
         AxiosInstance.get<Option[]>("/warehouses"),
 
         AxiosInstance.get<DriverUsersResponse>("/truck-loads/drivers"),
+
+        AxiosInstance.get<DriverUsersResponse>("/truck-loads/dummy-users"),
 
         AxiosInstance.get<VehiclesResponse>("/vehicles"),
       ]);
@@ -260,12 +269,15 @@ export default function TruckLoadCreate() {
 
       setDrivers(Array.isArray(driverResponse.data?.data) ? driverResponse.data.data : []);
 
+      setDummyUsers(Array.isArray(dummyUserResponse.data?.data) ? dummyUserResponse.data.data : []);
+
       setVehicles(Array.isArray(vehicleResponse.data?.data) ? vehicleResponse.data.data : []);
     } catch (err) {
       console.error("fetch truck load options error:", err);
 
       setWarehouses([]);
       setDrivers([]);
+      setDummyUsers([]);
       setVehicles([]);
 
       setError(getErrorMessage(err, "ไม่สามารถโหลดข้อมูลคนขับ รถ และคลังปลายทางได้"));
@@ -341,6 +353,7 @@ export default function TruckLoadCreate() {
     setError(null);
 
     setSelectedDriver("");
+    setSelectedDummyUser("");
     setSelectedVehicle("");
 
     setExtraDriverFirstName("");
@@ -384,6 +397,11 @@ export default function TruckLoadCreate() {
     }
 
     if (truckType === "EXTRA") {
+      if (!selectedDummyUser) {
+        setError("กรุณาเลือก User Dummy");
+        return;
+      }
+
       if (!extraDriverFirstName.trim()) {
         setError("กรุณากรอกชื่อคนขับรถ");
         return;
@@ -407,6 +425,11 @@ export default function TruckLoadCreate() {
 
     const selectedVehicleData = truckType === "MAIN" ? vehicles.find((vehicle) => vehicle.license_plate === selectedVehicle) : undefined;
 
+    const selectedDummyUserData =
+      truckType === "EXTRA"
+        ? dummyUsers.find((user) => String(user.id ?? user.user_id ?? "") === selectedDummyUser)
+        : undefined;
+
     if (truckType === "MAIN" && !selectedDriverData) {
       setError("ไม่พบข้อมูลพนักงานขับรถที่เลือก");
       return;
@@ -417,10 +440,13 @@ export default function TruckLoadCreate() {
       return;
     }
 
-    const userTruckId = selectedDriverData?.id ?? selectedDriverData?.user_id ?? null;
+    const userTruckId =
+      truckType === "MAIN"
+        ? (selectedDriverData?.id ?? selectedDriverData?.user_id ?? null)
+        : (selectedDummyUserData?.id ?? selectedDummyUserData?.user_id ?? null);
 
-    if (truckType === "MAIN" && userTruckId === null) {
-      setError("ข้อมูลพนักงานขับรถไม่มี user id");
+    if (userTruckId === null) {
+      setError(truckType === "EXTRA" ? "ข้อมูล User Dummy ไม่มี user id" : "ข้อมูลพนักงานขับรถไม่มี user id");
       return;
     }
 
@@ -432,7 +458,7 @@ export default function TruckLoadCreate() {
       const response = await AxiosInstance.post<CreateTruckLoadResponse>("/truck-loads/create-truck", {
         truck_type: truckType,
 
-        user_truck_id: truckType === "MAIN" ? userTruckId : null,
+        user_truck_id: userTruckId,
 
         employee_code: truckType === "MAIN" ? selectedDriverData?.employee_code : null,
 
@@ -453,6 +479,13 @@ export default function TruckLoadCreate() {
 
       resetCreateForm();
 
+      const createdTruckLoadId = response.data?.data?.truck_load_id;
+
+      if (createdTruckLoadId) {
+        navigate(`/truck-scan/${createdTruckLoadId}`);
+        return;
+      }
+
       await fetchTruckLoads();
     } catch (err) {
       console.error("create truck load error:", err);
@@ -462,6 +495,50 @@ export default function TruckLoadCreate() {
       setCreating(false);
     }
   };
+
+  const handleCloseTruckLoad = useCallback(
+    async (row: TruckLoadRow) => {
+      if (row.is_close === "Y") return;
+
+      try {
+        setActionLoadingId(row.truck_load_id);
+        setError(null);
+        setInfo(null);
+
+        const response = await AxiosInstance.patch(`/truck-loads/${row.truck_load_id}/close`);
+        setInfo(response.data?.message || "ปิดบรรทุกสำเร็จ");
+        await fetchTruckLoads();
+      } catch (err) {
+        console.error("close truck load error:", err);
+        setError(getErrorMessage(err, "ไม่สามารถปิดบรรทุกได้"));
+      } finally {
+        setActionLoadingId(null);
+      }
+    },
+    [fetchTruckLoads],
+  );
+
+  const handleGoTruckLoad = useCallback(
+    async (row: TruckLoadRow) => {
+      if (row.is_close !== "Y" || row.is_go === "Y") return;
+
+      try {
+        setActionLoadingId(row.truck_load_id);
+        setError(null);
+        setInfo(null);
+
+        const response = await AxiosInstance.post(`/truck-loads/${row.truck_load_id}/go`);
+        setInfo(response.data?.message || "ปล่อยรถสำเร็จ");
+        await fetchTruckLoads();
+      } catch (err) {
+        console.error("go truck load error:", err);
+        setError(getErrorMessage(err, "ไม่สามารถปล่อยรถได้"));
+      } finally {
+        setActionLoadingId(null);
+      }
+    },
+    [fetchTruckLoads],
+  );
 
   const columns = useMemo<ColumnDef<TruckLoadRow>[]>(
     () => [
@@ -540,16 +617,20 @@ export default function TruckLoadCreate() {
 
             <button
               type="button"
-              title="ปิดบรรทุก"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
+              title={params.row.is_close === "Y" ? "ปิดบรรทุกแล้ว" : "ปิดบรรทุก"}
+              onClick={() => void handleCloseTruckLoad(params.row)}
+              disabled={actionLoadingId === params.row.truck_load_id || params.row.is_close === "Y"}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
             >
               <PackageCheck size={16} />
             </button>
 
             <button
               type="button"
-              title="ปล่อยรถ"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+              title={params.row.is_go === "Y" ? "ปล่อยรถแล้ว" : params.row.is_close !== "Y" ? "ต้องปิดบรรทุกก่อน" : "ปล่อยรถ"}
+              onClick={() => void handleGoTruckLoad(params.row)}
+              disabled={actionLoadingId === params.row.truck_load_id || params.row.is_close !== "Y" || params.row.is_go === "Y"}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
             >
               <Truck size={16} />
             </button>
@@ -557,6 +638,7 @@ export default function TruckLoadCreate() {
             <button
               type="button"
               title="ปริ๊น"
+              onClick={() => navigate(`/truck-print/${params.row.truck_load_id}`)}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100"
             >
               <Printer size={16} />
@@ -565,7 +647,7 @@ export default function TruckLoadCreate() {
         ),
       },
     ],
-    [navigate],
+    [actionLoadingId, handleCloseTruckLoad, handleGoTruckLoad, navigate],
   );
 
   const isCreateDisabled =
@@ -573,7 +655,7 @@ export default function TruckLoadCreate() {
     creating ||
     !selectedToWarehouse ||
     (truckType === "MAIN" && (!selectedDriver || !selectedVehicle)) ||
-    (truckType === "EXTRA" && (!extraDriverFirstName.trim() || !extraDriverLastName.trim() || !extraLicensePlate.trim()));
+    (truckType === "EXTRA" && (!selectedDummyUser || !extraDriverFirstName.trim() || !extraDriverLastName.trim() || !extraLicensePlate.trim()));
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
@@ -751,6 +833,16 @@ export default function TruckLoadCreate() {
                 </>
               ) : (
                 <>
+                  <ModalSelect label="User Dummy" value={selectedDummyUser} onChange={setSelectedDummyUser} disabled={loadingOptions || creating}>
+                    <option value="">เลือก User Dummy</option>
+
+                    {dummyUsers.map((user) => (
+                      <option key={user.id ?? user.user_id ?? user.employee_code} value={String(user.id ?? user.user_id ?? "")}>
+                        {getDriverLabel(user)}
+                      </option>
+                    ))}
+                  </ModalSelect>
+
                   <ModalInput
                     label="ชื่อคนขับรถ"
                     value={extraDriverFirstName}

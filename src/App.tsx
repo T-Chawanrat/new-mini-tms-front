@@ -31,6 +31,7 @@ import LabelPrintPage from "./pages/LabelPrintPage";
 import WarehouseReceivePage from "./pages/WarehouseReceivePage";
 import TruckloadReceivePage from "./pages/TruckloadReceivePage";
 import TruckLoadCreate from "./pages/TruckloadCreate";
+import TruckLoadPrintPage from "./pages/TruckLoadPrintPage";
 // import ImportVGT from "./pages/ImportVGT";
 // import ImportADV from "./pages/ImportADV";
 
@@ -147,6 +148,7 @@ export default function App() {
              <Route path="/truck-scan" element={<TruckloadReceivePage />} />
              <Route path="/truck-scan/:truckLoadId" element={<TruckloadReceivePage />} />
              <Route path="/truck-create" element={<TruckLoadCreate />} />
+             <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrintPage />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>

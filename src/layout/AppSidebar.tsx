@@ -150,12 +150,6 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 10, 11],
       },
       {
-        name: "Truck Scan",
-        path: "/truck-scan",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 10, 11],
-      },
-      {
         name: "Truck Create",
         path: "/truck-create",
         icon: <File size={20} />,

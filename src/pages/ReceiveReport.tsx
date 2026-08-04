@@ -1,7 +1,9 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { RefreshCcw, Search } from "lucide-react";
+import type { GridColDef } from "@mui/x-data-grid";
 import AxiosInstance from "../utils/AxiosInstance";
 import DatePicker from "../components/form/DatePicker";
+import DataGrid from "../components/DataGrid";
 import ResizableColumns from "../components/ResizableColumns";
 import type { Filters, Option, Pagination, ReceiveReportRow, ReceiveReportSummary, ReceiveSerialRow } from "../types/receiveReport";
 import {
@@ -30,11 +32,11 @@ export default function ReceiveReport() {
   const [appliedFilters, setAppliedFilters] = useState<Filters>(defaultReceiveReportFilters);
 
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(100);
 
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
-    limit: 50,
+    limit: 100,
     total: 0,
     totalPages: 1,
   });
@@ -48,17 +50,66 @@ export default function ReceiveReport() {
   const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const showingFrom = useMemo(() => {
-    if (!pagination.total) return 0;
-    return (pagination.page - 1) * pagination.limit + 1;
-  }, [pagination]);
-
-  const showingTo = useMemo(() => {
-    return Math.min(pagination.page * pagination.limit, pagination.total);
-  }, [pagination]);
-
   const summaryTotal = summary?.total || null;
   const summaryDaily = summary?.daily || [];
+
+  const reportGridRows = useMemo(
+    () =>
+      rows.map((row, index) => ({
+        ...row,
+        _gridId: `${row.receive_business_id || row.receive_code || "receive"}-${index}`,
+        row_number: index + 1,
+      })),
+    [rows],
+  );
+
+  const reportColumns = useMemo<GridColDef[]>(
+    () => [
+      { field: "row_number", headerName: "#", width: 60, minWidth: 60, align: "center", headerAlign: "center" },
+      { field: "receive_code", headerName: "Receive Code", width: 170, minWidth: 160 },
+      {
+        field: "receive_date",
+        headerName: "Receive Date",
+        width: 165,
+        minWidth: 155,
+        renderCell: (params) => formatDateTime(params.row.receive_date),
+      },
+      {
+        field: "delivery_date",
+        headerName: "Delivery Date",
+        width: 140,
+        minWidth: 130,
+        renderCell: (params) => formatDate(params.row.delivery_date),
+      },
+      { field: "total_serial", headerName: "Serial", width: 100, minWidth: 90, align: "right", headerAlign: "right" },
+      {
+        field: "total_cost",
+        headerName: "Cost",
+        width: 115,
+        minWidth: 105,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => formatMoney(params.row.total_cost),
+      },
+      {
+        field: "total_cod",
+        headerName: "COD",
+        width: 115,
+        minWidth: 105,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => formatMoney(params.row.total_cod),
+      },
+      { field: "customer_name", headerName: "Customer", width: 200, minWidth: 180 },
+      { field: "customer_type", headerName: "Customer Type", width: 135, minWidth: 125 },
+      { field: "to_warehouse_name", headerName: "To Warehouse", width: 190, minWidth: 175 },
+      { field: "shipper_name", headerName: "Shipper", width: 180, minWidth: 165 },
+      { field: "recipient_name", headerName: "Recipient", width: 200, minWidth: 180 },
+      { field: "tel", headerName: "Tel", width: 140, minWidth: 130 },
+      { field: "province_name", headerName: "Province", width: 150, minWidth: 140 },
+    ],
+    [],
+  );
 
   const updateFilter = (name: keyof Filters, value: string) => {
     setFilters((prev) => ({
@@ -307,10 +358,9 @@ export default function ReceiveReport() {
         </div>
       </div>
 
-      <div className="mb-3 grid shrink-0 grid-cols-2 gap-2 md:grid-cols-5">
+      <div className="mb-3 grid shrink-0 grid-cols-2 gap-2 md:grid-cols-4">
         <SummaryCard label="Receive" value={summaryLoading ? "..." : formatNumber(summaryTotal?.total_receive)} accent />
         <SummaryCard label="Serial" value={summaryLoading ? "..." : formatNumber(summaryTotal?.total_serial)} />
-        <SummaryCard label="Rows" value={summaryLoading ? "..." : formatNumber(summaryTotal?.total_rows)} />
         <SummaryCard label="Cost" value={summaryLoading ? "..." : formatMoney(summaryTotal?.total_cost)} />
         <SummaryCard label="COD" value={summaryLoading ? "..." : formatMoney(summaryTotal?.total_cod)} />
       </div>
@@ -361,17 +411,24 @@ export default function ReceiveReport() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex h-10 items-center justify-between border-b border-slate-200 px-3">
-          <div className="text-xs font-semibold text-slate-800">รายการ Receive</div>
+      <div className="min-h-0 flex-1 overflow-hidden">
 
-          <div className="text-[11px] text-slate-500">
-            {pagination.total > 0
-              ? `แสดง ${formatNumber(showingFrom)} - ${formatNumber(showingTo)} จาก ${formatNumber(pagination.total)} receive_code`
-              : "ยังไม่มีข้อมูล"}
-          </div>
+        <div className="h-full min-h-0 overflow-hidden">
+          {error ? (
+            <div className="p-6 text-center text-sm text-red-600">{error}</div>
+          ) : (
+            <DataGrid
+              rows={reportGridRows}
+              columns={reportColumns}
+              loading={loading}
+              getRowId={(row: { _gridId: string }) => row._gridId}
+              height="100%"
+              pageSize={100}
+            />
+          )}
         </div>
 
+        <div className="hidden">
         {error ? (
           <div className="p-6 text-center text-sm text-red-600">{error}</div>
         ) : (
@@ -493,11 +550,11 @@ export default function ReceiveReport() {
           </div>
         )}
 
-        <div className="flex h-[42px] shrink-0 items-center justify-between border-t border-slate-200 bg-white px-3 py-1.5">
+        </div>
+
+        <div className="hidden">
           <div className="text-[11px] text-slate-500">
-            {pagination.total > 0
-              ? `แสดง ${formatNumber(showingFrom)} - ${formatNumber(showingTo)} จาก ${formatNumber(pagination.total)} receive_code`
-              : "ยังไม่มีข้อมูล"}
+            {null}
           </div>
 
           <div className="flex items-center gap-2">

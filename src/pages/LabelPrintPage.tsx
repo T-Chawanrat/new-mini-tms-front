@@ -14,6 +14,7 @@ import {
   RefreshCcw,
   Search,
 } from "lucide-react";
+import TablePagination from "@mui/material/TablePagination";
 
 import AxiosInstance from "../utils/AxiosInstance";
 
@@ -1107,74 +1108,37 @@ function PaginationBar({
 
   pagination,
 
-  showingFrom,
-
-  showingTo,
-
   onLimitChange,
 
   onPageChange,
 }: PaginationBarProps) {
   return (
-    <div className="flex h-[46px] shrink-0 items-center justify-between gap-6 border-t border-slate-200 bg-white px-4">
-      <div className="min-w-[240px] whitespace-nowrap text-xs text-slate-500">
-        {pagination.total > 0
-          ? `แสดง ${formatNumber(showingFrom)} - ${formatNumber(
-              showingTo,
-            )} จาก ${formatNumber(pagination.total)} receive`
-          : "ยังไม่มีข้อมูล"}
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="whitespace-nowrap text-xs text-slate-500">แสดง</span>
-
-          <select
-            value={limit}
-            onChange={(event) => onLimitChange(event.target.value)}
-            className="h-8 min-w-[64px] rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          >
-            <option value={25}>25</option>
-
-            <option value={50}>50</option>
-
-            <option value={100}>100</option>
-
-            <option value={200}>200</option>
-          </select>
-
-          <span className="whitespace-nowrap text-xs text-slate-500">
-            รายการ
-          </span>
-        </div>
-
-        <div className="h-5 w-px bg-slate-200" />
-
-        <div className="min-w-[82px] whitespace-nowrap text-center text-xs text-slate-500">
-          {formatNumber(pagination.page)} /{" "}
-          {formatNumber(pagination.totalPages || 1)}
-        </div>
-
-        <button
-          type="button"
-          disabled={loading || page <= 1}
-          onClick={() => onPageChange((prev) => Math.max(prev - 1, 1))}
-          className="inline-flex h-8 min-w-[68px] items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          ก่อนหน้า
-        </button>
-
-        <button
-          type="button"
-          disabled={loading || page >= pagination.totalPages}
-          onClick={() =>
-            onPageChange((prev) => Math.min(prev + 1, pagination.totalPages))
-          }
-          className="inline-flex h-8 min-w-[68px] items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          ถัดไป
-        </button>
-      </div>
+    <div className="shrink-0 border-t border-slate-200 bg-white">
+      <TablePagination
+        component="div"
+        count={pagination.total}
+        page={Math.max(page - 1, 0)}
+        rowsPerPage={limit}
+        rowsPerPageOptions={[10, 25, 50, 100]}
+        onPageChange={(_, nextPage) => onPageChange(nextPage + 1)}
+        onRowsPerPageChange={(event) => onLimitChange(event.target.value)}
+        labelRowsPerPage="Rows per page:"
+        disabled={loading}
+        sx={{
+          color: "#475569",
+          minHeight: "52px",
+          "& .MuiTablePagination-toolbar": {
+            minHeight: "52px",
+            paddingLeft: "16px",
+            paddingRight: "16px",
+          },
+          "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+            margin: 0,
+            fontSize: "13px",
+            color: "#475569",
+          },
+        }}
+      />
     </div>
   );
 }

@@ -232,15 +232,6 @@ export default function LabelPage() {
                 สร้าง Label
               </button>
 
-              {/* <button
-                onClick={() => {
-                  setShowReprint(true);
-                  setReprintSelectedIds([]);
-                }}
-                className="px-4 py-1.5 rounded-full font-medium transition border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-              >
-                พิมพ์ซ้ำ
-              </button> */}
               <button
                 onClick={() => {
                   setShowReprint(true);
