@@ -1,19 +1,6 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 
-import {
-  ChevronDown,
-  ChevronRight,
-  Printer,
-  RefreshCcw,
-  Search,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Printer, RefreshCcw, Search } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
 
 import AxiosInstance from "../utils/AxiosInstance";
@@ -36,17 +23,9 @@ import type {
 
 import { defaultLabelFilters, defaultLabelPagination } from "../types/label";
 
-import {
-  buildLabelReceiveQueryParams,
-  buildLabelSerialQueryParams,
-  formatDate,
-  formatDateTime,
-  formatNumber,
-  getText,
-} from "../utils/labelHelpers";
+import { buildLabelReceiveQueryParams, buildLabelSerialQueryParams, formatDate, formatDateTime, formatNumber, getText } from "../utils/labelHelpers";
 
 const LABEL_API_PATH = "/labels";
-const PRINTED_BY_USER_ID = 1;
 
 const RECEIVE_HEADERS = [
   <span key="expand-column" />,
@@ -113,8 +92,7 @@ export default function LabelPrintPage() {
 
   const [filters, setFilters] = useState<LabelFilters>(defaultLabelFilters);
 
-  const [appliedFilters, setAppliedFilters] =
-    useState<LabelFilters>(defaultLabelFilters);
+  const [appliedFilters, setAppliedFilters] = useState<LabelFilters>(defaultLabelFilters);
 
   const [activeReceiveCode, setActiveReceiveCode] = useState("");
   const [serialSearch, setSerialSearch] = useState("");
@@ -130,9 +108,7 @@ export default function LabelPrintPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(50);
 
-  const [pagination, setPagination] = useState<Pagination>(
-    defaultLabelPagination,
-  );
+  const [pagination, setPagination] = useState<Pagination>(defaultLabelPagination);
 
   const [receiveLoading, setReceiveLoading] = useState(false);
   const [serialLoading, setSerialLoading] = useState(false);
@@ -158,21 +134,13 @@ export default function LabelPrintPage() {
     return Math.min(pagination.page * pagination.limit, pagination.total);
   }, [pagination]);
 
-  const allSerialChecked =
-    serialRows.length > 0 &&
-    serialRows.every((row) => selectedSerialNos.includes(row.serial_no));
+  const allSerialChecked = serialRows.length > 0 && serialRows.every((row) => selectedSerialNos.includes(row.serial_no));
 
-  const someSerialChecked =
-    serialRows.some((row) => selectedSerialNos.includes(row.serial_no)) &&
-    !allSerialChecked;
+  const someSerialChecked = serialRows.some((row) => selectedSerialNos.includes(row.serial_no)) && !allSerialChecked;
 
-  const allReceivesChecked =
-    receiveRows.length > 0 &&
-    receiveRows.every((row) => selectedReceiveCodes.includes(row.receive_code));
+  const allReceivesChecked = receiveRows.length > 0 && receiveRows.every((row) => selectedReceiveCodes.includes(row.receive_code));
 
-  const someReceivesChecked =
-    receiveRows.some((row) => selectedReceiveCodes.includes(row.receive_code)) &&
-    !allReceivesChecked;
+  const someReceivesChecked = receiveRows.some((row) => selectedReceiveCodes.includes(row.receive_code)) && !allReceivesChecked;
 
   const updateFilter = (name: keyof LabelFilters, value: string) => {
     setFilters((prev) => ({
@@ -185,11 +153,7 @@ export default function LabelPrintPage() {
     try {
       setFilterLoading(true);
 
-      const [customersRes, warehousesRes] = await Promise.all([
-        AxiosInstance.get("/customers"),
-
-        AxiosInstance.get("/warehouses"),
-      ]);
+      const [customersRes, warehousesRes] = await Promise.all([AxiosInstance.get("/customers"), AxiosInstance.get("/warehouses")]);
 
       setCustomers(customersRes.data || []);
 
@@ -215,19 +179,13 @@ export default function LabelPrintPage() {
         params.set("serial_no", appliedSerialSearch.trim());
       }
 
-      const res = await AxiosInstance.get<LabelReceivesResponse>(
-        `${LABEL_API_PATH}/receives?${params.toString()}`,
-      );
+      const res = await AxiosInstance.get<LabelReceivesResponse>(`${LABEL_API_PATH}/receives?${params.toString()}`);
 
       const nextRows = res.data?.data || [];
 
       setReceiveRows(nextRows);
 
-      setSelectedReceiveCodes((prev) =>
-        prev.filter((receiveCode) =>
-          nextRows.some((row) => row.receive_code === receiveCode),
-        ),
-      );
+      setSelectedReceiveCodes((prev) => prev.filter((receiveCode) => nextRows.some((row) => row.receive_code === receiveCode)));
 
       setPagination(
         res.data?.pagination || {
@@ -238,10 +196,7 @@ export default function LabelPrintPage() {
         },
       );
 
-      if (
-        activeReceiveCode &&
-        !nextRows.some((row) => row.receive_code === activeReceiveCode)
-      ) {
+      if (activeReceiveCode && !nextRows.some((row) => row.receive_code === activeReceiveCode)) {
         setActiveReceiveCode("");
         setSerialRows([]);
         setSelectedSerialNos([]);
@@ -271,9 +226,7 @@ export default function LabelPrintPage() {
 
       const params = buildLabelSerialQueryParams(receiveCode, serialNo);
 
-      const res = await AxiosInstance.get<LabelSerialsResponse>(
-        `${LABEL_API_PATH}/serials?${params.toString()}`,
-      );
+      const res = await AxiosInstance.get<LabelSerialsResponse>(`${LABEL_API_PATH}/serials?${params.toString()}`);
 
       setSerialRows(res.data?.data || []);
 
@@ -401,9 +354,7 @@ export default function LabelPrintPage() {
       selectedReceiveCodes.map((receiveCode) => {
         const params = buildLabelSerialQueryParams(receiveCode, "");
 
-        return AxiosInstance.get<LabelSerialsResponse>(
-          `${LABEL_API_PATH}/serials?${params.toString()}`,
-        );
+        return AxiosInstance.get<LabelSerialsResponse>(`${LABEL_API_PATH}/serials?${params.toString()}`);
       }),
     );
 
@@ -419,59 +370,46 @@ export default function LabelPrintPage() {
   };
 
   const markPrinted = async (items: LabelRow[]) => {
-    const hasPrintedBefore = items.some(
-      (item) => Number(item.print_count || 0) > 0,
-    );
+    const hasPrintedBefore = items.some((item) => Number(item.print_count || 0) > 0);
 
-    const res = await AxiosInstance.post<PrintResponse>(
-      `${LABEL_API_PATH}/print`,
-      {
-        items: items.map((item) => ({
-          serial_no: item.serial_no,
-        })),
+    const res = await AxiosInstance.post<PrintResponse>(`${LABEL_API_PATH}/print`, {
+      items: items.map((item) => ({
+        serial_no: item.serial_no,
+      })),
 
-        printed_by_user: PRINTED_BY_USER_ID,
-
-        is_reprint: hasPrintedBefore,
-      },
-    );
+      is_reprint: hasPrintedBefore,
+    });
 
     return res.data;
   };
 
-const finishPrint = async () => {
-  if (afterPrintHandledRef.current) {
-    return;
-  }
+  const finishPrint = async () => {
+    if (afterPrintHandledRef.current) {
+      return;
+    }
 
-  afterPrintHandledRef.current = true;
+    afterPrintHandledRef.current = true;
 
-  const items = pendingPrintItemsRef.current;
+    const items = pendingPrintItemsRef.current;
 
-  if (!items.length) {
-    setPrinting(false);
-    return;
-  }
+    if (!items.length) {
+      setPrinting(false);
+      return;
+    }
 
-  try {
-    await markPrinted(items);
+    try {
+      await markPrinted(items);
 
-    await Promise.all([
-      fetchReceives(),
+      await Promise.all([fetchReceives(), activeReceiveCode ? fetchSerials(activeReceiveCode, appliedSerialSearch) : Promise.resolve()]);
+    } catch (err) {
+      console.error("print label error:", err);
+    } finally {
+      pendingPrintItemsRef.current = [];
 
-      activeReceiveCode
-        ? fetchSerials(activeReceiveCode, appliedSerialSearch)
-        : Promise.resolve(),
-    ]);
-  } catch (err) {
-    console.error("print label error:", err);
-  } finally {
-    pendingPrintItemsRef.current = [];
-
-    setPrintItems([]);
-    setPrinting(false);
-  }
-};
+      setPrintItems([]);
+      setPrinting(false);
+    }
+  };
 
   const handlePrint = async () => {
     if (!selectedReceiveCodes.length && !selectedItems.length) {
@@ -482,9 +420,7 @@ const finishPrint = async () => {
     try {
       setPrinting(true);
 
-      const receiveItems = selectedReceiveCodes.length
-        ? await fetchSelectedReceiveItems()
-        : [];
+      const receiveItems = selectedReceiveCodes.length ? await fetchSelectedReceiveItems() : [];
 
       const itemMap = new Map<string, LabelRow>();
 
@@ -544,23 +480,16 @@ const finishPrint = async () => {
 
       <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-base font-semibold text-slate-900">
-            Print Labels
-          </h1>
+          <h1 className="text-base font-semibold text-slate-900">Print Labels</h1>
 
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            เลือก Receive Code แล้วเลือก Serial No ที่ต้องการปริ้น
-          </p>
+          <p className="mt-0.5 text-[11px] text-slate-500">เลือก Receive Code แล้วเลือก Serial No ที่ต้องการปริ้น</p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handlePrint}
-            disabled={
-              printing ||
-              (selectedReceiveCodes.length === 0 && selectedItems.length === 0)
-            }
+            disabled={printing || (selectedReceiveCodes.length === 0 && selectedItems.length === 0)}
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
           >
             <Printer size={13} />
@@ -578,10 +507,7 @@ const finishPrint = async () => {
             disabled={receiveLoading || serialLoading || printing}
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshCcw
-              size={13}
-              className={receiveLoading || serialLoading ? "animate-spin" : ""}
-            />
+            <RefreshCcw size={13} className={receiveLoading || serialLoading ? "animate-spin" : ""} />
             รีเฟรช
           </button>
         </div>
@@ -605,20 +531,13 @@ const finishPrint = async () => {
             onEnter={handleSearch}
           />
 
-          <FilterInput
-            value={serialSearch}
-            onChange={setSerialSearch}
-            placeholder="Serial No"
-            onEnter={handleSearch}
-          />
+          <FilterInput value={serialSearch} onChange={setSerialSearch} placeholder="Serial No" onEnter={handleSearch} />
 
           <FilterDropdown
             value={filters.customer_id}
             options={customers}
             onChange={(value) => updateFilter("customer_id", value)}
-            placeholder={
-              filterLoading ? "กำลังโหลด Customer..." : "Customer ทั้งหมด"
-            }
+            placeholder={filterLoading ? "กำลังโหลด Customer..." : "Customer ทั้งหมด"}
             showCode
           />
 
@@ -626,11 +545,7 @@ const finishPrint = async () => {
             value={filters.to_warehouse_id}
             options={warehousesTo}
             onChange={(value) => updateFilter("to_warehouse_id", value)}
-            placeholder={
-              filterLoading
-                ? "กำลังโหลด To Warehouse..."
-                : "To Warehouse ทั้งหมด"
-            }
+            placeholder={filterLoading ? "กำลังโหลด To Warehouse..." : "To Warehouse ทั้งหมด"}
             optionKeyPrefix="warehouse-to"
             showCode
           />
@@ -660,9 +575,7 @@ const finishPrint = async () => {
 
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         {receiveError ? (
-          <div className="p-6 text-center text-sm text-red-600">
-            {receiveError}
-          </div>
+          <div className="p-6 text-center text-sm text-red-600">{receiveError}</div>
         ) : (
           <div className="h-[calc(100%-46px)] overflow-auto">
             <table className="w-max min-w-full table-fixed border-collapse text-left text-xs">
@@ -694,19 +607,13 @@ const finishPrint = async () => {
               <tbody className="divide-y divide-slate-100 bg-white">
                 {receiveLoading ? (
                   <tr>
-                    <td
-                      colSpan={11}
-                      className="px-3 py-10 text-center text-sm text-slate-500"
-                    >
+                    <td colSpan={11} className="px-3 py-10 text-center text-sm text-slate-500">
                       กำลังโหลด Receive...
                     </td>
                   </tr>
                 ) : receiveRows.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={11}
-                      className="px-3 py-10 text-center text-sm text-slate-500"
-                    >
+                    <td colSpan={11} className="px-3 py-10 text-center text-sm text-slate-500">
                       ไม่พบ Receive Code
                     </td>
                   </tr>
@@ -724,9 +631,7 @@ const finishPrint = async () => {
                         serialRows={expanded ? serialRows : []}
                         serialLoading={serialLoading}
                         serialError={serialError}
-                        receiveChecked={selectedReceiveCodes.includes(
-                          row.receive_code,
-                        )}
+                        receiveChecked={selectedReceiveCodes.includes(row.receive_code)}
                         selectedSerialNos={selectedSerialNos}
                         allSerialChecked={allSerialChecked}
                         someSerialChecked={someSerialChecked}
@@ -847,10 +752,7 @@ function ReceiveWithSerialRow({
           {formatNumber((pagination.page - 1) * pagination.limit + index + 1)}
         </td>
 
-        <td
-          onClick={(event) => event.stopPropagation()}
-          className="border-b border-slate-100 px-2 py-2 text-center"
-        >
+        <td onClick={(event) => event.stopPropagation()} className="border-b border-slate-100 px-2 py-2 text-center">
           <input
             type="checkbox"
             checked={receiveChecked}
@@ -860,30 +762,18 @@ function ReceiveWithSerialRow({
         </td>
 
         <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2">
-          <div className="truncate font-semibold text-blue-700">
-            {row.receive_code}
-          </div>
+          <div className="truncate font-semibold text-blue-700">{row.receive_code}</div>
 
-          <div className="truncate text-[11px] text-slate-400">
-            {expanded ? "กำลังแสดง Serial No" : "กดเพื่อดู Serial No"}
-          </div>
+          <div className="truncate text-[11px] text-slate-400">{expanded ? "กำลังแสดง Serial No" : "กดเพื่อดู Serial No"}</div>
         </td>
 
-        <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">
-          {formatDate(row.receive_date)}
-        </td>
+        <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{formatDate(row.receive_date)}</td>
 
-        <td
-          className="truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-          title={getText(row.customer_name || row.customer_id)}
-        >
+        <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={getText(row.customer_name || row.customer_id)}>
           {getText(row.customer_name || row.customer_id)}
         </td>
 
-        <td
-          className="truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-          title={getText(row.to_warehouse_name || row.to_warehouse_id)}
-        >
+        <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={getText(row.to_warehouse_name || row.to_warehouse_id)}>
           {getText(row.to_warehouse_name || row.to_warehouse_id)}
         </td>
 
@@ -899,9 +789,7 @@ function ReceiveWithSerialRow({
           {formatNumber(row.total_reprint_count)}
         </td>
 
-        <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-600">
-          {formatDateTime(row.last_printed_at)}
-        </td>
+        <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-600">{formatDateTime(row.last_printed_at)}</td>
       </tr>
 
       {expanded ? (
@@ -991,19 +879,13 @@ function SerialInlineTable({
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="px-3 py-8 text-center text-sm text-slate-500"
-                  >
+                  <td colSpan={3} className="px-3 py-8 text-center text-sm text-slate-500">
                     กำลังโหลด Serial No...
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="px-3 py-8 text-center text-sm text-slate-500"
-                  >
+                  <td colSpan={3} className="px-3 py-8 text-center text-sm text-slate-500">
                     ไม่พบ Serial No
                   </td>
                 </tr>
@@ -1056,16 +938,8 @@ function SerialTableRow({
             : "cursor-pointer bg-slate-50/70 hover:bg-blue-50/40"
       }
     >
-      <td
-        onClick={(event) => event.stopPropagation()}
-        className="w-[42px] border-b border-slate-100 px-2 py-2 text-center"
-      >
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onToggle}
-          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-        />
+      <td onClick={(event) => event.stopPropagation()} className="w-[42px] border-b border-slate-100 px-2 py-2 text-center">
+        <input type="checkbox" checked={checked} onChange={onToggle} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
       </td>
 
       <td className="w-[56px] whitespace-nowrap border-b border-slate-100 px-2 py-2 text-center font-semibold text-slate-500">
@@ -1073,9 +947,7 @@ function SerialTableRow({
       </td>
 
       <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2">
-        <span className="font-semibold text-blue-700">
-          {getText(row.serial_no)}
-        </span>
+        <span className="font-semibold text-blue-700">{getText(row.serial_no)}</span>
       </td>
     </tr>
   );
@@ -1220,9 +1092,7 @@ function FilterDropdown({
 
       {options.map((option) => (
         <option key={`${optionKeyPrefix}-${option.id}`} value={option.id}>
-          {showCode && option.code
-            ? `${option.code} - ${option.name}`
-            : option.name}
+          {showCode && option.code ? `${option.code} - ${option.name}` : option.name}
         </option>
       ))}
     </select>

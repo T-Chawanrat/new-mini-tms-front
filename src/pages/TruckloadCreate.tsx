@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { FolderOpen, PackageCheck, Plus, Printer, Truck, X } from "lucide-react";
+import { FolderOpen, PackageCheck, Plus, Printer, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import DataGrid from "../components/DataGrid";
@@ -83,7 +83,6 @@ type TruckLoadRow = {
 };
 
 type ConfirmAction = {
-  type: "close" | "go";
   row: TruckLoadRow;
 };
 
@@ -490,43 +489,21 @@ export default function TruckLoadCreate() {
     }
   };
 
-  const handleCloseTruckLoad = useCallback(
+  const handleCloseAndGoTruckLoad = useCallback(
     async (row: TruckLoadRow) => {
-      if (row.is_close === "Y") return;
+      if (row.is_close === "Y" && row.is_go === "Y") return;
 
       try {
         setActionLoadingId(row.truck_load_id);
         setError(null);
         setInfo(null);
 
-        const response = await AxiosInstance.patch(`/truck-loads/${row.truck_load_id}/close`);
-        setInfo(response.data?.message || "ปิดบรรทุกสำเร็จ");
+        const response = await AxiosInstance.patch(`/truck-loads/${row.truck_load_id}/close-and-go`);
+        setInfo(response.data?.message || "ปิดบรรทุกและปล่อยรถสำเร็จ");
         await fetchTruckLoads();
       } catch (err) {
-        console.error("close truck load error:", err);
-        setError(getErrorMessage(err, "ไม่สามารถปิดบรรทุกได้"));
-      } finally {
-        setActionLoadingId(null);
-      }
-    },
-    [fetchTruckLoads],
-  );
-
-  const handleGoTruckLoad = useCallback(
-    async (row: TruckLoadRow) => {
-      if (row.is_close !== "Y" || row.is_go === "Y") return;
-
-      try {
-        setActionLoadingId(row.truck_load_id);
-        setError(null);
-        setInfo(null);
-
-        const response = await AxiosInstance.post(`/truck-loads/${row.truck_load_id}/go`);
-        setInfo(response.data?.message || "ปล่อยรถสำเร็จ");
-        await fetchTruckLoads();
-      } catch (err) {
-        console.error("go truck load error:", err);
-        setError(getErrorMessage(err, "ไม่สามารถปล่อยรถได้"));
+        console.error("close and go truck load error:", err);
+        setError(getErrorMessage(err, "ไม่สามารถปิดบรรทุกและปล่อยรถได้"));
       } finally {
         setActionLoadingId(null);
       }
@@ -652,22 +629,22 @@ export default function TruckLoadCreate() {
 
             <button
               type="button"
-              title={Number(params.row.serial_count || 0) <= 0 ? "ยังไม่มี Serial No" : params.row.is_close === "Y" ? "ปิดบรรทุกแล้ว" : "ปิดบรรทุก"}
-              onClick={() => setConfirmAction({ type: "close", row: params.row })}
-              disabled={actionLoadingId === params.row.truck_load_id || params.row.is_close === "Y" || Number(params.row.serial_count || 0) <= 0}
+              title={
+                Number(params.row.serial_count || 0) <= 0
+                  ? "ยังไม่มี Serial No"
+                  : params.row.is_close === "Y" && params.row.is_go === "Y"
+                    ? "ปิดบรรทุกและปล่อยรถแล้ว"
+                    : "ปิดบรรทุกและปล่อยรถ"
+              }
+              onClick={() => setConfirmAction({ row: params.row })}
+              disabled={
+                actionLoadingId === params.row.truck_load_id ||
+                (params.row.is_close === "Y" && params.row.is_go === "Y") ||
+                Number(params.row.serial_count || 0) <= 0
+              }
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
             >
               <PackageCheck size={16} />
-            </button>
-
-            <button
-              type="button"
-              title={params.row.is_go === "Y" ? "ปล่อยรถแล้ว" : params.row.is_close !== "Y" ? "ต้องปิดบรรทุกก่อน" : "ปล่อยรถ"}
-              onClick={() => setConfirmAction({ type: "go", row: params.row })}
-              disabled={actionLoadingId === params.row.truck_load_id || params.row.is_close !== "Y" || params.row.is_go === "Y"}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
-            >
-              <Truck size={16} />
             </button>
 
             <button
@@ -683,7 +660,7 @@ export default function TruckLoadCreate() {
         ),
       },
     ],
-    [actionLoadingId, handleCloseTruckLoad, handleGoTruckLoad, navigate],
+    [actionLoadingId, handleCloseAndGoTruckLoad, navigate],
   );
 
   const isCreateDisabled =
@@ -951,11 +928,9 @@ export default function TruckLoadCreate() {
       {confirmAction && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4">
           <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
-            <h3 className="text-base font-bold text-slate-800">{confirmAction.type === "close" ? "ยืนยันปิดบรรทุก" : "ยืนยันปล่อยรถ"}</h3>
+            <h3 className="text-base font-bold text-slate-800">ยืนยันปิดบรรทุกและปล่อยรถ</h3>
             <p className="mt-2 text-sm text-slate-600">
-              {confirmAction.type === "close"
-                ? `ต้องการปิดบรรทุกใบ ${confirmAction.row.truck_code} ใช่หรือไม่`
-                : `ต้องการปล่อยรถของใบ ${confirmAction.row.truck_code} ใช่หรือไม่`}
+              {`ต้องการปิดบรรทุกและปล่อยรถของใบ ${confirmAction.row.truck_code} ใช่หรือไม่`}
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -970,8 +945,7 @@ export default function TruckLoadCreate() {
                 onClick={() => {
                   const action = confirmAction;
                   setConfirmAction(null);
-                  if (action.type === "close") void handleCloseTruckLoad(action.row);
-                  else void handleGoTruckLoad(action.row);
+                  void handleCloseAndGoTruckLoad(action.row);
                 }}
                 className="h-9 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
               >
