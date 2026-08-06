@@ -11,6 +11,7 @@ type TruckPrintHeader = {
   driver_name: string | null;
   employee_code: string | null;
   license_plate: string | null;
+  license_province: string | null;
   warehouse_name: string | null;
   to_warehouse_name: string | null;
   is_close: string | null;
@@ -61,19 +62,6 @@ type TruckPrintResponse = {
 
 const getText = (value: unknown) => String(value ?? "").trim();
 
-const formatThaiLongDate = (value: string | null | undefined) => {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return getText(value);
-
-  return date.toLocaleDateString("th-TH", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-};
-
 const formatShortDateTime = (value: string | null | undefined) => {
   if (!value) return "";
 
@@ -95,13 +83,6 @@ const formatShortDateTime = (value: string | null | undefined) => {
   return `${dateText} ${timeText} น.`;
 };
 
-const formatNumber = (value: number | string | null | undefined, fallback = "") => {
-  if (value === null || value === undefined || value === "") return fallback;
-
-  const number = Number(value);
-  return Number.isFinite(number) ? number.toLocaleString("th-TH") : getText(value);
-};
-
 export default function TruckLoadPrintPage() {
   const { truckLoadId } = useParams<{ truckLoadId: string }>();
   const navigate = useNavigate();
@@ -116,9 +97,7 @@ export default function TruckLoadPrintPage() {
         setLoading(true);
         setError(null);
 
-        const response = await AxiosInstance.get<TruckPrintResponse>(
-          `/truck-loads/${truckLoadId}/print`,
-        );
+        const response = await AxiosInstance.get<TruckPrintResponse>(`/truck-loads/${truckLoadId}/print`);
 
         const printData = response.data?.data;
         setTruck(printData?.truck || null);
@@ -196,29 +175,16 @@ export default function TruckLoadPrintPage() {
         </button>
       </div>
 
-      {error && (
-        <div className="mx-auto max-w-[297mm] rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="mx-auto max-w-[297mm] rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
-      <main
-        id="truck-print-area"
-        className="mx-auto min-h-[210mm] w-full max-w-[297mm] bg-white p-[7mm] font-sans shadow-sm"
-      >
+      <main id="truck-print-area" className="mx-auto min-h-[210mm] w-full max-w-[297mm] bg-white p-[7mm] font-sans shadow-sm">
         {loading ? (
-          <div className="py-20 text-center text-sm text-slate-500">
-            กำลังโหลดข้อมูล...
-          </div>
+          <div className="py-20 text-center text-sm text-slate-500">กำลังโหลดข้อมูล...</div>
         ) : truck ? (
           <>
             <header className="grid grid-cols-[52mm_1fr_72mm] items-start gap-[5mm] text-[10px] leading-[1.35]">
               <div>
-                <img
-                  src="/tms/logo.jpg"
-                  alt="Trantech"
-                  className="h-[26mm] w-[42mm] object-contain object-left-top"
-                />
+                <img src="/tms/logo.jpg" alt="Trantech" className="h-[26mm] w-[42mm] object-contain object-left-top" />
               </div>
 
               <div className="pt-[2mm]">
@@ -231,17 +197,18 @@ export default function TruckLoadPrintPage() {
                 <div>
                   เอกสารใบปิดบรรทุก เลขที่: <strong>{getText(truck.truck_code)}</strong>
                 </div>
-                <div>วันที่ {formatThaiLongDate(truck.create_date)}</div>
-                <div className="pt-[2mm] text-left">
+
+                <div>วันที่ {formatShortDateTime(truck.create_date)}</div>
+
+                <div className="pt-[2mm]">
                   <div>
                     ต้นทาง: <strong>{getText(truck.warehouse_name)}</strong>
                   </div>
+
                   <div>
                     ปลายทาง: <strong>{getText(truck.to_warehouse_name)}</strong>
                   </div>
-                  <div>
-                    {/* เวลารับสินค้าสิ้นสุด: {formatShortDateTime(truck.receive_completed_datetime)} */}
-                  </div>
+
                   <div>เวลาปิดบรรทุก: {formatShortDateTime(truck.close_datetime)}</div>
                 </div>
               </div>
@@ -250,108 +217,69 @@ export default function TruckLoadPrintPage() {
             <section className="mt-[5mm] grid grid-cols-[1fr_1fr] gap-x-[15mm] text-[10px] leading-[1.5]">
               <div>
                 <div>
-                  ผู้รับรถ <strong>{getText(truck.receiver_name)}</strong>
-                </div>
-                <div>
                   พนักงานปิดบรรทุก <strong>{getText(truck.closed_by_name)}</strong>
                 </div>
               </div>
 
               <div>
                 <div>
-                  ทะเบียนรถ <strong>{getText(truck.license_plate)}</strong>{" "}
-                  {truck.is_close === "Y" ? "ปิดงาน" : ""}
+                  ทะเบียนรถ <strong>{[truck.license_plate, truck.license_province].filter(Boolean).join(" ") || "-"}</strong>
                 </div>
-                <div>
-                  {getText(truck.vehicle_type_name || truck.route_name)}
-                </div>
+
+                <div>{getText(truck.vehicle_type_name || truck.route_name)}</div>
               </div>
             </section>
 
-            <table className="mt-[3mm] w-full table-fixed border-collapse text-[8.5px] leading-[1.25]">
-              <colgroup>
-                <col style={{ width: "14.5%" }} />
-                <col style={{ width: "3.8%" }} />
-                <col style={{ width: "14.8%" }} />
-                <col style={{ width: "8.4%" }} />
-                <col style={{ width: "10.1%" }} />
-                <col style={{ width: "3.9%" }} />
-                <col style={{ width: "4.2%" }} />
-                <col style={{ width: "21.2%" }} />
-                <col style={{ width: "5.4%" }} />
-                <col style={{ width: "5.4%" }} />
-                <col style={{ width: "5.9%" }} />
-                <col style={{ width: "2.4%" }} />
-              </colgroup>
-
+            <table className="mt-[3mm] w-full table-auto border-collapse text-[8.5px] leading-[1.25]">
               <thead>
-                <tr className="text-left align-middle font-normal">
-                  <th className="border border-black px-[1mm] py-[2mm]">เจ้าของงาน</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">รหัสลูกค้า</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">ชื่อลูกค้า</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">ใบเลขที่ขนส่ง</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">Reference</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">ชื่อสินค้า</th>
-                  <th className="border border-black px-[1mm] py-[2mm] text-center">จำนวน</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">ที่อยู่</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">ตำบล</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">อำเภอ</th>
-                  <th className="border border-black px-[1mm] py-[2mm]">จังหวัด</th>
-                  <th className="border border-black px-[0.5mm] py-[2mm]">รหัสไปรษณีย์</th>
+                <tr className="align-middle text-center font-normal">
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">เจ้าของงาน</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">รหัสลูกค้า</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ชื่อลูกค้า</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ใบเลขที่ขนส่ง</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">Reference</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ชื่อสินค้า</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">จำนวน</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ที่อยู่</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ตำบล</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">อำเภอ</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">จังหวัด</th>
+                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">รหัสไปรษณีย์</th>
                 </tr>
               </thead>
 
               <tbody>
                 {items.map((item, index) => (
-                  <tr
-                    key={item.id || `${item.serial_no}-${index}`}
-                    className="truck-print-row align-top"
-                  >
-                    <td className="break-words border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.customer_name)}
-                    </td>
-                    <td className="break-words border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.customer_code)}
-                    </td>
-                    <td className="break-words border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.recipient_name)}
-                    </td>
-                    <td className="break-all border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.receive_code)}
-                    </td>
-                    <td className="break-all border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.reference_no || item.serial_no)}
-                    </td>
-                    <td className="break-words border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.product_name)}
-                    </td>
-                    <td className="border border-black px-[1mm] py-[1.4mm] text-center">
-                      1
-                    </td>
-                    <td className="break-words border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.address)}
-                    </td>
-                    <td className="break-words border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.subdistrict_name)}
-                    </td>
-                    <td className="break-words border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.district_name)}
-                    </td>
-                    <td className="break-words border border-black px-[1mm] py-[1.4mm]">
-                      {getText(item.province_name)}
-                    </td>
-                    <td className="break-all border border-black px-[0.5mm] py-[1.4mm] text-center">
-                      {getText(item.zip_code)}
-                    </td>
+                  <tr key={item.id || `${item.serial_no}-${index}`} className="truck-print-row align-top">
+                    <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.customer_name)}</td>
+
+                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.customer_code)}</td>
+
+                    <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.recipient_name)}</td>
+
+                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.receive_code)}</td>
+
+                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.reference_no || item.serial_no)}</td>
+
+                    <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.product_name)}</td>
+
+                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm] text-center">1</td>
+
+                    <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.address)}</td>
+
+                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.subdistrict_name)}</td>
+
+                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.district_name)}</td>
+
+                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.province_name)}</td>
+
+                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm] text-center">{getText(item.zip_code)}</td>
                   </tr>
                 ))}
 
                 {!items.length && (
                   <tr>
-                    <td
-                      colSpan={12}
-                      className="h-[22mm] border border-black px-3 py-8 text-center text-slate-500"
-                    >
+                    <td colSpan={12} className="h-[22mm] border border-black px-3 py-8 text-center text-slate-500">
                       ไม่มีรายการพัสดุ
                     </td>
                   </tr>
@@ -361,33 +289,31 @@ export default function TruckLoadPrintPage() {
 
             <footer className="truck-print-footer mt-[5mm] border-t border-black pt-[3mm] text-[10px] leading-[1.5]">
               <div className="grid grid-cols-2 gap-[10mm] px-[45mm] text-center font-bold">
-                <div className="border border-black py-[1mm]">
-                  รวมบิลทั้งสิ้น {items.length.toLocaleString("th-TH")} บิล
-                </div>
-                <div className="border border-black py-[1mm]">
-                  จำนวนสินค้า {items.length.toLocaleString("th-TH")} กล่อง
-                </div>
+                <div className="border border-black py-[1mm]">รวมบิลทั้งสิ้น {items.length.toLocaleString("th-TH")} บิล</div>
+                <div className="border border-black py-[1mm]">จำนวนสินค้า {items.length.toLocaleString("th-TH")} กล่อง</div>
               </div>
 
-              <div className="mt-[5mm] font-bold">
-                พนักงานขับรถได้ทำการตรวจสอบสินค้าตามเอกสารชุดนี้แล้ว
-              </div>
+              <div className="mt-[5mm] font-bold">พนักงานขับรถได้ทำการตรวจสอบสินค้าตามเอกสารชุดนี้แล้ว</div>
 
-              <div className="mt-[6mm] grid grid-cols-[auto_35mm_auto_35mm_auto_35mm_auto_25mm_auto_25mm] items-end gap-x-[3mm] whitespace-nowrap">
-                <span>พนักงานขับรถ ลงชื่อ</span>
-                <span className="inline-block w-[35mm] border-b border-black">&nbsp;</span>
+              <div className="mt-[6mm] space-y-[5mm] whitespace-nowrap">
+                <div className="grid grid-cols-[auto_35mm_auto_35mm] items-end justify-start gap-x-[3mm]">
+                  <span>พนักงานขับรถ ลงชื่อ</span>
+                  <span className="inline-block w-[35mm] border-b border-black">&nbsp;</span>
 
-                <span>พนักงานปล่อยรถ ลงชื่อ</span>
-                <span className="inline-block w-[35mm] border-b border-black">&nbsp;</span>
+                  <span>พนักงานปล่อยรถ ลงชื่อ</span>
+                  <span className="inline-block w-[35mm] border-b border-black">&nbsp;</span>
+                </div>
 
-                <span>พนักงานคลังสินค้าปลายทาง ลงชื่อ</span>
-                <span className="inline-block w-[35mm] border-b border-black">&nbsp;</span>
+                <div className="grid grid-cols-[auto_35mm_auto_25mm_auto_25mm] items-end justify-start gap-x-[3mm]">
+                  <span>พนักงานคลังสินค้าปลายทาง ลงชื่อ</span>
+                  <span className="inline-block w-[35mm] border-b border-black">&nbsp;</span>
 
-                <span>วันที่</span>
-                <span className="inline-block w-[25mm] border-b border-black">&nbsp;</span>
+                  <span>วันที่</span>
+                  <span className="inline-block w-[25mm] border-b border-black">&nbsp;</span>
 
-                <span>เวลา</span>
-                <span className="inline-block w-[25mm] border-b border-black">&nbsp;</span>
+                  <span>เวลา</span>
+                  <span className="inline-block w-[25mm] border-b border-black">&nbsp;</span>
+                </div>
               </div>
             </footer>
           </>

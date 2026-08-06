@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../utils/AxiosInstance";
+import { formatCodeNameOption, formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
 import CustomerDropdown, { type Customer } from "../components/dropdown/CustomerDropdown";
 
 type Option = {
@@ -23,20 +24,6 @@ type WarehouseReceiveResponse = {
   success?: boolean;
   data: WarehouseReceiveRow[];
   total: number;
-};
-
-const formatNumber = (value: number) => {
-  return value.toLocaleString("th-TH");
-};
-
-const normalizeSerial = (value: string | number | null | undefined) => {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
-};
-
-const getOptionLabel = (option: Option) => {
-  return option.code ? `${option.code} - ${option.name}` : option.name;
 };
 
 export default function WarehouseReceivePage() {
@@ -154,7 +141,7 @@ export default function WarehouseReceivePage() {
 
   const handleReceiveScan = (value?: string) => {
     const rawSerial = (value ?? receiveSerialInput).trim();
-    const serial = normalizeSerial(rawSerial);
+    const serial = normalizeSerialText(rawSerial);
 
     if (!serial) {
       focusReceiveInput();
@@ -164,7 +151,7 @@ export default function WarehouseReceivePage() {
     setError(null);
     setInfo(null);
 
-    const alreadyScanned = scannedRows.some((row) => normalizeSerial(row.serial_no) === serial);
+    const alreadyScanned = scannedRows.some((row) => normalizeSerialText(row.serial_no) === serial);
 
     if (alreadyScanned) {
       playSound("error");
@@ -174,7 +161,7 @@ export default function WarehouseReceivePage() {
       return;
     }
 
-    const targetIndex = pendingRows.findIndex((row) => normalizeSerial(row.serial_no) === serial);
+    const targetIndex = pendingRows.findIndex((row) => normalizeSerialText(row.serial_no) === serial);
 
     if (targetIndex === -1) {
       playSound("error");
@@ -197,7 +184,7 @@ export default function WarehouseReceivePage() {
 
   const handleRemoveScan = (value?: string) => {
     const rawSerial = (value ?? removeSerialInput).trim();
-    const serial = normalizeSerial(rawSerial);
+    const serial = normalizeSerialText(rawSerial);
 
     if (!serial) {
       focusRemoveInput();
@@ -207,7 +194,7 @@ export default function WarehouseReceivePage() {
     setError(null);
     setInfo(null);
 
-    const targetIndex = scannedRows.findIndex((row) => normalizeSerial(row.serial_no) === serial);
+    const targetIndex = scannedRows.findIndex((row) => normalizeSerialText(row.serial_no) === serial);
 
     if (targetIndex === -1) {
       playSound("error");
@@ -249,7 +236,7 @@ export default function WarehouseReceivePage() {
 
       await fetchSerials();
 
-      setInfo(response.data?.message || `บันทึกรับเข้าคลังสำเร็จ ${formatNumber(receivedCount)} รายการ`);
+      setInfo(response.data?.message || `บันทึกรับเข้าคลังสำเร็จ ${formatThaiNumber(receivedCount)} รายการ`);
 
       playSound("success");
     } catch (err: any) {
@@ -311,7 +298,7 @@ export default function WarehouseReceivePage() {
               <option value="">To Warehouse ทั้งหมด</option>
               {warehouses.map((warehouse) => (
                 <option key={`warehouse-${warehouse.id}`} value={warehouse.id}>
-                  {getOptionLabel(warehouse)}
+                {formatCodeNameOption(warehouse)}
                 </option>
               ))}
             </select>
@@ -325,7 +312,7 @@ export default function WarehouseReceivePage() {
             disabled={saving || loading || scannedRows.length === 0}
             className="inline-flex h-9 w-full items-center justify-center rounded-md bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
           >
-            {saving ? "กำลังบันทึก..." : `บันทึก (${formatNumber(scannedRows.length)})`}
+            {saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}
           </button>
         </div>
 
@@ -371,7 +358,7 @@ export default function WarehouseReceivePage() {
           <div className="hidden" />
 
           <button type="button" onClick={handleSave} disabled={saving || loading || scannedRows.length === 0} className="hidden">
-            {saving ? "กำลังบันทึก..." : `บันทึก (${formatNumber(scannedRows.length)})`}
+              {saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}
           </button>
         </div>
       </section>
@@ -384,7 +371,7 @@ export default function WarehouseReceivePage() {
         <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5">
             <span className="text-sm font-semibold text-slate-700">รายการรอยิง</span>
-            <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">{formatNumber(pendingRows.length)} รายการ</span>
+            <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">{formatThaiNumber(pendingRows.length)} รายการ</span>
           </div>
 
           <div className="min-h-0 flex-1 overflow-auto">
@@ -439,7 +426,7 @@ export default function WarehouseReceivePage() {
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5">
             <span className="text-sm font-semibold text-slate-700">รายการที่ยิงแล้ว</span>
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-              {formatNumber(scannedRows.length)} รายการ
+              {formatThaiNumber(scannedRows.length)} รายการ
             </span>
           </div>
 

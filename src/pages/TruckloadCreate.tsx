@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { FolderOpen, PackageCheck, Plus, Printer, RefreshCw, Truck, X } from "lucide-react";
+import { FolderOpen, PackageCheck, Plus, Printer, Truck, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import DataGrid from "../components/DataGrid";
 import DatePicker from "../components/form/DatePicker";
 import AxiosInstance from "../utils/AxiosInstance";
+import { formatCodeNameOption, formatThaiDateTime, formatThaiNumber } from "../utils/textSanitizer";
 
 type TruckType = "MAIN" | "EXTRA";
 
@@ -13,6 +14,11 @@ type Option = {
   id: number | string;
   code?: string | null;
   name: string;
+};
+
+type Province = {
+  id: number;
+  province_name: string;
 };
 
 type DriverUser = {
@@ -36,8 +42,8 @@ type TruckLoadRow = {
   truck_code: string;
   create_date: string | null;
 
-  customer_id: number | null;
   user_truck_id: number | null;
+  driver_type?: "EMPLOYEE" | "CONTRACTOR" | null;
   status: string | null;
 
   warehouse_id: number | null;
@@ -58,10 +64,6 @@ type TruckLoadRow = {
   go_by: number | null;
   arrived_by: number | null;
 
-  shipper_id: number | null;
-  recipient_id: number | null;
-  recipient_detail_id?: number | null;
-
   note: string | null;
   sub_warehouse: string | null;
 
@@ -73,11 +75,17 @@ type TruckLoadRow = {
 
   vehicle_id?: number | null;
   license_plate?: string | null;
+  license_plate_province_id?: number | null;
   license_province?: string | null;
   model?: string | null;
+  serial_count?: number | string | null;
+  count_box?: number | string | null;
 };
 
-
+type ConfirmAction = {
+  type: "close" | "go";
+  row: TruckLoadRow;
+};
 
 type TruckLoadResponse = {
   success?: boolean;
@@ -147,10 +155,6 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-const getOptionLabel = (option: Option) => {
-  return option.code ? `${option.code} - ${option.name}` : option.name;
-};
-
 const getDriverLabel = (driver: DriverUser) => {
   const fullName = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
   const userCode = driver.employee_code || driver.id || driver.user_id || "User";
@@ -164,28 +168,6 @@ const getVehicleLabel = (vehicle: Vehicle) => {
   return detail ? `${vehicle.license_plate} - ${detail}` : vehicle.license_plate;
 };
 
-const formatNumber = (value: number | null | undefined) => {
-  return Number(value || 0).toLocaleString("th-TH");
-};
-
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) return "-";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("th-TH", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
 export default function TruckLoadCreate() {
   const navigate = useNavigate();
 
@@ -196,6 +178,8 @@ export default function TruckLoadCreate() {
   const [dummyUsers, setDummyUsers] = useState<DriverUser[]>([]);
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+
+  const [provinces, setProvinces] = useState<Province[]>([]);
 
   const [rows, setRows] = useState<TruckLoadRow[]>([]);
 
@@ -217,6 +201,8 @@ export default function TruckLoadCreate() {
 
   const [extraLicensePlate, setExtraLicensePlate] = useState("");
 
+  const [selectedExtraProvince, setSelectedExtraProvince] = useState("");
+
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -225,13 +211,13 @@ export default function TruckLoadCreate() {
   const [isGo, setIsGo] = useState("");
   const [isCompleted, setIsCompleted] = useState("");
 
-  const [total, setTotal] = useState(0);
 
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -248,6 +234,7 @@ export default function TruckLoadCreate() {
     setExtraDriverFirstName("");
     setExtraDriverLastName("");
     setExtraLicensePlate("");
+    setSelectedExtraProvince("");
   };
 
   const fetchOptions = useCallback(async () => {
@@ -255,7 +242,7 @@ export default function TruckLoadCreate() {
       setLoadingOptions(true);
       setError(null);
 
-      const [warehouseResponse, driverResponse, dummyUserResponse, vehicleResponse] = await Promise.all([
+      const [warehouseResponse, driverResponse, dummyUserResponse, vehicleResponse, provinceResponse] = await Promise.all([
         AxiosInstance.get<Option[]>("/warehouses"),
 
         AxiosInstance.get<DriverUsersResponse>("/truck-loads/drivers"),
@@ -263,6 +250,8 @@ export default function TruckLoadCreate() {
         AxiosInstance.get<DriverUsersResponse>("/truck-loads/dummy-users"),
 
         AxiosInstance.get<VehiclesResponse>("/vehicles"),
+
+        AxiosInstance.get<Province[]>("/provinces"),
       ]);
 
       setWarehouses(Array.isArray(warehouseResponse.data) ? warehouseResponse.data : []);
@@ -272,6 +261,8 @@ export default function TruckLoadCreate() {
       setDummyUsers(Array.isArray(dummyUserResponse.data?.data) ? dummyUserResponse.data.data : []);
 
       setVehicles(Array.isArray(vehicleResponse.data?.data) ? vehicleResponse.data.data : []);
+
+      setProvinces(Array.isArray(provinceResponse.data) ? provinceResponse.data : []);
     } catch (err) {
       console.error("fetch truck load options error:", err);
 
@@ -279,6 +270,7 @@ export default function TruckLoadCreate() {
       setDrivers([]);
       setDummyUsers([]);
       setVehicles([]);
+      setProvinces([]);
 
       setError(getErrorMessage(err, "ไม่สามารถโหลดข้อมูลคนขับ รถ และคลังปลายทางได้"));
     } finally {
@@ -312,12 +304,10 @@ export default function TruckLoadCreate() {
 
       setRows(Array.isArray(response.data?.data) ? response.data.data : []);
 
-      setTotal(Number(response.data?.pagination?.total || response.data?.data?.length || 0));
     } catch (err) {
       console.error("fetch truck loads error:", err);
 
       setRows([]);
-      setTotal(0);
 
       setError(getErrorMessage(err, "ไม่สามารถโหลดรายการใบปิดบรรทุกได้"));
     } finally {
@@ -359,6 +349,7 @@ export default function TruckLoadCreate() {
     setExtraDriverFirstName("");
     setExtraDriverLastName("");
     setExtraLicensePlate("");
+    setSelectedExtraProvince("");
   };
 
   const handleSearch = () => {
@@ -416,19 +407,20 @@ export default function TruckLoadCreate() {
         setError("กรุณากรอกทะเบียนรถ");
         return;
       }
+
+      if (!selectedExtraProvince) {
+        setError("กรุณาเลือกจังหวัดทะเบียนรถ");
+        return;
+      }
     }
 
     const selectedDriverData =
-      truckType === "MAIN"
-        ? drivers.find((driver) => String(driver.id ?? driver.user_id ?? "") === selectedDriver)
-        : undefined;
+      truckType === "MAIN" ? drivers.find((driver) => String(driver.id ?? driver.user_id ?? "") === selectedDriver) : undefined;
 
     const selectedVehicleData = truckType === "MAIN" ? vehicles.find((vehicle) => vehicle.license_plate === selectedVehicle) : undefined;
 
     const selectedDummyUserData =
-      truckType === "EXTRA"
-        ? dummyUsers.find((user) => String(user.id ?? user.user_id ?? "") === selectedDummyUser)
-        : undefined;
+      truckType === "EXTRA" ? dummyUsers.find((user) => String(user.id ?? user.user_id ?? "") === selectedDummyUser) : undefined;
 
     if (truckType === "MAIN" && !selectedDriverData) {
       setError("ไม่พบข้อมูลพนักงานขับรถที่เลือก");
@@ -469,6 +461,8 @@ export default function TruckLoadCreate() {
         vehicle_id: truckType === "MAIN" ? (selectedVehicleData?.id ?? selectedVehicleData?.vehicle_id ?? null) : null,
 
         license_plate: truckType === "MAIN" ? selectedVehicleData?.license_plate : extraLicensePlate.trim(),
+
+        license_plate_province_id: truckType === "EXTRA" ? Number(selectedExtraProvince) : null,
 
         to_warehouse_id: Number(selectedToWarehouse),
       });
@@ -547,7 +541,7 @@ export default function TruckLoadCreate() {
         headerName: "วันที่",
         width: 155,
         minWidth: 145,
-        renderCell: (params) => <div className="flex h-full w-full items-center text-slate-700">{formatDateTime(params.row.create_date)}</div>,
+        renderCell: (params) => <div className="flex h-full w-full items-center text-slate-700">{formatThaiDateTime(params.row.create_date)}</div>,
       },
       {
         field: "truck_code",
@@ -579,6 +573,34 @@ export default function TruckLoadCreate() {
         ),
       },
       {
+        field: "status",
+        headerName: "Status",
+        width: 145,
+        minWidth: 130,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+              {params.row.status || "-"}
+            </span>
+          </div>
+        ),
+      },
+      {
+        field: "driver_type",
+        headerName: "ประเภทรถ",
+        width: 105,
+        minWidth: 95,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+          <div className="flex h-full w-full items-center justify-center text-slate-700">
+            {params.row.driver_type === "CONTRACTOR" ? "รถเสริม" : params.row.driver_type === "EMPLOYEE" ? "รถปกติ" : "-"}
+          </div>
+        ),
+      },
+      {
         field: "driver_vehicle",
         headerName: "คนขับ / ทะเบียนรถ",
         width: 220,
@@ -591,8 +613,21 @@ export default function TruckLoadCreate() {
               {params.row.driver_name || params.row.employee_code || params.row.user_truck_id || "-"}
             </span>
 
-            <span className="truncate text-xs text-slate-500">{params.row.license_plate || "-"}</span>
+            <span className="truncate text-xs text-slate-500">
+              {[params.row.license_plate, params.row.license_province].filter(Boolean).join(" - ") || "-"}
+            </span>
           </div>
+        ),
+      },
+      {
+        field: "count_box",
+        headerName: "จำนวนกล่อง",
+        width: 105,
+        minWidth: 95,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+          <div className="flex h-full w-full items-center justify-center font-semibold text-slate-700">{formatThaiNumber(params.row.count_box)}</div>
         ),
       },
       {
@@ -617,9 +652,9 @@ export default function TruckLoadCreate() {
 
             <button
               type="button"
-              title={params.row.is_close === "Y" ? "ปิดบรรทุกแล้ว" : "ปิดบรรทุก"}
-              onClick={() => void handleCloseTruckLoad(params.row)}
-              disabled={actionLoadingId === params.row.truck_load_id || params.row.is_close === "Y"}
+              title={Number(params.row.serial_count || 0) <= 0 ? "ยังไม่มี Serial No" : params.row.is_close === "Y" ? "ปิดบรรทุกแล้ว" : "ปิดบรรทุก"}
+              onClick={() => setConfirmAction({ type: "close", row: params.row })}
+              disabled={actionLoadingId === params.row.truck_load_id || params.row.is_close === "Y" || Number(params.row.serial_count || 0) <= 0}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
             >
               <PackageCheck size={16} />
@@ -628,7 +663,7 @@ export default function TruckLoadCreate() {
             <button
               type="button"
               title={params.row.is_go === "Y" ? "ปล่อยรถแล้ว" : params.row.is_close !== "Y" ? "ต้องปิดบรรทุกก่อน" : "ปล่อยรถ"}
-              onClick={() => void handleGoTruckLoad(params.row)}
+              onClick={() => setConfirmAction({ type: "go", row: params.row })}
               disabled={actionLoadingId === params.row.truck_load_id || params.row.is_close !== "Y" || params.row.is_go === "Y"}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
             >
@@ -639,7 +674,8 @@ export default function TruckLoadCreate() {
               type="button"
               title="ปริ๊น"
               onClick={() => navigate(`/truck-print/${params.row.truck_load_id}`)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100"
+              disabled={params.row.is_close !== "Y" || Number(params.row.serial_count || 0) <= 0}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
             >
               <Printer size={16} />
             </button>
@@ -655,7 +691,8 @@ export default function TruckLoadCreate() {
     creating ||
     !selectedToWarehouse ||
     (truckType === "MAIN" && (!selectedDriver || !selectedVehicle)) ||
-    (truckType === "EXTRA" && (!selectedDummyUser || !extraDriverFirstName.trim() || !extraDriverLastName.trim() || !extraLicensePlate.trim()));
+    (truckType === "EXTRA" &&
+      (!selectedDummyUser || !extraDriverFirstName.trim() || !extraDriverLastName.trim() || !extraLicensePlate.trim() || !selectedExtraProvince));
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
@@ -741,33 +778,17 @@ export default function TruckLoadCreate() {
 
       {info && <div className="mb-3 shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{info}</div>}
 
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5">
-          <div>
-            <h2 className="text-sm font-bold text-slate-800">รายการใบปิดบรรทุก</h2>
-
-            <p className="text-xs text-slate-500">ทั้งหมด {formatNumber(total)} รายการ</p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => void fetchTruckLoads()}
-            disabled={loading}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            รีเฟรช
-          </button>
-        </div>
-
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="min-h-0 flex-1 overflow-hidden">
           <DataGrid
             rows={rows}
             columns={columns}
             loading={loading}
+            framed={false}
             getRowId={(row: TruckLoadRow) => row.truck_load_id}
             height="100%"
             pageSize={100}
+            getRowClassName={(params: { row: TruckLoadRow }) => (Number(params.row.serial_count || 0) <= 0 ? "truck-empty-row" : "")}
           />
         </div>
       </section>
@@ -812,10 +833,7 @@ export default function TruckLoadCreate() {
                     <option value="">เลือกพนักงานขับรถ</option>
 
                     {drivers.map((driver) => (
-                      <option
-                        key={driver.id ?? driver.user_id ?? driver.employee_code}
-                        value={String(driver.id ?? driver.user_id ?? "")}
-                      >
+                      <option key={driver.id ?? driver.user_id ?? driver.employee_code} value={String(driver.id ?? driver.user_id ?? "")}>
                         {getDriverLabel(driver)}
                       </option>
                     ))}
@@ -866,6 +884,21 @@ export default function TruckLoadCreate() {
                     placeholder="กรอกทะเบียนรถ"
                     disabled={creating}
                   />
+
+                  <ModalSelect
+                    label="จังหวัดทะเบียนรถ"
+                    value={selectedExtraProvince}
+                    onChange={setSelectedExtraProvince}
+                    disabled={loadingOptions || creating}
+                  >
+                    <option value="">เลือกจังหวัดทะเบียนรถ</option>
+
+                    {provinces.map((province) => (
+                      <option key={province.id} value={String(province.id)}>
+                        {province.province_name}
+                      </option>
+                    ))}
+                  </ModalSelect>
                 </>
               )}
 
@@ -874,7 +907,7 @@ export default function TruckLoadCreate() {
 
                 {warehouses.map((warehouse) => (
                   <option key={warehouse.id} value={String(warehouse.id)}>
-                    {getOptionLabel(warehouse)}
+                    {formatCodeNameOption(warehouse)}
                   </option>
                 ))}
               </ModalSelect>
@@ -909,6 +942,40 @@ export default function TruckLoadCreate() {
                 <Plus size={16} />
 
                 {creating ? "กำลังสร้าง..." : "สร้างใบปิดบรรทุก"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmAction && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
+            <h3 className="text-base font-bold text-slate-800">{confirmAction.type === "close" ? "ยืนยันปิดบรรทุก" : "ยืนยันปล่อยรถ"}</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {confirmAction.type === "close"
+                ? `ต้องการปิดบรรทุกใบ ${confirmAction.row.truck_code} ใช่หรือไม่`
+                : `ต้องการปล่อยรถของใบ ${confirmAction.row.truck_code} ใช่หรือไม่`}
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmAction(null)}
+                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                ไม่
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const action = confirmAction;
+                  setConfirmAction(null);
+                  if (action.type === "close") void handleCloseTruckLoad(action.row);
+                  else void handleGoTruckLoad(action.row);
+                }}
+                className="h-9 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                ใช่
               </button>
             </div>
           </div>

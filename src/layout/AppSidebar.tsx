@@ -231,7 +231,7 @@ const AppSidebar: React.FC = () => {
             <>
               <button
                 onClick={() => handleSubmenuToggle(index, menuType)}
-                className={`menu-item group ${
+                className={`menu-item group outline-none focus:outline-none focus-visible:outline-none ${
                   openSubmenu?.type === menuType && openSubmenu?.index === index ? "menu-item-active" : "menu-item-inactive"
                 } cursor-pointer ${!isExpanded ? "lg:justify-center" : "lg:justify-start"}`}
               >
@@ -261,7 +261,7 @@ const AppSidebar: React.FC = () => {
                       <Link
                         key={subItem.name}
                         to={subItem.path}
-                        className={`flex justify-center items-center w-full h-10 rounded-md transition-colors ${
+                        className={`flex h-10 w-full items-center justify-center rounded-md outline-none transition-colors focus:outline-none focus-visible:outline-none ${
                           isActive(subItem.path) ? "bg-brand-50 text-brand-500" : "text-gray-600 hover:bg-gray-100"
                         }`}
                         title={subItem.name}
@@ -289,7 +289,9 @@ const AppSidebar: React.FC = () => {
                         <li key={subItem.name}>
                           <Link
                             to={subItem.path}
-                            className={`menu-dropdown-item ${isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"}`}
+                            className={`menu-dropdown-item outline-none focus:outline-none focus-visible:outline-none ${
+                              isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
+                            }`}
                           >
                             {subItem.name}
                           </Link>
@@ -301,7 +303,12 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             nav.path && (
-              <Link to={nav.path} className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}>
+              <Link
+                to={nav.path}
+                className={`menu-item group outline-none focus:outline-none focus-visible:outline-none ${
+                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                }`}
+              >
                 <span className={`menu-item-icon-size ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>{nav.icon}</span>
                 {(isExpanded || isMobileOpen) && <span className="menu-item-text">{nav.name}</span>}
               </Link>
@@ -367,6 +374,7 @@ const AppSidebar: React.FC = () => {
               onClick={handleLogout}
               className="
             menu-item menu-item-inactive group
+            outline-none focus:outline-none focus-visible:outline-none
             cursor-pointer w-full text-left
             py-1
             hover:bg-slate-50

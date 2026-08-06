@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../utils/AxiosInstance";
+import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
 
 type VehicleLoadRow = {
   serial_id: string;
   serial_no: string;
+  warehouse_id: number | null;
   customer_id: number | null;
   customer_name: string | null;
   to_warehouse_id: number | null;
@@ -24,6 +26,7 @@ type VehicleLoadResponse = {
 type TruckLoadDetail = {
   truck_load_id: number;
   truck_code: string;
+  warehouse_id: number | null;
   user_truck_id: number | null;
   vehicle_id: number | null;
   to_warehouse_id: number | null;
@@ -37,21 +40,14 @@ type TruckLoadDetail = {
   is_go: string | null;
 };
 
+type WarehouseOption = {
+  id: number | string;
+  name: string;
+};
+
 type TruckLoadDetailResponse = {
   success?: boolean;
   data: TruckLoadDetail;
-};
-
-const formatNumber = (value: number) => {
-  return value.toLocaleString("th-TH");
-};
-
-const normalizeSerial = (
-  value: string | number | null | undefined,
-) => {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
 };
 
 export default function TruckloadReceivePage() {
@@ -73,6 +69,9 @@ export default function TruckloadReceivePage() {
 
   const [warehouseFilter, setWarehouseFilter] =
     useState("");
+
+  const [fromWarehouseFilter, setFromWarehouseFilter] = useState("");
+  const [warehouseOptions, setWarehouseOptions] = useState<WarehouseOption[]>([]);
 
   const [
     selectedDriverEmployeeCode,
@@ -191,6 +190,7 @@ export default function TruckloadReceivePage() {
         setSelectedDriverEmployeeCode(row?.employee_code || row?.driver_name || "");
         setSelectedVehicleLicensePlate(row?.license_plate || "");
         setWarehouseFilter(row?.to_warehouse_id ? String(row.to_warehouse_id) : "");
+        setFromWarehouseFilter(row?.warehouse_id ? String(row.warehouse_id) : "");
       } catch (err) {
         console.error(
           "fetch vehicle load options error:",
@@ -257,6 +257,20 @@ export default function TruckloadReceivePage() {
   }, [fetchTruckLoad]);
 
   useEffect(() => {
+    const fetchWarehouses = async () => {
+      try {
+        const response = await AxiosInstance.get<WarehouseOption[]>("/warehouses");
+        setWarehouseOptions(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error("fetch warehouse filter options error:", err);
+        setWarehouseOptions([]);
+      }
+    };
+
+    void fetchWarehouses();
+  }, []);
+
+  useEffect(() => {
     void fetchSerials();
   }, [fetchSerials]);
 
@@ -270,12 +284,20 @@ export default function TruckloadReceivePage() {
     }
   }, [activeScanSide, focusLoadInput, focusRemoveInput, loading, loadingOptions, saving, scannedRows.length, truckLoad?.is_close]);
 
+  const visiblePendingRows = useMemo(
+    () =>
+      fromWarehouseFilter
+        ? pendingRows.filter((row) => String(row.warehouse_id || "") === fromWarehouseFilter)
+        : pendingRows,
+    [fromWarehouseFilter, pendingRows],
+  );
+
   const handleLoadScan = async (value?: string) => {
     const rawSerial = (
       value ?? loadSerialInput
     ).trim();
 
-    const serial = normalizeSerial(rawSerial);
+    const serial = normalizeSerialText(rawSerial);
 
     if (!serial) {
       focusLoadInput();
@@ -287,7 +309,7 @@ export default function TruckloadReceivePage() {
 
     const alreadyScanned = scannedRows.some(
       (row) =>
-        normalizeSerial(row.serial_no) === serial,
+        normalizeSerialText(row.serial_no) === serial,
     );
 
     if (alreadyScanned) {
@@ -305,7 +327,8 @@ export default function TruckloadReceivePage() {
 
     const targetIndex = pendingRows.findIndex(
       (row) =>
-        normalizeSerial(row.serial_no) === serial,
+        normalizeSerialText(row.serial_no) === serial &&
+        (!fromWarehouseFilter || String(row.warehouse_id || "") === fromWarehouseFilter),
     );
 
     if (targetIndex === -1) {
@@ -367,7 +390,7 @@ export default function TruckloadReceivePage() {
       value ?? removeSerialInput
     ).trim();
 
-    const serial = normalizeSerial(rawSerial);
+    const serial = normalizeSerialText(rawSerial);
 
     if (!serial) {
       focusRemoveInput();
@@ -379,7 +402,7 @@ export default function TruckloadReceivePage() {
 
     const targetIndex = scannedRows.findIndex(
       (row) =>
-        normalizeSerial(row.serial_no) === serial,
+        normalizeSerialText(row.serial_no) === serial,
     );
 
     if (targetIndex === -1) {
@@ -455,7 +478,21 @@ export default function TruckloadReceivePage() {
       </header>
 
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 xl:items-end">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 xl:items-end">
+          <div className="min-w-0">
+            <label className="mb-1 block text-xs font-medium text-slate-600">From Warehouse</label>
+            <select
+              value={fromWarehouseFilter}
+              onChange={(event) => setFromWarehouseFilter(event.target.value)}
+              disabled={disabled}
+              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
+            >
+              <option value="">ทั้งหมด</option>
+              {warehouseOptions.map((warehouse) => (
+                <option key={warehouse.id} value={String(warehouse.id)}>{warehouse.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-slate-600">
               Driver
@@ -645,15 +682,15 @@ export default function TruckloadReceivePage() {
             </span>
 
             <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
-              {formatNumber(
-                pendingRows.length,
+              {formatThaiNumber(
+                visiblePendingRows.length,
               )}{" "}
               รายการ
             </span>
           </div>
 
           <SerialTable
-            rows={pendingRows}
+            rows={visiblePendingRows}
             loading={loading}
             mode="pending"
           />
@@ -666,7 +703,7 @@ export default function TruckloadReceivePage() {
             </span>
 
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-              {formatNumber(
+              {formatThaiNumber(
                 scannedRows.length,
               )}{" "}
               รายการ

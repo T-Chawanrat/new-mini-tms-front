@@ -125,3 +125,49 @@ export const formatCod = (
     maximumFractionDigits: 2,
   })} บาท`;
 };
+
+// ใช้เทียบ Serial No จากช่องสแกนโดยไม่สนตัวพิมพ์เล็ก-ใหญ่
+export const normalizeSerialText = (value: unknown) => {
+  return normalizeText(value).toLowerCase();
+};
+
+// ใช้แสดงตัวเลขรูปแบบไทยในตารางและจำนวนรายการ
+export const formatThaiNumber = (
+  value: string | number | null | undefined,
+  digits = 0,
+) => {
+  const numberValue = Number(value || 0);
+
+  return (Number.isFinite(numberValue) ? numberValue : 0).toLocaleString("th-TH", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+};
+
+// ใช้แสดงวันและเวลารูปแบบไทยใน DataGrid
+export const formatThaiDateTime = (
+  value: string | Date | null | undefined,
+  fallback = "-",
+) => {
+  if (!value) return fallback;
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) return fallback;
+
+  return date.toLocaleString("th-TH", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+// ใช้กับ option ที่มี code และ name
+export const formatCodeNameOption = (option: {
+  code?: string | null;
+  name: string;
+}) => {
+  return option.code ? `${option.code} - ${option.name}` : option.name;
+};

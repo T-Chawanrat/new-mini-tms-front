@@ -11,6 +11,8 @@ type AppDataGridProps = {
   getRowId?: (row: any) => string | number;
   height?: number | string;
   pageSize?: number;
+  getRowClassName?: (params: any) => string;
+  framed?: boolean;
 };
 
 export default function AppDataGrid({
@@ -20,15 +22,24 @@ export default function AppDataGrid({
   getRowId,
   height = 560,
   pageSize = 100,
+  getRowClassName,
+  framed = true,
 }: AppDataGridProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full min-h-0">
+    <div
+      className={
+        framed
+          ? "h-full min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+          : "h-full min-h-0 overflow-hidden bg-white"
+      }
+    >
       <div style={{ height, width: "100%", minHeight: 0 }}>
         <MuiDataGrid
           rows={rows}
           columns={columns}
           loading={loading}
           getRowId={getRowId}
+          getRowClassName={getRowClassName}
           disableRowSelectionOnClick
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{
@@ -41,17 +52,32 @@ export default function AppDataGrid({
           }}
           sx={{
             border: "none",
+            outline: "none !important",
             fontFamily: "inherit",
             height: "100%",
 
+            "&:focus, &:focus-visible, &:focus-within": {
+              outline: "none !important",
+            },
+
             "& .MuiDataGrid-main": {
               minHeight: 0,
+              outline: "none !important",
+            },
+
+            "& .MuiDataGrid-main:focus, & .MuiDataGrid-main:focus-visible, & .MuiDataGrid-main:focus-within": {
+              outline: "none !important",
             },
 
             "& .MuiDataGrid-virtualScroller": {
               minHeight: 0,
               overflowX: "auto",
               overflowY: "auto",
+              outline: "none !important",
+            },
+
+            "& .MuiDataGrid-virtualScroller:focus, & .MuiDataGrid-virtualScroller:focus-visible, & .MuiDataGrid-virtualScroller:focus-within": {
+              outline: "none !important",
             },
 
             "& .MuiDataGrid-columnHeaders": {
@@ -100,6 +126,14 @@ export default function AppDataGrid({
 
             "& .MuiDataGrid-row:hover": {
               backgroundColor: "#f8fafc",
+            },
+
+            "& .truck-empty-row": {
+              backgroundColor: "#fcc9c9",
+            },
+
+            "& .truck-empty-row:hover": {
+              backgroundColor: "#fcc9c9",
             },
 
             "& .MuiDataGrid-footerContainer": {
