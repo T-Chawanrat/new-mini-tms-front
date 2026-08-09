@@ -68,7 +68,7 @@ type LoadProductError = {
   };
 };
 
-export default function TruckloadReceivePage() {
+export default function TruckloadScan() {
   const { truckLoadId } = useParams<{ truckLoadId: string }>();
   const navigate = useNavigate();
 

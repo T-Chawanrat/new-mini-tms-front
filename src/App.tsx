@@ -28,10 +28,13 @@ import CreateReceivePage from "./pages/CreateReceivePage/CreateReceivePage";
 import ManageHolidays from "./pages/ManageHolidays";
 import ReceiveReport from "./pages/ReceiveReport";
 import LabelPrintPage from "./pages/LabelPrintPage";
-import WarehouseReceivePage from "./pages/WarehouseReceivePage";
-import TruckloadReceivePage from "./pages/TruckloadReceivePage";
+import WarehouseScan from "./pages/WarehouseScan";
+import TruckloadScan from "./pages/TruckloadScan";
 import TruckLoadCreate from "./pages/TruckloadCreate";
-import TruckLoadPrintPage from "./pages/TruckLoadPrintPage";
+import TruckLoadPrint from "./pages/TruckLoadPrint";
+import DcReceivePage from "./pages/DcReceivePage";
+import MoveTk from "./pages/MoveTk";
+import MoveTkScanPage from "./pages/MoveTkScanPage";
 // import ImportVGT from "./pages/ImportVGT";
 // import ImportADV from "./pages/ImportADV";
 
@@ -41,7 +44,7 @@ const RoleRedirect = () => {
 
   if ([1, 2, 5, 6, 7, 8, 9, 10].includes(roleId)) return <Navigate to="/import" replace />;
   if (roleId === 3) return <Navigate to="/warehouse-scan" replace />;
-  if (roleId === 4) return <Navigate to="/dc-scan" replace />;
+  if (roleId === 4) return <Navigate to="/dc-receive" replace />;
 
   return <Navigate to="/signin" replace />;
 };
@@ -144,11 +147,14 @@ export default function App() {
               <Route path="/manage-holidays" element={<ManageHolidays />} />
               <Route path="/receive-report" element={<ReceiveReport />} />
              <Route path="/label-print" element={<LabelPrintPage />} />
-             <Route path="/warehouse-scan" element={<WarehouseReceivePage />} />
-             <Route path="/truck-scan" element={<TruckloadReceivePage />} />
-             <Route path="/truck-scan/:truckLoadId" element={<TruckloadReceivePage />} />
+             <Route path="/warehouse-scan" element={<WarehouseScan />} />
+             <Route path="/truck-scan" element={<TruckloadScan />} />
+             <Route path="/truck-scan/:truckLoadId" element={<TruckloadScan />} />
              <Route path="/truck-create" element={<TruckLoadCreate />} />
-             <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrintPage />} />
+             <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrint />} />
+             <Route path="/dc-receive" element={<DcReceivePage />} />
+             <Route path="/move-tk" element={<MoveTk />} />
+             <Route path="/move-tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScanPage />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>

@@ -20,6 +20,7 @@ export default function ManageVehicles() {
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [brands, setBrands] = useState<MasterOption[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<MasterOption[]>([]);
+  const [provinces, setProvinces] = useState<any[]>([]);
 
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("");
@@ -36,7 +37,8 @@ export default function ManageVehicles() {
 
   const emptyForm = {
     license_plate: "",
-    license_province: "",
+    license_plate_province_id: "",
+    license_plate_province: "",
     brand_id: "",
     model: "",
     color: "",
@@ -139,11 +141,17 @@ export default function ManageVehicles() {
     setVehicleTypes(res.data || []);
   };
 
+  const fetchProvinces = async () => {
+    const res = await AxiosInstance.get("/provinces");
+    setProvinces(res.data || []);
+  };
+
   useEffect(() => {
     fetchData();
     fetchWarehouses();
     fetchVehicleBrands();
     fetchVehicleTypes();
+    fetchProvinces();
   }, []);
 
   const handleChange = (k: string, v: any) => {
@@ -169,7 +177,8 @@ export default function ManageVehicles() {
 
     setForm({
       license_plate: row.license_plate || "",
-      license_province: row.license_province || "",
+      license_plate_province_id: row.license_plate_province_id ? String(row.license_plate_province_id) : "",
+      license_plate_province: row.license_plate_province || "",
       brand_id: row.brand_id ? String(row.brand_id) : "",
       model: row.model || "",
       color: row.color || "",
@@ -203,7 +212,7 @@ export default function ManageVehicles() {
 
   const validateForm = () => {
     if (!form.license_plate) return "กรุณากรอกทะเบียนรถ";
-    if (!form.license_province) return "กรุณากรอกจังหวัดทะเบียน";
+    if (!form.license_plate_province_id) return "กรุณาเลือกจังหวัดทะเบียน";
     if (!form.brand_id) return "กรุณาเลือกยี่ห้อรถ";
     if (!form.vehicle_type_id) return "กรุณาเลือกประเภทรถ";
     if (!form.capacity_kg) return "กรุณากรอกน้ำหนักใช้งานจริง (kg)";
@@ -216,7 +225,7 @@ export default function ManageVehicles() {
   const buildPayload = () => {
     return {
       license_plate: form.license_plate,
-      license_province: form.license_province,
+      license_plate_province_id: form.license_plate_province_id,
       brand_id: form.brand_id,
       model: form.model || null,
       color: form.color || null,
@@ -319,9 +328,9 @@ export default function ManageVehicles() {
                   {row.license_plate || "-"}
                 </div>
 
-                {row.license_province && (
-                  <div title={row.license_province || ""} className="text-xs text-slate-400 truncate">
-                    {row.license_province || "-"}
+                {row.license_plate_province && (
+                  <div title={row.license_plate_province || ""} className="text-xs text-slate-400 truncate">
+                    {row.license_plate_province || "-"}
                   </div>
                 )}
               </div>
@@ -593,12 +602,18 @@ export default function ManageVehicles() {
 
                     <div>
                       <RequiredLabel required>จังหวัดทะเบียน</RequiredLabel>
-                      <input
+                      <select
                         className="input-modern w-full"
-                        placeholder="เช่น กรุงเทพมหานคร"
-                        value={form.license_province}
-                        onChange={(e) => handleChange("license_province", e.target.value)}
-                      />
+                        value={form.license_plate_province_id}
+                        onChange={(e) => handleChange("license_plate_province_id", e.target.value)}
+                      >
+                        <option value="">เลือกจังหวัด</option>
+                        {provinces.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.province_name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>

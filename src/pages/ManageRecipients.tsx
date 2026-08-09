@@ -6,6 +6,7 @@ import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
 import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
 import RequiredLabel from "../components/form/RequiredLabel";
+import { removeSpaces } from "../utils/textSanitizer";
 
 type Id = string | number;
 type YesNo = "Y" | "N" | string;
@@ -1123,7 +1124,7 @@ export default function ManageRecipients() {
                         className="input-modern w-full"
                         placeholder="Recipient Code"
                         value={form.recipient_code}
-                        onChange={(e) => handleChange("recipient_code", e.target.value)}
+                        onChange={(e) => handleChange("recipient_code", removeSpaces(e.target.value))}
                       />
                     </div>
 

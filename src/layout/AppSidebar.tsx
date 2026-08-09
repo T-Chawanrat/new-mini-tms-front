@@ -20,63 +20,8 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Menu",
+    name: "Manage",
     subItems: [
-      // {
-      //   name: "import Excel",
-      //   path: "/import",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-      // {
-      //   name: "import VGT",
-      //   path: "/importvgt",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-      // {
-      //   name: "import ADV",
-      //   path: "/importadv",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-      // {
-      //   name: "คีย์บิล",
-      //   path: "/input",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-      // {
-      //   name: "Label",
-      //   path: "/labels",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-      // {
-      //   name: "Warehouse Scan",
-      //   path: "/warehouse-scan",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-      // {
-      //   name: "DC Scan",
-      //   path: "/dc-scan",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-
-      // {
-      //   name: "report",
-      //   path: "/report",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
-      // {
-      //   name: "import manual",
-      //   path: "/manual",
-      //   icon: <File size={20} />,
-      //   roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      // },
       {
         name: "manage users",
         path: "/manage/users",
@@ -119,6 +64,12 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 10, 11],
       },
+    ],
+  },
+  {
+    icon: <GridIcon />,
+    name: "Delivery Order",
+    subItems: [
       {
         name: "Create Delivery Order",
         path: "/create-do",
@@ -143,6 +94,12 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 10, 11],
       },
+    ],
+  },
+  {
+    icon: <GridIcon />,
+    name: "Warehouse & Transport",
+    subItems: [
       {
         name: "Warehouse Scan",
         path: "/warehouse-scan",
@@ -152,6 +109,18 @@ const navItems: NavItem[] = [
       {
         name: "Truck Create",
         path: "/truck-create",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 10, 11],
+      },
+      {
+        name: "DC Receive",
+        path: "/dc-receive",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 10, 11],
+      },
+      {
+        name: "Move TK",
+        path: "/move-tk",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 10, 11],
       },

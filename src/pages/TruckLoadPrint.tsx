@@ -83,7 +83,7 @@ const formatShortDateTime = (value: string | null | undefined) => {
   return `${dateText} ${timeText} น.`;
 };
 
-export default function TruckLoadPrintPage() {
+export default function TruckLoadPrint() {
   const { truckLoadId } = useParams<{ truckLoadId: string }>();
   const navigate = useNavigate();
   const [truck, setTruck] = useState<TruckPrintHeader | null>(null);

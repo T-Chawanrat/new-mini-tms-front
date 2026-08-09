@@ -20,7 +20,7 @@ type WarehouseReceiveResponse = {
   total: number;
 };
 
-export default function WarehouseReceivePage() {
+export default function WarehouseScan() {
   const receiveInputRef = useRef<HTMLInputElement | null>(null);
   const removeInputRef = useRef<HTMLInputElement | null>(null);
   const successAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -316,7 +316,7 @@ export default function WarehouseReceivePage() {
           <div className="hidden" />
 
           <button type="button" onClick={handleSave} disabled={saving || loading || scannedRows.length === 0} className="hidden">
-              {saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}
+            {saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}
           </button>
         </div>
       </section>
@@ -329,7 +329,9 @@ export default function WarehouseReceivePage() {
         <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5">
             <span className="text-sm font-semibold text-slate-700">รายการรอยิง</span>
-            <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">{formatThaiNumber(pendingRows.length)} รายการ</span>
+            <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
+              {formatThaiNumber(pendingRows.length)} รายการ
+            </span>
           </div>
 
           <div className="min-h-0 flex-1 overflow-auto">
