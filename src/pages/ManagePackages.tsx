@@ -142,10 +142,6 @@ export default function ManagePackages() {
       });
 
       setCustomers(activeCustomers);
-
-      if (activeCustomers.length > 0) {
-        setCustomerId((prev) => prev || String(activeCustomers[0].id));
-      }
     } catch (err: any) {
       alert(err?.response?.data?.message || "fetch customers failed");
     }
@@ -215,7 +211,11 @@ export default function ManagePackages() {
 
   useEffect(() => {
     if (!user) return;
-    if (!customerId) return;
+
+    if (!customerId) {
+      setRows([]);
+      return;
+    }
 
     fetchData();
   }, [customerId]);
@@ -701,6 +701,7 @@ export default function ManagePackages() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
         {canSelectCustomer && (
           <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-modern w-auto">
+            <option value="">เลือกลูกค้า</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.id} {c.code ? `${c.code} - ` : ""}

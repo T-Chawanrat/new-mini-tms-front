@@ -576,7 +576,7 @@ export default function TruckloadScan() {
             />
           </div>
 
-          <div className="min-w-0 lg:border-l lg:border-slate-200 lg:pl-4">
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-slate-600">ยิงลบรายการ</label>
 
             <input

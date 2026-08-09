@@ -7,12 +7,9 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ColumnWidthsProvider } from "./context/ColumnWidths";
 import "react-datepicker/dist/react-datepicker.css";
 import BillImport from "./pages/BillImport";
-// import BillManual from "./pages/ImportManual";
-// import BillScanWarehouse from "./pages/BillScanWarehouse";
 import BillScanDc from "./pages/BillScanDc";
 import BillImportADV from "./pages/BillImportADV";
 import BillImportVGT from "./pages/BillImportVGT";
-import PrintLabel from "./pages/PrintLabel";
 import BillReport from "./pages/BillReport";
 import ProtectedRoute from "./context/ProtectedRoute";
 import ManageVehicles from "./pages/ManageVehicles";
@@ -29,14 +26,13 @@ import ManageHolidays from "./pages/ManageHolidays";
 import ReceiveReport from "./pages/ReceiveReport";
 import LabelPrintPage from "./pages/LabelPrintPage";
 import WarehouseScan from "./pages/WarehouseScan";
+import ProductWarehouse from "./pages/ProductWarehouse";
 import TruckloadScan from "./pages/TruckloadScan";
 import TruckLoadCreate from "./pages/TruckloadCreate";
 import TruckLoadPrint from "./pages/TruckLoadPrint";
 import DcReceivePage from "./pages/DcReceivePage";
 import MoveTk from "./pages/MoveTk";
-import MoveTkScanPage from "./pages/MoveTkScanPage";
-// import ImportVGT from "./pages/ImportVGT";
-// import ImportADV from "./pages/ImportADV";
+import MoveTkScan from "./pages/MoveTkScan";
 
 const RoleRedirect = () => {
   const { user } = useAuth();
@@ -92,37 +88,12 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              {/* <Route
-                path="/input"
-                element={
-                  <ProtectedRoute
-                    allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-                  >
-                    <BillManual />
-                  </ProtectedRoute>
-                }
-              /> */}
-              {/* <Route
-                path="/warehouse-scan"
-                element={
-                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
-                    <BillScanWarehouse />
-                  </ProtectedRoute>
-                }
-              /> */}
+
               <Route
                 path="/dc-scan"
                 element={
                   <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
                     <BillScanDc />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/labels"
-                element={
-                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
-                    <PrintLabel />
                   </ProtectedRoute>
                 }
               />
@@ -146,15 +117,16 @@ export default function App() {
               <Route path="/create-do" element={<CreateReceivePage />} />
               <Route path="/manage-holidays" element={<ManageHolidays />} />
               <Route path="/receive-report" element={<ReceiveReport />} />
-             <Route path="/label-print" element={<LabelPrintPage />} />
-             <Route path="/warehouse-scan" element={<WarehouseScan />} />
-             <Route path="/truck-scan" element={<TruckloadScan />} />
-             <Route path="/truck-scan/:truckLoadId" element={<TruckloadScan />} />
-             <Route path="/truck-create" element={<TruckLoadCreate />} />
-             <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrint />} />
-             <Route path="/dc-receive" element={<DcReceivePage />} />
-             <Route path="/move-tk" element={<MoveTk />} />
-             <Route path="/move-tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScanPage />} />
+              <Route path="/label-print" element={<LabelPrintPage />} />
+              <Route path="/warehouse-scan" element={<WarehouseScan />} />
+              <Route path="/product-warehouse" element={<ProductWarehouse />} />
+              <Route path="/truck-scan" element={<TruckloadScan />} />
+              <Route path="/truck-scan/:truckLoadId" element={<TruckloadScan />} />
+              <Route path="/truck-create" element={<TruckLoadCreate />} />
+              <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrint />} />
+              <Route path="/dc-receive" element={<DcReceivePage />} />
+              <Route path="/move-tk" element={<MoveTk />} />
+              <Route path="/move-tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScan />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>

@@ -52,6 +52,7 @@ export default function CreateReceivePage() {
 
   const [showPackageModal, setShowPackageModal] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [scanBarcode, setScanBarcode] = useState("");
 
   const [loadingCustomers, setLoadingCustomers] = useState(false);
@@ -561,23 +562,32 @@ export default function CreateReceivePage() {
     setShipperSearch("");
     setRecipientSearch("");
     setExpandedRecipientIds({});
+    setShowSaveConfirm(false);
     setError(null);
     setSuccess(null);
   };
 
+  const requestSaveReceive = () => {
+    setError(null);
+    setSuccess(null);
+
+    const validationError = validateReceive();
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setShowSaveConfirm(true);
+  };
+
   const handleSaveReceive = async () => {
+    setShowSaveConfirm(false);
     setSaving(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const validationError = validateReceive();
-
-      if (validationError) {
-        setError(validationError);
-        return;
-      }
-
       const payload = {
         receiveHeader: {
           reference_no: form.reference_no || null,
@@ -680,7 +690,7 @@ export default function CreateReceivePage() {
 
             <button
               type="button"
-              onClick={handleSaveReceive}
+              onClick={requestSaveReceive}
               disabled={saving}
               className={`rounded-md px-4 py-1 text-xs font-semibold ${
                 saving ? "bg-slate-300 text-slate-500" : "bg-emerald-600 text-white hover:bg-emerald-700"
@@ -723,6 +733,40 @@ export default function CreateReceivePage() {
         </div>
 
         {/* <ReceiveTrackingSection /> */}
+
+        {showSaveConfirm && (
+          <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm animate-scaleIn rounded-2xl bg-white p-5 shadow-xl">
+              <h3 className="text-base font-bold text-slate-800">ยืนยันบันทึกบิล</h3>
+              <p className="mt-2 text-sm text-slate-600">ต้องการบันทึกบิลนี้ใช่หรือไม่</p>
+
+              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                <div>ผู้ส่ง: {form.shipper_name || "-"}</div>
+                <div>ผู้รับ: {form.recipient_detail_name || form.recipient_name || "-"}</div>
+                <div>จำนวน Package: {packageRows.length.toLocaleString("th-TH")}</div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSaveConfirm(false)}
+                  disabled={saving}
+                  className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  ไม่
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSaveReceive()}
+                  disabled={saving}
+                  className="h-9 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-300"
+                >
+                  {saving ? "กำลังบันทึก..." : "ใช่"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <ReceiveModals
           customerId={form.customer_id}

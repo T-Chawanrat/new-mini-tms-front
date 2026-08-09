@@ -65,7 +65,7 @@ export default function MoveTkTruckTable({ rows, selectedId, loading, emptyText,
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${truck.is_close === "Y" ? "bg-slate-100 text-slate-600" : "bg-emerald-50 text-emerald-700"}`}
                     >
-                      {truck.is_close === "Y" ? "ปิดแล้ว" : "ยังไม่ปิด"}
+                      {truck.is_close === "Y" ? "ปิดบรรทุก" : "ยังไม่ปิด"}
                     </span>
                   </td>
                 </tr>

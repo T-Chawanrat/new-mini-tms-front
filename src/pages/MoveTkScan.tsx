@@ -11,7 +11,7 @@ import type { MoveTkProduct, MoveTkTruck } from "../components/moveTk/types";
 import AxiosInstance from "../utils/AxiosInstance";
 import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
 
-export default function MoveTkScanPage() {
+export default function MoveTkScan() {
   const navigate = useNavigate();
   const { sourceTruckLoadId = "", targetTruckLoadId = "" } = useParams<{
     sourceTruckLoadId: string;
@@ -234,7 +234,7 @@ export default function MoveTkScanPage() {
               className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
             />
           </div>
-          <div className="lg:border-l lg:border-slate-200 lg:pl-4">
+          <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">ยิงลบรายการ</label>
             <input
               ref={removeInputRef}

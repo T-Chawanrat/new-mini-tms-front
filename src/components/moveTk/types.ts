@@ -19,6 +19,7 @@ export type MoveTkProduct = {
   driver_type: "EMPLOYEE" | "CONTRACTOR";
   license_plate: string | null;
   license_plate_province_id: number | null;
+  license_province: string | null;
   to_warehouse_id: number | null;
   to_warehouse_name: string | null;
 };

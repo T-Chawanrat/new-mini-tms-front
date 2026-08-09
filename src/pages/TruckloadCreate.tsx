@@ -33,7 +33,7 @@ type Vehicle = {
   id?: number;
   vehicle_id?: number;
   license_plate: string;
-  license_province: string | null;
+  license_plate_province: string | null;
   model: string | null;
 };
 
@@ -72,6 +72,7 @@ type TruckLoadRow = {
 
   driver_name?: string | null;
   employee_code?: string | null;
+  tel?: string | null;
 
   vehicle_id?: number | null;
   license_plate?: string | null;
@@ -162,7 +163,7 @@ const getDriverLabel = (driver: DriverUser) => {
 };
 
 const getVehicleLabel = (vehicle: Vehicle) => {
-  const detail = [vehicle.license_province, vehicle.model].filter(Boolean).join(" - ");
+  const detail = [vehicle.license_plate_province, vehicle.model].filter(Boolean).join(" - ");
 
   return detail ? `${vehicle.license_plate} - ${detail}` : vehicle.license_plate;
 };
@@ -595,6 +596,13 @@ export default function TruckLoadCreate() {
             </span>
           </div>
         ),
+      },
+      {
+        field: "tel",
+        headerName: "เบอร์โทรคนขับ",
+        width: 135,
+        minWidth: 125,
+        renderCell: (params) => <div className="flex h-full w-full items-center text-slate-700">{params.row.tel || "-"}</div>,
       },
       {
         field: "count_box",

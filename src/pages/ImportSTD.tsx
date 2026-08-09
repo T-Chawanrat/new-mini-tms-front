@@ -186,6 +186,7 @@ export default function BillImport() {
 
   const [loadingFile, setLoadingFile] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -349,7 +350,10 @@ export default function BillImport() {
     reader.readAsArrayBuffer(selectedFile);
   };
 
-  const handleSave = async () => {
+  const requestSave = () => {
+    setError(null);
+    setSuccess(null);
+
     if (!selectedCustomerId) {
       setError("กรุณาเลือก Customer ก่อนนำเข้า");
       return;
@@ -368,6 +372,18 @@ export default function BillImport() {
     if (hasDuplicateSerial || hasInvalidPhone || hasBlankShipperCode || hasInvalidSubdistrict) {
       return;
     }
+
+    setShowSaveConfirm(true);
+  };
+
+  const handleSave = async () => {
+    if (!file) {
+      setShowSaveConfirm(false);
+      setError("กรุณาเลือกไฟล์ Excel");
+      return;
+    }
+
+    setShowSaveConfirm(false);
 
     setSaving(true);
     setError(null);
@@ -498,7 +514,7 @@ export default function BillImport() {
           <div className="flex items-end justify-end">
             <button
               type="button"
-              onClick={handleSave}
+              onClick={requestSave}
               disabled={Boolean(disabledReason) || hasValidationError}
               title={disabledReason}
               className={`h-8 rounded-md px-4 text-xs font-semibold ${
@@ -548,6 +564,40 @@ export default function BillImport() {
       {error && <div className="mb-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{error}</div>}
 
       {success && <div className="mb-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-700">{success}</div>}
+
+      {showSaveConfirm && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm animate-scaleIn rounded-2xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-bold text-slate-800">ยืนยันนำเข้าบิล</h3>
+            <p className="mt-2 text-sm text-slate-600">ต้องการบันทึกข้อมูลจากไฟล์ Excel นี้ใช่หรือไม่</p>
+
+            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <div className="truncate" title={fileName}>ไฟล์: {fileName || "-"}</div>
+              <div>จำนวนบิล: {billCount.toLocaleString("th-TH")}</div>
+              <div>จำนวนแถว: {rows.length.toLocaleString("th-TH")}</div>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSaveConfirm(false)}
+                disabled={saving}
+                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                ไม่
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={saving}
+                className="h-9 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-300"
+              >
+                {saving ? "กำลังบันทึก..." : "ใช่"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-md border border-slate-200 bg-white shadow-sm">
         <div className="max-h-[72vh] overflow-auto rounded-md">

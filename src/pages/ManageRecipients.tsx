@@ -449,10 +449,6 @@ export default function ManageRecipients() {
       const data = res.data || [];
 
       setCustomers(data);
-
-      if (data.length > 0) {
-        setCustomerId((prev) => prev || String(data[0].id));
-      }
     } catch (err) {
       alert(getErrorMessage(err, "fetch customers failed"));
     }
@@ -514,7 +510,14 @@ export default function ManageRecipients() {
   }, [user, isCustomer]);
 
   useEffect(() => {
-    if (!user || !customerId) return;
+    if (!user) return;
+
+    if (!customerId) {
+      setRows([]);
+      setRowCount(0);
+      setExpandedRecipientId(null);
+      return;
+    }
 
     const firstPage = {
       page: 0,
@@ -952,6 +955,7 @@ export default function ManageRecipients() {
               }}
               className="input-modern"
             >
+              <option value="">เลือกผู้รับ</option>
               {customers.map((customer: Customer) => (
                 <option key={customer.id} value={customer.id}>
                   {customer.id} {customer.code} - {customer.name}
