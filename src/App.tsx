@@ -27,10 +27,11 @@ import ReceiveReport from "./pages/ReceiveReport";
 import LabelPrintPage from "./pages/LabelPrintPage";
 import WarehouseScan from "./pages/WarehouseScan";
 import ProductWarehouse from "./pages/ProductWarehouse";
+import ProductTruck from "./pages/ProductTruck";
 import TruckloadScan from "./pages/TruckloadScan";
 import TruckLoadCreate from "./pages/TruckloadCreate";
 import TruckLoadPrint from "./pages/TruckLoadPrint";
-import DcReceivePage from "./pages/DcReceivePage";
+import DcReceive from "./pages/DcReceive";
 import MoveTk from "./pages/MoveTk";
 import MoveTkScan from "./pages/MoveTkScan";
 
@@ -120,11 +121,12 @@ export default function App() {
               <Route path="/label-print" element={<LabelPrintPage />} />
               <Route path="/warehouse-scan" element={<WarehouseScan />} />
               <Route path="/product-warehouse" element={<ProductWarehouse />} />
+              <Route path="/product-truck" element={<ProductTruck />} />
               <Route path="/truck-scan" element={<TruckloadScan />} />
               <Route path="/truck-scan/:truckLoadId" element={<TruckloadScan />} />
               <Route path="/truck-create" element={<TruckLoadCreate />} />
               <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrint />} />
-              <Route path="/dc-receive" element={<DcReceivePage />} />
+              <Route path="/dc-receive" element={<DcReceive />} />
               <Route path="/move-tk" element={<MoveTk />} />
               <Route path="/move-tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScan />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />

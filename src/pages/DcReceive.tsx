@@ -3,21 +3,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../utils/AxiosInstance";
-import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
+import { formatThaiDateTime, formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
 
 type DcReceiveRow = {
   serial_id: string;
   serial_no: string;
+  movement_date: string | null;
   truck_load_id: number;
   truck_code: string;
   driver_name: string | null;
   license_plate: string | null;
-  license_plate_province_id: number | null;
+  license_province: string | null;
 };
 
-const tableHeaders = ["SERIAL NO", "TRUCK CODE", "DRIVER", "LICENSE PLATE", "PROVINCE ID"];
+const countTruckLoads = (rows: DcReceiveRow[]) =>
+  new Set(rows.map((row) => row.truck_load_id).filter(Boolean)).size;
 
-export default function DcReceivePage() {
+export default function DcReceive() {
   const receiveInputRef = useRef<HTMLInputElement>(null);
   const removeInputRef = useRef<HTMLInputElement>(null);
   const successAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -126,20 +128,37 @@ export default function DcReceivePage() {
 
   const renderTable = (rows: DcReceiveRow[], emptyText: string, color: "red" | "green") => (
     <div className="min-h-0 flex-1 overflow-auto">
-      <table className="w-full border-collapse text-xs">
+      <table className="w-full min-w-[1050px] table-fixed border-collapse text-xs">
         <thead className="sticky top-0 z-10 bg-slate-100 text-slate-600">
-          <tr>{tableHeaders.map((header) => <th key={header} className="whitespace-nowrap border-b border-slate-200 px-3 py-2 text-left">{header}</th>)}</tr>
+          <tr>
+            <th className="w-[330px] whitespace-nowrap border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
+            <th className="w-[180px] whitespace-nowrap border-b border-slate-200 px-3 py-2 text-left">วันที่</th>
+            <th className="w-[200px] whitespace-nowrap border-b border-slate-200 px-3 py-2 text-left">เลขใบปิดบรรทุก</th>
+            <th className="w-[170px] whitespace-nowrap border-b border-slate-200 px-3 py-2 text-left">คนขับ</th>
+            <th className="w-[170px] whitespace-nowrap border-b border-slate-200 px-3 py-2 text-left">ทะเบียนรถ</th>
+          </tr>
         </thead>
         <tbody>
           {!rows.length ? (
-            <tr><td colSpan={5} className="py-12 text-center text-sm text-slate-500">{loading ? "กำลังโหลด..." : emptyText}</td></tr>
-          ) : rows.map((row) => (
-            <tr key={`${row.truck_load_id}-${row.serial_id}-${row.serial_no}`} className="odd:bg-white even:bg-slate-50/70">
-              <td className="border-b border-slate-100 px-3 py-2"><span className={`rounded-md px-2 py-1 font-mono font-semibold ${color === "red" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>{row.serial_no}</span></td>
-              <td className="border-b border-slate-100 px-3 py-2">{row.truck_code || "-"}</td>
-              <td className="border-b border-slate-100 px-3 py-2">{row.driver_name || "-"}</td>
-              <td className="border-b border-slate-100 px-3 py-2">{row.license_plate || "-"}</td>
-              <td className="border-b border-slate-100 px-3 py-2">{row.license_plate_province_id ?? "-"}</td>
+            <tr><td colSpan={5} className="px-3 py-10 text-center text-sm text-slate-500">{loading ? "กำลังโหลดรายการ..." : emptyText}</td></tr>
+          ) : rows.map((row, index) => (
+            <tr
+              key={`${row.truck_load_id}-${row.serial_id}-${row.serial_no}`}
+              className={
+                index % 2 === 0
+                  ? color === "red" ? "bg-white hover:bg-blue-50/50" : "bg-white hover:bg-emerald-50/50"
+                  : color === "red" ? "bg-slate-50/70 hover:bg-blue-50/50" : "bg-slate-50/70 hover:bg-emerald-50/50"
+              }
+            >
+              <td title={row.serial_no} className="whitespace-nowrap border-b border-slate-100 px-3 py-2 align-top">
+                <span className={`inline-block whitespace-nowrap rounded-lg border px-2.5 py-1 font-mono text-sm font-semibold leading-5 ${color === "red" ? "border-red-300 bg-red-50 text-red-600" : "border-emerald-300 bg-emerald-50 text-emerald-700"}`}>
+                  {row.serial_no}
+                </span>
+              </td>
+              <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2">{formatThaiDateTime(row.movement_date)}</td>
+              <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2">{row.truck_code || "-"}</td>
+              <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2">{row.driver_name || "-"}</td>
+              <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2">{[row.license_plate, row.license_province].filter(Boolean).join(" ") || "-"}</td>
             </tr>
           ))}
         </tbody>
@@ -160,8 +179,8 @@ export default function DcReceivePage() {
       {error && <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       {message && !error && <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div>}
       <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-2">
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex justify-between border-b border-slate-200 px-4 py-2.5 text-sm font-semibold"><span>รายการรอยิง</span><span>{formatThaiNumber(pendingRows.length)} รายการ</span></div>{renderTable(pendingRows, "ไม่มีรายการรอยิง", "red")}</section>
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex justify-between border-b border-slate-200 px-4 py-2.5 text-sm font-semibold"><span>รายการที่ยิงแล้ว</span><span>{formatThaiNumber(scannedRows.length)} รายการ</span></div>{renderTable(scannedRows, "ยังไม่มีรายการที่ยิง", "green")}</section>
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5"><span className="text-sm font-semibold text-slate-700">รายการรอยิง</span><span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">{formatThaiNumber(pendingRows.length)} รายการ · {formatThaiNumber(countTruckLoads(pendingRows))} ใบปิดบรรทุก</span></div>{renderTable(pendingRows, "ไม่มีรายการรอยิง", "red")}</section>
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5"><span className="text-sm font-semibold text-slate-700">รายการที่ยิงแล้ว</span><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{formatThaiNumber(scannedRows.length)} รายการ · {formatThaiNumber(countTruckLoads(scannedRows))} ใบปิดบรรทุก</span></div>{renderTable(scannedRows, "ยังไม่มีรายการที่ยิง", "green")}</section>
       </div>
     </div>
   );
