@@ -29,7 +29,8 @@ AxiosInstance.interceptors.response.use(
     // ✅ endpoint login ไม่ต้องถือว่า token หมดอายุ
     const isLoginRequest =
       url.includes("/login") ||
-      url.includes("/auth/login");
+      url.includes("/auth/login") ||
+      url.includes("/select-warehouse");
 
     if (status === 401 && !isLoginRequest) {
       tokenExpiredHandler();

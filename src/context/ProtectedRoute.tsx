@@ -9,9 +9,9 @@ type Props = {
 
 const ProtectedRoute: React.FC<Props> = ({ children, allowedRoles }) => {
   const { isLoggedIn, user } = useAuth();
+  const token = localStorage.getItem("token");
 
-  
-  if (!isLoggedIn) return <Navigate to="/signin" replace />;
+  if (!token || !isLoggedIn) return <Navigate to="/signin" replace />;
 
   
   if (!user) return null; 

@@ -72,6 +72,7 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
           <>
             <span className="block mr-1 font-medium text-theme-sm text-gray-700">
               {user.first_name} {user.last_name}
+              {user.warehouse_name ? ` | ${user.warehouse_name}` : ""}
             </span>
 
             <svg

@@ -1,16 +1,16 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import SignIn from "./pages/AuthPages/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import { ColumnWidthsProvider } from "./context/ColumnWidths";
 import "react-datepicker/dist/react-datepicker.css";
-import BillImport from "./pages/BillImport";
-import BillScanDc from "./pages/BillScanDc";
-import BillImportADV from "./pages/BillImportADV";
-import BillImportVGT from "./pages/BillImportVGT";
-import BillReport from "./pages/BillReport";
+// import BillImport from "./pages/BillImport";
+// import BillScanDc from "./pages/BillScanDc";
+// import BillImportADV from "./pages/BillImportADV";
+// import BillImportVGT from "./pages/BillImportVGT";
+// import BillReport from "./pages/BillReport";
 import ProtectedRoute from "./context/ProtectedRoute";
 import ManageVehicles from "./pages/ManageVehicles";
 import ManageUsers from "./pages/ManageUsers";
@@ -35,17 +35,6 @@ import DcReceive from "./pages/DcReceive";
 import MoveTk from "./pages/MoveTk";
 import MoveTkScan from "./pages/MoveTkScan";
 
-const RoleRedirect = () => {
-  const { user } = useAuth();
-  const roleId = Number(user?.role_id);
-
-  if ([1, 2, 5, 6, 7, 8, 9, 10].includes(roleId)) return <Navigate to="/import" replace />;
-  if (roleId === 3) return <Navigate to="/warehouse-scan" replace />;
-  if (roleId === 4) return <Navigate to="/dc-receive" replace />;
-
-  return <Navigate to="/signin" replace />;
-};
-
 export default function App() {
   return (
     <AuthProvider>
@@ -60,12 +49,12 @@ export default function App() {
                 index
                 element={
                   <ProtectedRoute>
-                    <RoleRedirect />
+                    <ImportSTD />
                   </ProtectedRoute>
                 }
               />
 
-              <Route
+              {/* <Route
                 path="/import"
                 element={
                   <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
@@ -105,7 +94,7 @@ export default function App() {
                     <BillReport />
                   </ProtectedRoute>
                 }
-              />
+              /> */}
               <Route path="/manage/vehicles" element={<ManageVehicles />} />
               <Route path="/manage/users" element={<ManageUsers />} />
               <Route path="/manage/customers" element={<ManageCustomers />} />

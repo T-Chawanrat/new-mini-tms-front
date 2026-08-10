@@ -18,6 +18,7 @@ export interface UserType {
   last_name: string | null;
   role_id: number;
   warehouse_id: number | null;
+  warehouse_name?: string | null;
   customer_id: number | null;
   license_no?: string | null;
   license_expire?: string | null;
@@ -114,7 +115,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const checkTokenExpiration = () => {
       const token = localStorage.getItem("token");
 
-      if (token && isTokenExpired(token)) {
+      if (!token) {
+        clearAuthData();
+        return;
+      }
+
+      if (isTokenExpired(token)) {
         triggerTokenExpired();
       }
     };
