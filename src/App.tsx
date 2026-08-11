@@ -34,6 +34,7 @@ import TruckLoadPrint from "./pages/TruckLoadPrint";
 import DcReceive from "./pages/DcReceive";
 import MoveTk from "./pages/MoveTk";
 import MoveTkScan from "./pages/MoveTkScan";
+import ContractorCreate from "./pages/ContractorCreate";
 
 export default function App() {
   return (
@@ -96,6 +97,7 @@ export default function App() {
                 }
               /> */}
               <Route path="/manage/vehicles" element={<ManageVehicles />} />
+              <Route path="/contractor-create" element={<ContractorCreate />} />
               <Route path="/manage/users" element={<ManageUsers />} />
               <Route path="/manage/customers" element={<ManageCustomers />} />
               <Route path="/std" element={<ImportSTD />} />

@@ -41,6 +41,12 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
+        name: "create contractor",
+        path: "/contractor-create",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
         name: "manage shippers",
         path: "/manage/shippers",
         icon: <File size={20} />,

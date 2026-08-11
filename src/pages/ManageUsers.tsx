@@ -195,8 +195,8 @@ export default function ManageUsers() {
       const last_name = cleanNameInput(form.last_name);
       const citizen_id = cleanNumberInput(form.citizen_id).slice(0, 13);
       const email = cleanEmailInput(form.email);
-      const tel = cleanNumberInput(form.tel);
-      const license_no = cleanCodeInput(form.license_no);
+      const tel = cleanNumberInput(form.tel).slice(0, 10);
+      const license_no = cleanNumberInput(form.license_no).slice(0, 8);
 
       if (!employee_code) {
         setError("กรุณากรอกรหัสพนักงาน");
@@ -306,8 +306,8 @@ export default function ManageUsers() {
     const last_name = cleanNameInput(editForm.last_name);
     const citizen_id = cleanNumberInput(editForm.citizen_id).slice(0, 13);
     const email = cleanEmailInput(editForm.email);
-    const tel = cleanNumberInput(editForm.tel);
-    const license_no = cleanCodeInput(editForm.license_no);
+    const tel = cleanNumberInput(editForm.tel).slice(0, 10);
+    const license_no = cleanNumberInput(editForm.license_no).slice(0, 8);
 
     if (!employee_code) {
       alert("กรุณากรอกรหัสพนักงาน");
@@ -737,7 +737,8 @@ export default function ManageUsers() {
                     className="input-modern w-full"
                     placeholder="เบอร์โทร"
                     value={form.tel}
-                    onChange={(e) => handleChange("tel", cleanNumberInput(e.target.value))}
+                    maxLength={10}
+                    onChange={(e) => handleChange("tel", cleanNumberInput(e.target.value).slice(0, 10))}
                   />
                 </div>
 
@@ -776,7 +777,8 @@ export default function ManageUsers() {
                       className="input-modern w-full"
                       placeholder="เลขใบขับขี่"
                       value={form.license_no}
-                      onChange={(e) => handleChange("license_no", cleanCodeInput(e.target.value))}
+                      maxLength={8}
+                      onChange={(e) => handleChange("license_no", cleanNumberInput(e.target.value).slice(0, 8))}
                     />
                   </div>
 
@@ -927,7 +929,8 @@ export default function ManageUsers() {
                     className="input-modern w-full"
                     placeholder="เบอร์โทร"
                     value={editForm.tel}
-                    onChange={(e) => handleEditChange("tel", cleanNumberInput(e.target.value))}
+                    maxLength={10}
+                    onChange={(e) => handleEditChange("tel", cleanNumberInput(e.target.value).slice(0, 10))}
                   />
                 </div>
 
@@ -937,7 +940,8 @@ export default function ManageUsers() {
                     className="input-modern w-full"
                     placeholder="เลขใบขับขี่"
                     value={editForm.license_no}
-                    onChange={(e) => handleEditChange("license_no", cleanCodeInput(e.target.value))}
+                    maxLength={8}
+                    onChange={(e) => handleEditChange("license_no", cleanNumberInput(e.target.value).slice(0, 8))}
                   />
                 </div>
 

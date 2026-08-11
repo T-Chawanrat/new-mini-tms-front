@@ -224,12 +224,12 @@ export default function ManageVehicles() {
 
   const buildPayload = () => {
     return {
-      license_plate: form.license_plate,
+      license_plate: form.license_plate.slice(0, 7),
       license_plate_province_id: form.license_plate_province_id,
       brand_id: form.brand_id,
       model: form.model || null,
       color: form.color || null,
-      vehicle_year: form.vehicle_year || null,
+      vehicle_year: form.vehicle_year.slice(0, 4) || null,
       vehicle_type_id: form.vehicle_type_id,
       fuel_type: form.fuel_type || null,
       capacity_kg: form.capacity_kg,
@@ -592,8 +592,9 @@ export default function ManageVehicles() {
                         className="input-modern w-full"
                         placeholder="เช่น 1กก1234"
                         value={form.license_plate}
+                        maxLength={7}
                         onChange={(e) => {
-                          const value = removeSpaces(e.target.value).toUpperCase().replace(/-/g, "");
+                          const value = removeSpaces(e.target.value).toUpperCase().replace(/-/g, "").slice(0, 7);
 
                           handleChange("license_plate", value);
                         }}
@@ -654,7 +655,8 @@ export default function ManageVehicles() {
                         className="input-modern w-full"
                         placeholder="เช่น 2024"
                         value={form.vehicle_year}
-                        onChange={(e) => handleChange("vehicle_year", cleanNumberInput(e.target.value))}
+                        maxLength={4}
+                        onChange={(e) => handleChange("vehicle_year", cleanNumberInput(e.target.value).slice(0, 4))}
                       />
                     </div>
 

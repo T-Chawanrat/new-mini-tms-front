@@ -16,11 +16,6 @@ type Option = {
   name: string;
 };
 
-type Province = {
-  id: number;
-  province_name: string;
-};
-
 type DriverUser = {
   id?: number;
   user_id?: number;
@@ -33,6 +28,19 @@ type Vehicle = {
   id?: number;
   vehicle_id?: number;
   license_plate: string;
+  license_plate_province: string | null;
+  model: string | null;
+};
+
+type ContractorVehicle = {
+  vehicle_contractor_id: number;
+  user_truck_id: number;
+  employee_code: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  tel: string | null;
+  license_plate: string;
+  license_plate_province_id: number;
   license_plate_province: string | null;
   model: string | null;
 };
@@ -111,6 +119,12 @@ type VehiclesResponse = {
   data: Vehicle[];
 };
 
+type ContractorVehiclesResponse = {
+  success?: boolean;
+  message?: string;
+  data: ContractorVehicle[];
+};
+
 type CreateTruckLoadResponse = {
   success?: boolean;
   message?: string;
@@ -168,6 +182,13 @@ const getVehicleLabel = (vehicle: Vehicle) => {
   return detail ? `${vehicle.license_plate} - ${detail}` : vehicle.license_plate;
 };
 
+const getContractorLabel = (contractor: ContractorVehicle) => {
+  const driverName = [contractor.first_name, contractor.last_name].filter(Boolean).join(" ").trim();
+  const vehicle = [contractor.license_plate, contractor.license_plate_province].filter(Boolean).join(" - ");
+
+  return `${contractor.employee_code || contractor.user_truck_id} - ${driverName || "ไม่ระบุชื่อ"} | ${vehicle}`;
+};
+
 export default function TruckLoadCreate() {
   const navigate = useNavigate();
 
@@ -175,11 +196,9 @@ export default function TruckLoadCreate() {
 
   const [drivers, setDrivers] = useState<DriverUser[]>([]);
 
-  const [dummyUsers, setDummyUsers] = useState<DriverUser[]>([]);
+  const [contractors, setContractors] = useState<ContractorVehicle[]>([]);
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-
-  const [provinces, setProvinces] = useState<Province[]>([]);
 
   const [rows, setRows] = useState<TruckLoadRow[]>([]);
 
@@ -189,19 +208,11 @@ export default function TruckLoadCreate() {
 
   const [selectedDriver, setSelectedDriver] = useState("");
 
-  const [selectedDummyUser, setSelectedDummyUser] = useState("");
+  const [selectedContractor, setSelectedContractor] = useState("");
 
   const [selectedVehicle, setSelectedVehicle] = useState("");
 
   const [selectedToWarehouse, setSelectedToWarehouse] = useState("");
-
-  const [extraDriverFirstName, setExtraDriverFirstName] = useState("");
-
-  const [extraDriverLastName, setExtraDriverLastName] = useState("");
-
-  const [extraLicensePlate, setExtraLicensePlate] = useState("");
-
-  const [selectedExtraProvince, setSelectedExtraProvince] = useState("");
 
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -227,14 +238,10 @@ export default function TruckLoadCreate() {
     setTruckType("MAIN");
 
     setSelectedDriver("");
-    setSelectedDummyUser("");
+    setSelectedContractor("");
     setSelectedVehicle("");
     setSelectedToWarehouse("");
 
-    setExtraDriverFirstName("");
-    setExtraDriverLastName("");
-    setExtraLicensePlate("");
-    setSelectedExtraProvince("");
   };
 
   const fetchOptions = useCallback(async () => {
@@ -242,35 +249,32 @@ export default function TruckLoadCreate() {
       setLoadingOptions(true);
       setError(null);
 
-      const [warehouseResponse, driverResponse, dummyUserResponse, vehicleResponse, provinceResponse] = await Promise.all([
+      const [warehouseResponse, driverResponse, contractorResponse, vehicleResponse] = await Promise.all([
         AxiosInstance.get<Option[]>("/warehouses"),
 
         AxiosInstance.get<DriverUsersResponse>("/truck-loads/drivers"),
 
-        AxiosInstance.get<DriverUsersResponse>("/truck-loads/dummy-users"),
+        AxiosInstance.get<ContractorVehiclesResponse>("/contractors/available"),
 
         AxiosInstance.get<VehiclesResponse>("/vehicles"),
 
-        AxiosInstance.get<Province[]>("/provinces"),
       ]);
 
       setWarehouses(Array.isArray(warehouseResponse.data) ? warehouseResponse.data : []);
 
       setDrivers(Array.isArray(driverResponse.data?.data) ? driverResponse.data.data : []);
 
-      setDummyUsers(Array.isArray(dummyUserResponse.data?.data) ? dummyUserResponse.data.data : []);
+      setContractors(Array.isArray(contractorResponse.data?.data) ? contractorResponse.data.data : []);
 
       setVehicles(Array.isArray(vehicleResponse.data?.data) ? vehicleResponse.data.data : []);
 
-      setProvinces(Array.isArray(provinceResponse.data) ? provinceResponse.data : []);
     } catch (err) {
       console.error("fetch truck load options error:", err);
 
       setWarehouses([]);
       setDrivers([]);
-      setDummyUsers([]);
+      setContractors([]);
       setVehicles([]);
-      setProvinces([]);
 
       setError(getErrorMessage(err, "ไม่สามารถโหลดข้อมูลคนขับ รถ และคลังปลายทางได้"));
     } finally {
@@ -343,13 +347,9 @@ export default function TruckLoadCreate() {
     setError(null);
 
     setSelectedDriver("");
-    setSelectedDummyUser("");
+    setSelectedContractor("");
     setSelectedVehicle("");
 
-    setExtraDriverFirstName("");
-    setExtraDriverLastName("");
-    setExtraLicensePlate("");
-    setSelectedExtraProvince("");
   };
 
   const handleSearch = () => {
@@ -388,28 +388,8 @@ export default function TruckLoadCreate() {
     }
 
     if (truckType === "EXTRA") {
-      if (!selectedDummyUser) {
-        setError("กรุณาเลือก User Dummy");
-        return;
-      }
-
-      if (!extraDriverFirstName.trim()) {
-        setError("กรุณากรอกชื่อคนขับรถ");
-        return;
-      }
-
-      if (!extraDriverLastName.trim()) {
-        setError("กรุณากรอกนามสกุลคนขับรถ");
-        return;
-      }
-
-      if (!extraLicensePlate.trim()) {
-        setError("กรุณากรอกทะเบียนรถ");
-        return;
-      }
-
-      if (!selectedExtraProvince) {
-        setError("กรุณาเลือกจังหวัดทะเบียนรถ");
+      if (!selectedContractor) {
+        setError("กรุณาเลือกคนขับและรถเสริม");
         return;
       }
     }
@@ -419,8 +399,10 @@ export default function TruckLoadCreate() {
 
     const selectedVehicleData = truckType === "MAIN" ? vehicles.find((vehicle) => vehicle.license_plate === selectedVehicle) : undefined;
 
-    const selectedDummyUserData =
-      truckType === "EXTRA" ? dummyUsers.find((user) => String(user.id ?? user.user_id ?? "") === selectedDummyUser) : undefined;
+    const selectedContractorData =
+      truckType === "EXTRA"
+        ? contractors.find((contractor) => String(contractor.vehicle_contractor_id) === selectedContractor)
+        : undefined;
 
     if (truckType === "MAIN" && !selectedDriverData) {
       setError("ไม่พบข้อมูลพนักงานขับรถที่เลือก");
@@ -432,13 +414,18 @@ export default function TruckLoadCreate() {
       return;
     }
 
+    if (truckType === "EXTRA" && !selectedContractorData) {
+      setError("ไม่พบข้อมูลคนขับและรถเสริมที่เลือก");
+      return;
+    }
+
     const userTruckId =
       truckType === "MAIN"
         ? (selectedDriverData?.id ?? selectedDriverData?.user_id ?? null)
-        : (selectedDummyUserData?.id ?? selectedDummyUserData?.user_id ?? null);
+        : (selectedContractorData?.user_truck_id ?? null);
 
     if (userTruckId === null) {
-      setError(truckType === "EXTRA" ? "ข้อมูล User Dummy ไม่มี user id" : "ข้อมูลพนักงานขับรถไม่มี user id");
+      setError("ข้อมูลคนขับไม่มี user id");
       return;
     }
 
@@ -452,17 +439,9 @@ export default function TruckLoadCreate() {
 
         user_truck_id: userTruckId,
 
-        employee_code: truckType === "MAIN" ? selectedDriverData?.employee_code : null,
-
-        driver_first_name: truckType === "EXTRA" ? extraDriverFirstName.trim() : selectedDriverData?.first_name || null,
-
-        driver_last_name: truckType === "EXTRA" ? extraDriverLastName.trim() : selectedDriverData?.last_name || null,
-
         vehicle_id: truckType === "MAIN" ? (selectedVehicleData?.id ?? selectedVehicleData?.vehicle_id ?? null) : null,
 
-        license_plate: truckType === "MAIN" ? selectedVehicleData?.license_plate : extraLicensePlate.trim(),
-
-        license_plate_province_id: truckType === "EXTRA" ? Number(selectedExtraProvince) : null,
+        vehicle_contractor_id: truckType === "EXTRA" ? selectedContractorData?.vehicle_contractor_id : null,
 
         to_warehouse_id: Number(selectedToWarehouse),
       });
@@ -676,8 +655,7 @@ export default function TruckLoadCreate() {
     creating ||
     !selectedToWarehouse ||
     (truckType === "MAIN" && (!selectedDriver || !selectedVehicle)) ||
-    (truckType === "EXTRA" &&
-      (!selectedDummyUser || !extraDriverFirstName.trim() || !extraDriverLastName.trim() || !extraLicensePlate.trim() || !selectedExtraProvince));
+    (truckType === "EXTRA" && !selectedContractor);
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
@@ -835,56 +813,23 @@ export default function TruckLoadCreate() {
                   </ModalSelect>
                 </>
               ) : (
-                <>
-                  <ModalSelect label="User Dummy" value={selectedDummyUser} onChange={setSelectedDummyUser} disabled={loadingOptions || creating}>
-                    <option value="">เลือก User Dummy</option>
+                <ModalSelect
+                  label="คนขับ / รถเสริม"
+                  value={selectedContractor}
+                  onChange={setSelectedContractor}
+                  disabled={loadingOptions || creating}
+                >
+                  <option value="">เลือกคนขับและรถเสริม</option>
 
-                    {dummyUsers.map((user) => (
-                      <option key={user.id ?? user.user_id ?? user.employee_code} value={String(user.id ?? user.user_id ?? "")}>
-                        {getDriverLabel(user)}
-                      </option>
-                    ))}
-                  </ModalSelect>
-
-                  <ModalInput
-                    label="ชื่อคนขับรถ"
-                    value={extraDriverFirstName}
-                    onChange={setExtraDriverFirstName}
-                    placeholder="กรอกชื่อคนขับรถ"
-                    disabled={creating}
-                  />
-
-                  <ModalInput
-                    label="นามสกุลคนขับรถ"
-                    value={extraDriverLastName}
-                    onChange={setExtraDriverLastName}
-                    placeholder="กรอกนามสกุลคนขับรถ"
-                    disabled={creating}
-                  />
-
-                  <ModalInput
-                    label="ทะเบียนรถ"
-                    value={extraLicensePlate}
-                    onChange={setExtraLicensePlate}
-                    placeholder="กรอกทะเบียนรถ"
-                    disabled={creating}
-                  />
-
-                  <ModalSelect
-                    label="จังหวัดทะเบียนรถ"
-                    value={selectedExtraProvince}
-                    onChange={setSelectedExtraProvince}
-                    disabled={loadingOptions || creating}
-                  >
-                    <option value="">เลือกจังหวัดทะเบียนรถ</option>
-
-                    {provinces.map((province) => (
-                      <option key={province.id} value={String(province.id)}>
-                        {province.province_name}
-                      </option>
-                    ))}
-                  </ModalSelect>
-                </>
+                  {contractors.map((contractor) => (
+                    <option
+                      key={contractor.vehicle_contractor_id}
+                      value={String(contractor.vehicle_contractor_id)}
+                    >
+                      {getContractorLabel(contractor)}
+                    </option>
+                  ))}
+                </ModalSelect>
               )}
 
               <ModalSelect label="To Warehouse" value={selectedToWarehouse} onChange={setSelectedToWarehouse} disabled={loadingOptions || creating}>
@@ -906,6 +851,10 @@ export default function TruckLoadCreate() {
               {!loadingOptions && truckType === "MAIN" && drivers.length === 0 && <p className="text-xs text-red-600">ไม่พบข้อมูลพนักงานขับรถ</p>}
 
               {!loadingOptions && truckType === "MAIN" && vehicles.length === 0 && <p className="text-xs text-red-600">ไม่พบข้อมูลทะเบียนรถ</p>}
+
+              {!loadingOptions && truckType === "EXTRA" && contractors.length === 0 && (
+                <p className="text-xs text-red-600">ไม่พบข้อมูลคนขับและรถเสริมที่พร้อมใช้งาน</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4">
@@ -1016,27 +965,3 @@ function ModalSelect({ label, value, onChange, disabled = false, children }: Mod
   );
 }
 
-type ModalInputProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-};
-
-function ModalInput({ label, value, onChange, placeholder = "", disabled = false }: ModalInputProps) {
-  return (
-    <div>
-      <label className="mb-1.5 block text-sm font-semibold text-slate-700">{label}</label>
-
-      <input
-        type="text"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-      />
-    </div>
-  );
-}
