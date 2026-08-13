@@ -33,6 +33,13 @@ export default function MoveTkScan() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [destinationWarning, setDestinationWarning] = useState<MoveTkProduct | null>(null);
+  const [confirmedMismatchSerialNos, setConfirmedMismatchSerialNos] = useState<string[]>([]);
+  const getTruckDetail = (truck: MoveTkTruck | null) => {
+    if (!truck) return "กำลังโหลดข้อมูล";
+    const vehicleType = truck.driver_type === "CONTRACTOR" ? "รถเสริม" : "รถปกติ";
+    const licensePlate = [truck.license_plate, truck.license_province].filter(Boolean).join(" - ") || "-";
+    return `${vehicleType} | ${truck.driver_name || "-"} | ${licensePlate}`;
+  };
 
   useEffect(() => {
     successAudioRef.current = new Audio(successSound);
@@ -60,6 +67,7 @@ export default function MoveTkScan() {
       const response = await AxiosInstance.get(`/move-tk/${sourceTruckLoadId}/products`);
       setPendingRows(Array.isArray(response.data?.data) ? response.data.data : []);
       setMovingRows([]);
+      setConfirmedMismatchSerialNos([]);
       window.setTimeout(() => addInputRef.current?.focus(), 0);
     } catch (requestError: any) {
       setError(requestError?.response?.data?.message || "ไม่สามารถโหลดสินค้าในใบปิดบรรทุกได้");
@@ -150,6 +158,7 @@ export default function MoveTkScan() {
         source_truck_load_id: Number(sourceTruckLoadId),
         target_truck_load_id: Number(targetTruckLoadId),
         serial_nos: movingRows.map((row) => row.serial_no),
+        confirmed_destination_mismatch_serial_nos: confirmedMismatchSerialNos,
       });
       playSound("success");
       if (response.data?.source_deleted) {
@@ -204,6 +213,9 @@ export default function MoveTkScan() {
             <div className="text-xs text-slate-500">
               {sourceTruck ? `${sourceTruck.warehouse_name || "-"} → ${sourceTruck.to_warehouse_name || "-"}` : "กำลังโหลดข้อมูล"}
             </div>
+            <div className="mt-1 truncate text-xs font-medium text-slate-600" title={getTruckDetail(sourceTruck)}>
+              {getTruckDetail(sourceTruck)}
+            </div>
           </div>
           <div className="flex shrink-0 items-center justify-center px-1 text-slate-400">
             <ArrowLeftRight size={24} strokeWidth={2} />
@@ -213,6 +225,9 @@ export default function MoveTkScan() {
             <div className="font-semibold text-slate-800">{targetTruck?.truck_code || targetTruckLoadId}</div>
             <div className="text-xs text-slate-500">
               {targetTruck ? `${targetTruck.warehouse_name || "-"} → ${targetTruck.to_warehouse_name || "-"}` : "กำลังโหลดข้อมูล"}
+            </div>
+            <div className="mt-1 truncate text-xs font-medium text-slate-600" title={getTruckDetail(targetTruck)}>
+              {getTruckDetail(targetTruck)}
             </div>
           </div>
         </div>
@@ -268,6 +283,11 @@ export default function MoveTkScan() {
           }}
           onConfirm={() => {
             moveRow(destinationWarning, "right");
+            setConfirmedMismatchSerialNos((current) =>
+              current.includes(destinationWarning.serial_no)
+                ? current
+                : [...current, destinationWarning.serial_no],
+            );
             setDestinationWarning(null);
             window.setTimeout(() => addInputRef.current?.focus(), 0);
           }}
@@ -291,7 +311,7 @@ export default function MoveTkScan() {
               {formatThaiNumber(movingRows.length)} รายการ
             </span>
           </div>
-          <MoveTkProductTable rows={movingRows} moved emptyText="ยังไม่มีรายการที่จะย้าย" />
+          <MoveTkProductTable rows={movingRows} moved destinationTruck={targetTruck} emptyText="ยังไม่มีรายการที่จะย้าย" />
         </section>
       </div>
     </div>

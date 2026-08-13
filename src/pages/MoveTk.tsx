@@ -65,6 +65,12 @@ export default function MoveTk() {
   const visibleTargets = useMemo(() => filterTrucks(targetTrucks, targetSearch), [targetSearch, targetTrucks]);
   const selectedSource = sourceTrucks.find((truck) => String(truck.truck_load_id) === sourceId);
   const selectedTarget = targetTrucks.find((truck) => String(truck.truck_load_id) === targetId);
+  const getTruckDetail = (truck?: MoveTkTruck) => {
+    if (!truck) return "เลือกจากตาราง";
+    const vehicleType = truck.driver_type === "CONTRACTOR" ? "รถเสริม" : "รถปกติ";
+    const licensePlate = [truck.license_plate, truck.license_province].filter(Boolean).join(" - ") || "-";
+    return `${vehicleType} | ${truck.driver_name || "-"} | ${licensePlate}`;
+  };
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
@@ -93,6 +99,9 @@ export default function MoveTk() {
             <div className="text-xs text-slate-500">
               {selectedSource ? `${selectedSource.warehouse_name || "-"} → ${selectedSource.to_warehouse_name || "-"}` : "เลือกจากตารางด้านซ้าย"}
             </div>
+            <div className="mt-1 truncate text-xs font-medium text-slate-600" title={getTruckDetail(selectedSource)}>
+              {getTruckDetail(selectedSource)}
+            </div>
           </div>
           <div className="flex shrink-0 items-center justify-center px-1 text-slate-400">
             <ArrowLeftRight size={24} strokeWidth={2} />
@@ -102,6 +111,9 @@ export default function MoveTk() {
             <div className="font-semibold text-slate-800">{selectedTarget?.truck_code || "ยังไม่ได้เลือก"}</div>
             <div className="text-xs text-slate-500">
               {selectedTarget ? `${selectedTarget.warehouse_name || "-"} → ${selectedTarget.to_warehouse_name || "-"}` : "เลือกจากตารางด้านขวา"}
+            </div>
+            <div className="mt-1 truncate text-xs font-medium text-slate-600" title={getTruckDetail(selectedTarget)}>
+              {getTruckDetail(selectedTarget)}
             </div>
           </div>
         </div>

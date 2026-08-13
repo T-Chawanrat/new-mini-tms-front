@@ -1,13 +1,14 @@
-import type { MoveTkProduct } from "./types";
+import type { MoveTkProduct, MoveTkTruck } from "./types";
 
 type Props = {
   rows: MoveTkProduct[];
   loading?: boolean;
   moved?: boolean;
+  destinationTruck?: MoveTkTruck | null;
   emptyText: string;
 };
 
-export default function MoveTkProductTable({ rows, loading = false, moved = false, emptyText }: Props) {
+export default function MoveTkProductTable({ rows, loading = false, moved = false, destinationTruck = null, emptyText }: Props) {
   return (
     <div className="min-h-0 flex-1 overflow-auto">
       <table className="w-full table-fixed border-collapse text-xs">
@@ -15,7 +16,7 @@ export default function MoveTkProductTable({ rows, loading = false, moved = fals
           <tr>
             <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
             <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-left">ประเภทรถ</th>
-            <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">ทะเบียนรถ / จังหวัด</th>
+            <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">ทะเบียนรถ</th>
           </tr>
         </thead>
         <tbody>
@@ -26,7 +27,10 @@ export default function MoveTkProductTable({ rows, loading = false, moved = fals
               </td>
             </tr>
           ) : (
-            rows.map((row, index) => (
+            rows.map((row, index) => {
+              const truck = moved && destinationTruck ? destinationTruck : row;
+
+              return (
               <tr key={row.product_truck_id} className={index % 2 === 0 ? "bg-white hover:bg-blue-50/50" : "bg-slate-50/70 hover:bg-blue-50/50"}>
                 <td className="border-b border-slate-100 px-3 py-2 align-top">
                   <span
@@ -35,19 +39,18 @@ export default function MoveTkProductTable({ rows, loading = false, moved = fals
                     {row.serial_no}
                   </span>
                 </td>
-                <td className="border-b border-slate-100 px-3 py-2">{row.driver_type === "CONTRACTOR" ? "รถเสริม" : "รถปกติ"}</td>
+                <td className="border-b border-slate-100 px-3 py-2">{truck.driver_type === "CONTRACTOR" ? "รถเสริม" : "รถปกติ"}</td>
                 <td className="border-b border-slate-100 px-3 py-2">
-                  <div className="flex min-w-0 flex-col justify-center leading-5">
-                    <span className="truncate font-medium text-slate-700" title={row.license_plate || "-"}>
-                      {row.license_plate || "-"}
-                    </span>
-                    <span className="truncate text-[11px] text-slate-500" title={row.license_province || "-"}>
-                      {row.license_province || "-"}
-                    </span>
-                  </div>
+                  <span
+                    className="block truncate font-medium text-slate-700"
+                    title={[truck.license_plate, truck.license_province].filter(Boolean).join(" - ") || "-"}
+                  >
+                    {[truck.license_plate, truck.license_province].filter(Boolean).join(" - ") || "-"}
+                  </span>
                 </td>
               </tr>
-            ))
+              );
+            })
           )}
         </tbody>
       </table>
