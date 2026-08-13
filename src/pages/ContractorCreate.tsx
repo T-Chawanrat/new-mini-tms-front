@@ -4,6 +4,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import DatePicker from "../components/form/DatePicker";
 import RequiredLabel from "../components/form/RequiredLabel";
+import SearchableSelect, { SearchableOption } from "../components/form/SearchableSelect";
 import { useAuth } from "../context/AuthContext";
 import AxiosInstance from "../utils/AxiosInstance";
 import {
@@ -30,9 +31,11 @@ type ContractorForm = {
   license_plate: string;
   license_plate_province_id: string;
   brand_id: string;
+  brand_other_name: string;
   model: string;
   color: string;
   vehicle_type_id: string;
+  vehicle_type_other_name: string;
   max_load_kg: string;
 };
 
@@ -49,9 +52,11 @@ const emptyForm: ContractorForm = {
   license_plate: "",
   license_plate_province_id: "",
   brand_id: "",
+  brand_other_name: "",
   model: "",
   color: "",
   vehicle_type_id: "",
+  vehicle_type_other_name: "",
   max_load_kg: "",
 };
 
@@ -104,6 +109,8 @@ export default function ContractorCreate() {
     if (!form.license_expire) return "กรุณาเลือกวันหมดอายุใบขับขี่";
     if (!form.license_plate.trim()) return "กรุณากรอกทะเบียนรถ";
     if (!form.license_plate_province_id) return "กรุณาเลือกจังหวัดทะเบียน";
+    if (form.brand_id === "__OTHER__" && !form.brand_other_name.trim()) return "กรุณากรอกยี่ห้อรถ";
+    if (form.vehicle_type_id === "__OTHER__" && !form.vehicle_type_other_name.trim()) return "กรุณากรอกประเภทรถ";
     return "";
   };
 
@@ -137,9 +144,11 @@ export default function ContractorCreate() {
           license_plate: form.license_plate.slice(0, 7),
           license_plate_province_id: form.license_plate_province_id,
           brand_id: form.brand_id || null,
+          brand_name: form.brand_id === "__OTHER__" ? form.brand_other_name : null,
           model: form.model || null,
           color: form.color || null,
           vehicle_type_id: form.vehicle_type_id || null,
+          vehicle_type_name: form.vehicle_type_id === "__OTHER__" ? form.vehicle_type_other_name : null,
           max_load_kg: form.max_load_kg || null,
         },
       });
@@ -160,6 +169,10 @@ export default function ContractorCreate() {
 
   const inputClass =
     "h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100";
+
+  const provinceOptions: SearchableOption[] = provinces.map((item) => ({ value: String(item.id), label: item.province_name || "" }));
+  const brandOptions: SearchableOption[] = [...brands.map((item) => ({ value: String(item.id), label: item.name || "" })), { value: "__OTHER__", label: "อื่นๆ" }];
+  const vehicleTypeOptions: SearchableOption[] = [...vehicleTypes.map((item) => ({ value: String(item.id), label: item.name || "" })), { value: "__OTHER__", label: "อื่นๆ" }];
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -291,7 +304,7 @@ export default function ContractorCreate() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
-              <RequiredLabel required>ทะเบียนรถ</RequiredLabel>
+              <RequiredLabel required>ทะเบียนรถ ไม่เกิน7ตัวอักษร</RequiredLabel>
               <input
                 className={inputClass}
                 value={form.license_plate}
@@ -303,8 +316,9 @@ export default function ContractorCreate() {
             </div>
             <div>
               <RequiredLabel required>จังหวัดทะเบียน</RequiredLabel>
+              <SearchableSelect value={form.license_plate_province_id} options={provinceOptions} onChange={(value) => setValue("license_plate_province_id", value)} placeholder="เลือกจังหวัดทะเบียน" />
               <select
-                className={inputClass}
+                className={`${inputClass} hidden`}
                 value={form.license_plate_province_id}
                 onChange={(event) =>
                   setValue("license_plate_province_id", event.target.value)
@@ -320,8 +334,10 @@ export default function ContractorCreate() {
             </div>
             <div>
               <RequiredLabel>ยี่ห้อรถ</RequiredLabel>
+              <SearchableSelect value={form.brand_id} options={brandOptions} onChange={(value) => setValue("brand_id", value)} placeholder="เลือกยี่ห้อรถ" />
+              {form.brand_id === "__OTHER__" && <input className={`${inputClass} mt-2`} value={form.brand_other_name} onChange={(event) => setValue("brand_other_name", event.target.value)} placeholder="กรอกยี่ห้อรถ" />}
               <select
-                className={inputClass}
+                className={`${inputClass} hidden`}
                 value={form.brand_id}
                 onChange={(event) => setValue("brand_id", event.target.value)}
               >
@@ -335,8 +351,10 @@ export default function ContractorCreate() {
             </div>
             <div>
               <RequiredLabel>ประเภทรถ</RequiredLabel>
+              <SearchableSelect value={form.vehicle_type_id} options={vehicleTypeOptions} onChange={(value) => setValue("vehicle_type_id", value)} placeholder="เลือกประเภทรถ" />
+              {form.vehicle_type_id === "__OTHER__" && <input className={`${inputClass} mt-2`} value={form.vehicle_type_other_name} onChange={(event) => setValue("vehicle_type_other_name", event.target.value)} placeholder="กรอกประเภทรถ" />}
               <select
-                className={inputClass}
+                className={`${inputClass} hidden`}
                 value={form.vehicle_type_id}
                 onChange={(event) =>
                   setValue("vehicle_type_id", event.target.value)
