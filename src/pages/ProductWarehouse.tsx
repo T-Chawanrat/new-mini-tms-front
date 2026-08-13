@@ -230,7 +230,7 @@ export default function ProductWarehouse() {
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[1450px] table-fixed border-collapse text-left text-xs">
-            <thead className="sticky top-0 z-20 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            <thead className="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               <tr className="border-b border-slate-200">
                 <th className="w-[42px] px-2 py-2" />
                 <th className="w-[56px] px-2 py-2 text-center">#</th>
@@ -357,7 +357,7 @@ function SerialInlineTable({ items }: { items: ProductWarehouseSerialItem[] }) {
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="max-h-[330px] overflow-auto">
         <table className="w-full min-w-[420px] border-collapse text-left text-xs">
-          <thead className="sticky top-0 z-10 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+          <thead className="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
             <tr className="border-b border-slate-200">
               <th className="w-[70px] px-3 py-2 text-center">#</th>
               <th className="w-[42%] px-3 py-2">Serial No</th>

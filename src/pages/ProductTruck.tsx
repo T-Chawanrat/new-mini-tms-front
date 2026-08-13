@@ -186,7 +186,7 @@ export default function ProductTruck() {
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[1740px] table-fixed border-collapse text-left text-xs">
-            <thead className="sticky top-0 z-20 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            <thead className="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               <tr className="border-b border-slate-200">
                 <th className="w-[210px] px-3 py-2">เลขที่บิล</th>
                 <th className="w-[250px] px-3 py-2">Serial No</th>

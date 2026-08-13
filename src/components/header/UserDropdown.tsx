@@ -43,7 +43,7 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
   if (!user) return null;
 
   return (
-    <div className="relative">
+    <div className={isOpen ? "relative z-[100]" : "relative"}>
       <button
         type="button"
         onClick={toggleDropdown}
@@ -102,8 +102,8 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
         onClose={closeDropdown}
         className={
           variant === "dots"
-            ? "absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
-            : "absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+            ? "absolute z-[9999] right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+            : "absolute z-[9999] right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
         }
       >
         <div>
