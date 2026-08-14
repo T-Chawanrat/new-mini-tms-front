@@ -177,12 +177,12 @@ export default function LabelPrintStyle() {
             margin-bottom: 0;
           }
 
-            .label-remark {
+          .label-remark {
             display: grid;
             grid-template-columns: 13mm minmax(0, 1fr);
             gap: 1.2mm;
 
-            margin-top: auto;
+            margin-top: 0;
             margin-bottom: 1mm;
 
             font-size: 6.2pt;
@@ -211,6 +211,10 @@ export default function LabelPrintStyle() {
             line-height: 1.1;
             text-align: center;
             white-space: nowrap;
+          }
+
+          .label-bottom {
+            margin-top: auto;
           }
 
           .label-qr {

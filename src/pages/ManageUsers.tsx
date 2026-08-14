@@ -9,6 +9,12 @@ import { cleanCodeInput, cleanNameInput, cleanNumberInput, cleanEmailInput } fro
 import DataGrid from "../components/DataGrid";
 import RequiredLabel from "../components/form/RequiredLabel";
 
+const genderFromTitle = (titleName: string) => {
+  if (titleName === "นาย") return "ชาย";
+  if (titleName === "นาง" || titleName === "นางสาว") return "หญิง";
+  return "";
+};
+
 export default function ManageUsers() {
   const [rows, setRows] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -27,11 +33,6 @@ export default function ManageUsers() {
   const { user } = useAuth();
 
   const titleOptions = ["นาย", "นาง", "นางสาว"];
-  const genderOptions = [
-    { value: "ชาย", label: "ชาย" },
-    { value: "หญิง", label: "หญิง" },
-  ];
-
   const [editForm, setEditForm] = useState({
     employee_code: "",
     title_name: "",
@@ -233,11 +234,6 @@ export default function ManageUsers() {
         return;
       }
 
-      if (!form.gender) {
-        setError("กรุณาเลือกเพศ");
-        return;
-      }
-
       if (!form.role_id) {
         setError("กรุณาเลือก role");
         return;
@@ -274,7 +270,7 @@ export default function ManageUsers() {
         title_name: form.title_name,
         first_name,
         last_name,
-        gender: form.gender,
+        gender: genderFromTitle(form.title_name),
         citizen_id,
         email,
         tel,
@@ -339,18 +335,13 @@ export default function ManageUsers() {
       return;
     }
 
-    if (!editForm.gender) {
-      alert("กรุณาเลือกเพศ");
-      return;
-    }
-
     try {
       await AxiosInstance.put(`/manage/users/${editingUser.id}`, {
         employee_code,
         title_name: editForm.title_name,
         first_name,
         last_name,
-        gender: editForm.gender,
+        gender: genderFromTitle(editForm.title_name),
         citizen_id: citizen_id || null,
         email: email || null,
         tel: tel || null,
@@ -678,7 +669,14 @@ export default function ManageUsers() {
 
                 <div>
                   <RequiredLabel required>คำนำหน้า</RequiredLabel>
-                  <select className="input-modern w-full" value={form.title_name} onChange={(e) => handleChange("title_name", e.target.value)}>
+                  <select
+                    className="input-modern w-full"
+                    value={form.title_name}
+                    onChange={(e) => {
+                      const titleName = e.target.value;
+                      setForm((current) => ({ ...current, title_name: titleName, gender: genderFromTitle(titleName) }));
+                    }}
+                  >
                     <option value="">เลือกคำนำหน้า</option>
                     {titleOptions.map((t) => (
                       <option key={t} value={t}>
@@ -708,17 +706,6 @@ export default function ManageUsers() {
                   />
                 </div>
 
-                <div>
-                  <RequiredLabel required>เพศ</RequiredLabel>
-                  <select className="input-modern w-full" value={form.gender} onChange={(e) => handleChange("gender", e.target.value)}>
-                    <option value="">เลือกเพศ</option>
-                    {genderOptions.map((g) => (
-                      <option key={g.value} value={g.value}>
-                        {g.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
                 <div>
                   <RequiredLabel>เลขบัตรประชาชน</RequiredLabel>
@@ -869,7 +856,10 @@ export default function ManageUsers() {
                   <select
                     className="input-modern w-full"
                     value={editForm.title_name}
-                    onChange={(e) => handleEditChange("title_name", e.target.value)}
+                    onChange={(e) => {
+                      const titleName = e.target.value;
+                      setEditForm((current) => ({ ...current, title_name: titleName, gender: genderFromTitle(titleName) }));
+                    }}
                   >
                     <option value="">เลือกคำนำหน้า</option>
                     {titleOptions.map((t) => (
@@ -900,17 +890,6 @@ export default function ManageUsers() {
                   />
                 </div>
 
-                <div>
-                  <RequiredLabel required>เพศ</RequiredLabel>
-                  <select className="input-modern w-full" value={editForm.gender} onChange={(e) => handleEditChange("gender", e.target.value)}>
-                    <option value="">เลือกเพศ</option>
-                    {genderOptions.map((g) => (
-                      <option key={g.value} value={g.value}>
-                        {g.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
                 <div>
                   <RequiredLabel>เลขบัตรประชาชน</RequiredLabel>

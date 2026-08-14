@@ -672,7 +672,7 @@ export default function CreateReceivePage() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <div className={`font-thai min-h-[80vh] w-full bg-slate-50 px-1 py-2 ${saving ? "cursor-wait" : ""}`}>
+      <div className={`font-thai min-h-[80vh] w-full bg-slate-50 px-1 py-2 ${saving ? "cursor-wait" : ""}`}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-bold tracking-tight text-slate-800">สร้างบิล / DO</h2>
@@ -683,7 +683,7 @@ export default function CreateReceivePage() {
             <button
               type="button"
               onClick={handleClearForm}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
             >
               ล้างฟอร์ม
             </button>
@@ -692,9 +692,7 @@ export default function CreateReceivePage() {
               type="button"
               onClick={requestSaveReceive}
               disabled={saving}
-              className={`rounded-md px-4 py-1 text-xs font-semibold ${
-                saving ? "bg-slate-300 text-slate-500" : "bg-emerald-600 text-white hover:bg-emerald-700"
-              }`}
+              className={`rounded-lg px-5 py-2 text-sm font-semibold text-white ${saving ? "bg-slate-300" : "bg-emerald-600 hover:bg-emerald-700"}`}
             >
               {saving ? "กำลังบันทึก..." : "บันทึกบิล"}
             </button>

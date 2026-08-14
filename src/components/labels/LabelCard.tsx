@@ -157,15 +157,17 @@ export default function LabelCard({ item }: LabelCardProps) {
             <strong>{addressText}</strong>
           </div>
 
-          {remarkText && (
-            <div className="label-remark">
-              <span className="label-title">หมายเหตุ</span>
+          <div className="label-bottom">
+            {remarkText && (
+              <div className="label-remark">
+                <span className="label-title">หมายเหตุ</span>
 
-              <strong>{remarkText}</strong>
-            </div>
-          )}
+                <strong>{remarkText}</strong>
+              </div>
+            )}
 
-          <div className={`label-cod ${hasCod ? "label-cod-has-value" : "label-cod-no-value"}`}>{codText}</div>
+            <div className={`label-cod ${hasCod ? "label-cod-has-value" : "label-cod-no-value"}`}>{codText}</div>
+          </div>
         </div>
 
         <div className="label-qr">

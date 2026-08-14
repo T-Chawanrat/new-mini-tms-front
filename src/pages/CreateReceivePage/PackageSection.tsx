@@ -25,7 +25,7 @@ const safeQty = (value?: string | number | null) => {
 };
 
 const actionButtonClass = (disabled: boolean) =>
-  `rounded px-2.5 py-1 text-[11px] font-semibold ${
+  `rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
     disabled ? "cursor-not-allowed bg-slate-300 text-slate-500" : "bg-blue-600 text-white hover:bg-blue-700"
   }`;
 
@@ -37,38 +37,38 @@ export default function PackageSection({ packageRows, totalPrice, packageTotal, 
     <div className="mt-2 border border-slate-200">
       <div className="flex items-center justify-end border-b border-slate-200 px-2 py-1.5">
         <button type="button" onClick={onAdd} disabled={disabled} className={actionButtonClass(disabled)}>
-          เพิ่มรายการ +
+          + เพิ่มรายการ
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="max-h-[300px] overflow-auto">
         <table className="w-full min-w-[1080px] table-fixed border-collapse text-[11px]">
           <thead>
             <tr className="bg-slate-50 text-left text-[11px] text-slate-600">
-              <th className="w-14 border-b border-slate-200 px-2 py-1 text-center">ลำดับ</th>
+              <th className="w-14 border-b border-slate-200 px-2 py-2 text-center">ลำดับ</th>
 
-              <th className="w-64 border-b border-slate-200 px-2 py-1">ชื่อสินค้า</th>
+              <th className="w-64 border-b border-slate-200 px-2 py-2">ชื่อสินค้า</th>
 
-              <th className="w-52 border-b border-slate-200 px-2 py-1">Barcode / SN</th>
+              <th className="w-52 border-b border-slate-200 px-2 py-2">Barcode / SN</th>
 
-              <th className="w-30 border-b border-slate-200 px-2 py-1 text-center">กxยxส, Q</th>
+              <th className="w-30 border-b border-slate-200 px-2 py-2 text-center">กxยxส, Q</th>
 
-              <th className="w-22 border-b border-slate-200 px-2 py-1 text-center">น้ำหนัก</th>
+              <th className="w-22 border-b border-slate-200 px-2 py-2 text-center">น้ำหนัก</th>
 
-              <th className="w-20 border-b border-slate-200 px-2 py-1 text-center">จำนวน</th>
+              <th className="w-20 border-b border-slate-200 px-2 py-2 text-center">จำนวน</th>
 
-              <th className="w-24 border-b border-slate-200 px-2 py-1 text-center">ราคา/หน่วย</th>
+              <th className="w-24 border-b border-slate-200 px-2 py-2 text-center">ราคา/หน่วย</th>
 
-              <th className="w-24 border-b border-slate-200 px-2 py-1 text-right">ราคา</th>
+              <th className="w-24 border-b border-slate-200 px-2 py-2 text-right">ราคา</th>
 
-              <th className="w-20 border-b border-slate-200 px-2 py-1 text-center">จัดการ</th>
+              <th className="w-20 border-b border-slate-200 px-2 py-2 text-center">จัดการ</th>
             </tr>
           </thead>
 
           <tbody>
             {!packageRows.length && (
               <tr>
-                <td colSpan={9} className="h-36 border-b border-slate-200 text-center text-xs text-slate-400">
+                <td colSpan={9} className="h-48 border-b border-slate-200 text-center text-xs text-slate-400">
                   ยังไม่มีรายการสินค้า
                 </td>
               </tr>
@@ -124,22 +124,18 @@ export default function PackageSection({ packageRows, totalPrice, packageTotal, 
             })}
           </tbody>
 
-          <tfoot>
-            <tr>
-              <td colSpan={5} className="px-2 py-2 text-right text-sm font-semibold text-slate-800">
-                รวมจำนวน:
-              </td>
-
-              <td className="px-2 py-2 text-center text-sm font-bold text-slate-900 tabular-nums">{totalQty}</td>
-
-              <td className="px-2 py-2 text-right text-sm font-semibold text-slate-800">รวม:</td>
-
-              <td className="px-2 py-2 text-right text-base font-bold text-slate-900 tabular-nums">{money(totalPrice)} บาท</td>
-
-              <td />
-            </tr>
-          </tfoot>
         </table>
+      </div>
+
+      <div className="flex items-center justify-end gap-8 border-t border-slate-200 px-4 py-2 text-sm">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-slate-800">รวมจำนวน:</span>
+          <span className="font-bold text-slate-900 tabular-nums">{totalQty}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-slate-800">รวม:</span>
+          <span className="text-base font-bold text-slate-900 tabular-nums">{money(totalPrice)} บาท</span>
+        </div>
       </div>
     </div>
   );

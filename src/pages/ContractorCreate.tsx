@@ -16,6 +16,7 @@ type Option = {
   id: number;
   name?: string;
   province_name?: string;
+  default_max_load_kg?: number | string | null;
 };
 
 type ContractorForm = {
@@ -34,7 +35,6 @@ type ContractorForm = {
   model: string;
   color: string;
   vehicle_type_id: string;
-  vehicle_type_other_name: string;
   max_load_kg: string;
 };
 
@@ -54,8 +54,20 @@ const emptyForm: ContractorForm = {
   model: "",
   color: "",
   vehicle_type_id: "",
-  vehicle_type_other_name: "",
   max_load_kg: "",
+};
+
+const truckPlateTypeIds = new Set(["3", "4"]);
+
+const formatLicensePlate = (value: string, isTruck: boolean) => {
+  const compactValue = value.replace(/\s/g, "");
+
+  if (!isTruck) {
+    return compactValue.replace(/-/g, "").slice(0, 7);
+  }
+
+  const digits = compactValue.replace(/\D/g, "").slice(0, 6);
+  return digits.length > 2 ? `${digits.slice(0, 2)}-${digits.slice(2)}` : digits;
 };
 
 export default function ContractorCreate() {
@@ -99,6 +111,19 @@ export default function ContractorCreate() {
     setForm((previous) => ({ ...previous, [field]: value }));
   };
 
+  const setVehicleType = (value: string) => {
+    const selectedType = vehicleTypes.find((item) => String(item.id) === value);
+    const defaultMaxLoad = selectedType?.default_max_load_kg;
+    const isTruck = truckPlateTypeIds.has(value);
+
+    setForm((previous) => ({
+      ...previous,
+      vehicle_type_id: value,
+      max_load_kg: defaultMaxLoad === null || defaultMaxLoad === undefined ? "" : String(defaultMaxLoad),
+      license_plate: formatLicensePlate(previous.license_plate, isTruck),
+    }));
+  };
+
   const validate = () => {
     if (!form.first_name.trim()) return "กรุณากรอกชื่อคนขับ";
     if (!form.last_name.trim()) return "กรุณากรอกนามสกุลคนขับ";
@@ -106,9 +131,11 @@ export default function ContractorCreate() {
     if (!form.license_no.trim()) return "กรุณากรอกเลขใบขับขี่";
     if (!form.license_expire) return "กรุณาเลือกวันหมดอายุใบขับขี่";
     if (!form.license_plate.trim()) return "กรุณากรอกทะเบียนรถ";
+    if (truckPlateTypeIds.has(form.vehicle_type_id) && !/^\d{2}-\d{4}$/.test(form.license_plate)) {
+      return "รถบรรทุก 6 ล้อและ 10 ล้อ ต้องใช้ทะเบียนรูปแบบ 71-4585";
+    }
     if (!form.license_plate_province_id) return "กรุณาเลือกจังหวัดทะเบียน";
     if (form.brand_id === "__OTHER__" && !form.brand_other_name.trim()) return "กรุณากรอกยี่ห้อรถ";
-    if (form.vehicle_type_id === "__OTHER__" && !form.vehicle_type_other_name.trim()) return "กรุณากรอกประเภทรถ";
     return "";
   };
 
@@ -145,7 +172,7 @@ export default function ContractorCreate() {
           model: form.model || null,
           color: form.color || null,
           vehicle_type_id: form.vehicle_type_id || null,
-          vehicle_type_name: form.vehicle_type_id === "__OTHER__" ? form.vehicle_type_other_name : null,
+          vehicle_type_name: null,
           max_load_kg: form.max_load_kg || null,
         },
       });
@@ -169,7 +196,7 @@ export default function ContractorCreate() {
 
   const provinceOptions: SearchableOption[] = provinces.map((item) => ({ value: String(item.id), label: item.province_name || "" }));
   const brandOptions: SearchableOption[] = [...brands.map((item) => ({ value: String(item.id), label: item.name || "" })), { value: "__OTHER__", label: "อื่นๆ" }];
-  const vehicleTypeOptions: SearchableOption[] = [...vehicleTypes.map((item) => ({ value: String(item.id), label: item.name || "" })), { value: "__OTHER__", label: "อื่นๆ" }];
+  const vehicleTypeOptions: SearchableOption[] = vehicleTypes.map((item) => ({ value: String(item.id), label: item.name || "" }));
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -289,30 +316,17 @@ export default function ContractorCreate() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
-              <RequiredLabel required>ทะเบียนรถ ไม่เกิน7ตัวอักษร</RequiredLabel>
-              <input
-                className={inputClass}
-                value={form.license_plate}
-                maxLength={7}
-                onChange={(event) =>
-                  setValue("license_plate", event.target.value.replace(/\s/g, "").slice(0, 7))
-                }
-              />
-            </div>
-            <div>
-              <RequiredLabel required>จังหวัดทะเบียน</RequiredLabel>
-              <SearchableSelect value={form.license_plate_province_id} options={provinceOptions} onChange={(value) => setValue("license_plate_province_id", value)} placeholder="เลือกจังหวัดทะเบียน" />
+              <RequiredLabel>ประเภทรถ</RequiredLabel>
+              <SearchableSelect value={form.vehicle_type_id} options={vehicleTypeOptions} onChange={setVehicleType} placeholder="เลือกประเภทรถ" />
               <select
                 className={`${inputClass} hidden`}
-                value={form.license_plate_province_id}
-                onChange={(event) =>
-                  setValue("license_plate_province_id", event.target.value)
-                }
+                value={form.vehicle_type_id}
+                onChange={(event) => setVehicleType(event.target.value)}
               >
-                <option value="">เลือกจังหวัดทะเบียน</option>
-                {provinces.map((province) => (
-                  <option key={province.id} value={province.id}>
-                    {province.province_name}
+                <option value="">เลือกประเภทรถ</option>
+                {vehicleTypes.map((vehicleType) => (
+                  <option key={vehicleType.id} value={vehicleType.id}>
+                    {vehicleType.name}
                   </option>
                 ))}
               </select>
@@ -335,20 +349,34 @@ export default function ContractorCreate() {
               </select>
             </div>
             <div>
-              <RequiredLabel>ประเภทรถ</RequiredLabel>
-              <SearchableSelect value={form.vehicle_type_id} options={vehicleTypeOptions} onChange={(value) => setValue("vehicle_type_id", value)} placeholder="เลือกประเภทรถ" />
-              {form.vehicle_type_id === "__OTHER__" && <input className={`${inputClass} mt-2`} value={form.vehicle_type_other_name} onChange={(event) => setValue("vehicle_type_other_name", event.target.value)} placeholder="กรอกประเภทรถ" />}
+              <RequiredLabel required>ทะเบียนรถ ไม่เกิน7ตัวอักษร</RequiredLabel>
+              <input
+                className={inputClass}
+                placeholder={truckPlateTypeIds.has(form.vehicle_type_id) ? "เช่น 71-4585" : "เช่น 1กก1234"}
+                value={form.license_plate}
+                maxLength={7}
+                onChange={(event) =>
+                  setValue(
+                    "license_plate",
+                    formatLicensePlate(event.target.value, truckPlateTypeIds.has(form.vehicle_type_id)),
+                  )
+                }
+              />
+            </div>
+            <div>
+              <RequiredLabel required>จังหวัดทะเบียน</RequiredLabel>
+              <SearchableSelect value={form.license_plate_province_id} options={provinceOptions} onChange={(value) => setValue("license_plate_province_id", value)} placeholder="เลือกจังหวัดทะเบียน" />
               <select
                 className={`${inputClass} hidden`}
-                value={form.vehicle_type_id}
+                value={form.license_plate_province_id}
                 onChange={(event) =>
-                  setValue("vehicle_type_id", event.target.value)
+                  setValue("license_plate_province_id", event.target.value)
                 }
               >
-                <option value="">เลือกประเภทรถ</option>
-                {vehicleTypes.map((vehicleType) => (
-                  <option key={vehicleType.id} value={vehicleType.id}>
-                    {vehicleType.name}
+                <option value="">เลือกจังหวัดทะเบียน</option>
+                {provinces.map((province) => (
+                  <option key={province.id} value={province.id}>
+                    {province.province_name}
                   </option>
                 ))}
               </select>

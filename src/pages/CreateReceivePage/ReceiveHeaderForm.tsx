@@ -96,9 +96,9 @@ export default function ReceiveHeaderForm({
             />
           </div>
 
-          <div className="grid grid-cols-[58px_155px] items-center gap-1.5">
+          <div className="grid grid-cols-[50px_155px] items-center gap-0.5">
             <label className={`${labelClass} whitespace-nowrap`}>วันที่ส่ง</label>
-            <div className={datePickerWrapClass}>
+            <div className={`${datePickerWrapClass} [&_.MuiFormControl-root]:!border-0 [&_.MuiFormControl-root]:!shadow-none [&_.MuiOutlinedInput-root]:!border-0 [&_.MuiOutlinedInput-notchedOutline]:!border [&_.MuiOutlinedInput-notchedOutline]:!border-slate-200`}>
               <DatePicker
                 variant="compact"
                 value={form.delivery_date}

@@ -1,5 +1,5 @@
-import { ArrowLeft, Printer } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Maximize2, Printer, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import AxiosInstance from "../utils/AxiosInstance";
@@ -90,6 +90,16 @@ export default function TruckLoadPrint() {
   const [items, setItems] = useState<TruckPrintItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewZoom, setPreviewZoom] = useState(1.5);
+
+  const changePreviewZoom = (amount: number) => {
+    setPreviewZoom((current) => Math.min(1.5, Math.max(0.5, Number((current + amount).toFixed(2)))));
+  };
+
+  const fitPreviewToScreen = () => {
+    const availableWidth = document.documentElement.clientWidth - 56;
+    setPreviewZoom(Math.min(1, Math.max(0.5, Number((availableWidth / 794).toFixed(2)))));
+  };
 
   useEffect(() => {
     const fetchPrintData = async () => {
@@ -116,6 +126,12 @@ export default function TruckLoadPrint() {
   return (
     <div className="min-h-[calc(100vh-61px)] bg-slate-100 px-2 py-3 text-black">
       <style>{`
+        #truck-print-area,
+        #truck-print-area * {
+          color: #000 !important;
+          border-color: #000 !important;
+        }
+
         .truck-print-items th:nth-child(2),
         .truck-print-items td:nth-child(2),
         .truck-print-items th:nth-child(5),
@@ -157,6 +173,10 @@ export default function TruckLoadPrint() {
             visibility: visible !important;
           }
 
+          .truck-print-preview {
+            zoom: 1 !important;
+          }
+
           #truck-print-area {
             position: fixed;
             top: 0;
@@ -167,6 +187,7 @@ export default function TruckLoadPrint() {
             padding: 12mm !important;
             box-sizing: border-box !important;
             box-shadow: none !important;
+            zoom: 1 !important;
           }
 
           #truck-print-area .truck-print-header {
@@ -187,7 +208,7 @@ export default function TruckLoadPrint() {
         }
       `}</style>
 
-      <div className="mx-auto mb-3 flex max-w-[210mm] items-center justify-between print:hidden">
+      <div className="mx-auto mb-3 flex max-w-[210mm] items-center justify-between gap-3 print:hidden">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -196,19 +217,35 @@ export default function TruckLoadPrint() {
           <ArrowLeft size={16} /> กลับ
         </button>
 
-        <button
-          type="button"
-          onClick={() => window.print()}
-          disabled={!truck || loading}
-          className="inline-flex h-9 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-slate-300"
-        >
-          <Printer size={16} /> Print
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={() => changePreviewZoom(-0.1)} disabled={previewZoom <= 0.5} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40" title="ซูมออก">
+            <ZoomOut size={16} />
+          </button>
+          <span className="min-w-[52px] text-center text-xs font-medium text-slate-600">{Math.round(previewZoom * 100)}%</span>
+          <button type="button" onClick={() => changePreviewZoom(0.1)} disabled={previewZoom >= 1.5} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40" title="ซูมเข้า">
+            <ZoomIn size={16} />
+          </button>
+          <button type="button" onClick={fitPreviewToScreen} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" title="พอดีกับหน้าจอ">
+            <Maximize2 size={16} />
+          </button>
+          <button type="button" onClick={() => setPreviewZoom(1)} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" title="ขนาดจริง">
+            <RotateCcw size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            disabled={!truck || loading}
+            className="ml-1 inline-flex h-9 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-slate-300"
+          >
+            <Printer size={16} /> Print
+          </button>
+        </div>
       </div>
 
       {error && <div className="mx-auto max-w-[210mm] rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
-      <main id="truck-print-area" className="mx-auto min-h-[297mm] w-full max-w-[210mm] bg-white px-[7mm] pb-[7mm] pt-[8mm] font-sans shadow-sm">
+      <div className="truck-print-preview mx-auto w-fit max-w-none" style={{ zoom: previewZoom } as CSSProperties}>
+      <main id="truck-print-area" className="min-h-[297mm] w-[210mm] bg-white px-[7mm] pb-[7mm] pt-[8mm] font-sans shadow-sm">
         {loading ? (
           <div className="py-20 text-center text-sm text-slate-500">กำลังโหลดข้อมูล...</div>
         ) : truck ? (
@@ -356,6 +393,7 @@ export default function TruckLoadPrint() {
           </>
         ) : null}
       </main>
+      </div>
     </div>
   );
 }

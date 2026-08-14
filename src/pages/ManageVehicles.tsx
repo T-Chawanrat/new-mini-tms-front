@@ -11,6 +11,18 @@ import RequiredLabel from "../components/form/RequiredLabel";
 type MasterOption = {
   id: number;
   name: string;
+  default_max_load_kg?: number | string | null;
+};
+
+const truckPlateTypeIds = new Set(["3", "4"]);
+
+const formatLicensePlate = (value: string, isTruck: boolean) => {
+  const compactValue = removeSpaces(value).toUpperCase();
+
+  if (!isTruck) return compactValue.replace(/-/g, "").slice(0, 7);
+
+  const digits = compactValue.replace(/\D/g, "").slice(0, 6);
+  return digits.length > 2 ? `${digits.slice(0, 2)}-${digits.slice(2)}` : digits;
 };
 
 export default function ManageVehicles() {
@@ -40,6 +52,7 @@ export default function ManageVehicles() {
     license_plate_province_id: "",
     license_plate_province: "",
     brand_id: "",
+    brand_other_name: "",
     model: "",
     color: "",
     vehicle_year: "",
@@ -158,6 +171,19 @@ export default function ManageVehicles() {
     setForm((prev) => ({ ...prev, [k]: v }));
   };
 
+  const handleVehicleTypeChange = (value: string) => {
+    const selectedType = vehicleTypes.find((item) => String(item.id) === value);
+    const defaultMaxLoad = selectedType?.default_max_load_kg;
+    const isTruck = truckPlateTypeIds.has(value);
+
+    setForm((previous) => ({
+      ...previous,
+      vehicle_type_id: value,
+      license_plate: formatLicensePlate(previous.license_plate, isTruck),
+      max_load_kg: defaultMaxLoad === null || defaultMaxLoad === undefined ? "" : String(defaultMaxLoad),
+    }));
+  };
+
   // =====================
   // MODAL CLOSE / RESET
   // =====================
@@ -176,10 +202,14 @@ export default function ManageVehicles() {
     setEditing(row);
 
     setForm({
-      license_plate: row.license_plate || "",
+      license_plate: formatLicensePlate(
+        row.license_plate || "",
+        truckPlateTypeIds.has(String(row.vehicle_type_id)),
+      ),
       license_plate_province_id: row.license_plate_province_id ? String(row.license_plate_province_id) : "",
       license_plate_province: row.license_plate_province || "",
       brand_id: row.brand_id ? String(row.brand_id) : "",
+      brand_other_name: "",
       model: row.model || "",
       color: row.color || "",
       vehicle_year: row.vehicle_year ? String(row.vehicle_year) : "",
@@ -214,7 +244,11 @@ export default function ManageVehicles() {
     if (!form.license_plate) return "กรุณากรอกทะเบียนรถ";
     if (!form.license_plate_province_id) return "กรุณาเลือกจังหวัดทะเบียน";
     if (!form.brand_id) return "กรุณาเลือกยี่ห้อรถ";
+    if (form.brand_id === "__OTHER__" && !form.brand_other_name.trim()) return "กรุณากรอกยี่ห้อรถ";
     if (!form.vehicle_type_id) return "กรุณาเลือกประเภทรถ";
+    if (truckPlateTypeIds.has(form.vehicle_type_id) && !/^\d{2}-\d{4}$/.test(form.license_plate)) {
+      return "รถบรรทุก 6 ล้อและ 10 ล้อ ต้องใช้ทะเบียนรูปแบบ 71-4585";
+    }
     if (!form.capacity_kg) return "กรุณากรอกน้ำหนักใช้งานจริง (kg)";
     if (!form.warehouse_id) return "กรุณาเลือก warehouse";
     if (!form.owner_type) return "กรุณาเลือกเจ้าของรถ";
@@ -227,6 +261,7 @@ export default function ManageVehicles() {
       license_plate: form.license_plate.slice(0, 7),
       license_plate_province_id: form.license_plate_province_id,
       brand_id: form.brand_id,
+      brand_name: form.brand_id === "__OTHER__" ? form.brand_other_name.trim() : null,
       model: form.model || null,
       color: form.color || null,
       vehicle_year: form.vehicle_year.slice(0, 4) || null,
@@ -587,16 +622,54 @@ export default function ManageVehicles() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <RequiredLabel required>ประเภทรถ</RequiredLabel>
+                      <select
+                        className="input-modern w-full"
+                        value={form.vehicle_type_id}
+                        onChange={(e) => handleVehicleTypeChange(e.target.value)}
+                      >
+                        <option value="">เลือกประเภทรถ</option>
+                        {vehicleTypes.map((x) => (
+                          <option key={x.id} value={x.id}>
+                            {x.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <RequiredLabel required>ยี่ห้อรถ</RequiredLabel>
+                      <select className="input-modern w-full" value={form.brand_id} onChange={(e) => handleChange("brand_id", e.target.value)}>
+                        <option value="">เลือกยี่ห้อ</option>
+                        {brands.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
+                        <option value="__OTHER__">อื่นๆ</option>
+                      </select>
+                      {form.brand_id === "__OTHER__" && (
+                        <input
+                          className="input-modern mt-2 w-full"
+                          value={form.brand_other_name}
+                          onChange={(e) => handleChange("brand_other_name", e.target.value)}
+                          placeholder="กรอกยี่ห้อรถ"
+                        />
+                      )}
+                    </div>
+
+                    <div>
                       <RequiredLabel required>ทะเบียนรถ</RequiredLabel>
                       <input
                         className="input-modern w-full"
-                        placeholder="เช่น 1กก1234"
+                        placeholder={truckPlateTypeIds.has(form.vehicle_type_id) ? "เช่น 71-4585" : "เช่น 1กก1234"}
                         value={form.license_plate}
                         maxLength={7}
                         onChange={(e) => {
-                          const value = removeSpaces(e.target.value).toUpperCase().replace(/-/g, "").slice(0, 7);
-
-                          handleChange("license_plate", value);
+                          handleChange(
+                            "license_plate",
+                            formatLicensePlate(e.target.value, truckPlateTypeIds.has(form.vehicle_type_id)),
+                          );
                         }}
                       />
                     </div>
@@ -612,18 +685,6 @@ export default function ManageVehicles() {
                         {provinces.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.province_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <RequiredLabel required>ยี่ห้อรถ</RequiredLabel>
-                      <select className="input-modern w-full" value={form.brand_id} onChange={(e) => handleChange("brand_id", e.target.value)}>
-                        <option value="">เลือกยี่ห้อ</option>
-                        {brands.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.name}
                           </option>
                         ))}
                       </select>
@@ -658,22 +719,6 @@ export default function ManageVehicles() {
                         maxLength={4}
                         onChange={(e) => handleChange("vehicle_year", cleanNumberInput(e.target.value).slice(0, 4))}
                       />
-                    </div>
-
-                    <div>
-                      <RequiredLabel required>ประเภทรถ</RequiredLabel>
-                      <select
-                        className="input-modern w-full"
-                        value={form.vehicle_type_id}
-                        onChange={(e) => handleChange("vehicle_type_id", e.target.value)}
-                      >
-                        <option value="">เลือกประเภทรถ</option>
-                        {vehicleTypes.map((x) => (
-                          <option key={x.id} value={x.id}>
-                            {x.name}
-                          </option>
-                        ))}
-                      </select>
                     </div>
 
                     <div>
