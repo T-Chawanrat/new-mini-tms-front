@@ -22,7 +22,6 @@ type ContractorForm = {
   title_name: string;
   first_name: string;
   last_name: string;
-  gender: string;
   citizen_id: string;
   email: string;
   tel: string;
@@ -43,7 +42,6 @@ const emptyForm: ContractorForm = {
   title_name: "",
   first_name: "",
   last_name: "",
-  gender: "",
   citizen_id: "",
   email: "",
   tel: "",
@@ -104,7 +102,7 @@ export default function ContractorCreate() {
   const validate = () => {
     if (!form.first_name.trim()) return "กรุณากรอกชื่อคนขับ";
     if (!form.last_name.trim()) return "กรุณากรอกนามสกุลคนขับ";
-    if (!/^\d{9,10}$/.test(form.tel)) return "กรุณากรอกเบอร์โทร 9-10 หลัก";
+    if (!/^0\d{8,9}$/.test(form.tel)) return "กรุณากรอกเบอร์โทรที่ขึ้นต้นด้วย 0 จำนวน 9-10 หลัก";
     if (!form.license_no.trim()) return "กรุณากรอกเลขใบขับขี่";
     if (!form.license_expire) return "กรุณาเลือกวันหมดอายุใบขับขี่";
     if (!form.license_plate.trim()) return "กรุณากรอกทะเบียนรถ";
@@ -133,7 +131,6 @@ export default function ContractorCreate() {
           title_name: form.title_name || null,
           first_name: form.first_name,
           last_name: form.last_name,
-          gender: form.gender || null,
           citizen_id: form.citizen_id || null,
           email: form.email || null,
           tel: form.tel || null,
@@ -207,18 +204,6 @@ export default function ContractorCreate() {
                 <option value="นาย">นาย</option>
                 <option value="นาง">นาง</option>
                 <option value="นางสาว">นางสาว</option>
-              </select>
-            </div>
-            <div>
-              <RequiredLabel>เพศ</RequiredLabel>
-              <select
-                className={inputClass}
-                value={form.gender}
-                onChange={(event) => setValue("gender", event.target.value)}
-              >
-                <option value="">เลือกเพศ</option>
-                <option value="ชาย">ชาย</option>
-                <option value="หญิง">หญิง</option>
               </select>
             </div>
             <div>

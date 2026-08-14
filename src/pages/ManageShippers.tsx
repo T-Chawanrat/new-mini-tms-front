@@ -542,6 +542,11 @@ export default function ManageShippers() {
     const tel = cleanNumberInput(form.tel);
     const fax = cleanNumberInput(form.fax);
 
+    if (tel && !tel.startsWith("0")) {
+      alert("เบอร์โทรต้องขึ้นต้นด้วย 0");
+      return;
+    }
+
     if (!shipper_code || !shipper_name) {
       alert("กรุณากรอก shipper code และ shipper name");
       return;

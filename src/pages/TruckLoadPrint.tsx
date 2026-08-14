@@ -118,6 +118,8 @@ export default function TruckLoadPrint() {
       <style>{`
         .truck-print-items th:nth-child(2),
         .truck-print-items td:nth-child(2),
+        .truck-print-items th:nth-child(5),
+        .truck-print-items td:nth-child(5),
         .truck-print-items th:nth-child(6),
         .truck-print-items td:nth-child(6),
         .truck-print-items th:nth-child(8),
@@ -136,7 +138,7 @@ export default function TruckLoadPrint() {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 0;
           }
 
           html,
@@ -156,12 +158,13 @@ export default function TruckLoadPrint() {
           }
 
           #truck-print-area {
-            position: absolute;
-            inset: 0;
-            width: 190mm !important;
-            min-height: 277mm !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 210mm !important;
+            min-height: 297mm !important;
             margin: 0 !important;
-            padding: 10mm 7mm 7mm !important;
+            padding: 12mm !important;
             box-sizing: border-box !important;
             box-shadow: none !important;
           }

@@ -206,6 +206,11 @@ export default function ManageCustomers() {
         email: cleanEmailInput(form.email),
       };
 
+      if ((payload.tel && !payload.tel.startsWith("0")) || (payload.contact_tel && !payload.contact_tel.startsWith("0"))) {
+        alert("เบอร์โทรต้องขึ้นต้นด้วย 0");
+        return;
+      }
+
       if (editingCustomer) {
         await AxiosInstance.patch(`/manage/customers/${editingCustomer.id}`, payload);
       } else {

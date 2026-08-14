@@ -623,6 +623,11 @@ export default function ManageRecipients() {
       return false;
     }
 
+    if (!/^0\d+$/.test(form.tel1)) {
+      alert("เบอร์โทรต้องขึ้นต้นด้วย 0");
+      return false;
+    }
+
     if (!form.subdistrict_id || !form.district_id || !form.province_id) {
       alert("กรุณาเลือกตำบล / อำเภอ / จังหวัด จาก dropdown");
       return false;

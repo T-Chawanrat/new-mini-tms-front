@@ -198,6 +198,11 @@ export default function ManageUsers() {
       const tel = cleanNumberInput(form.tel).slice(0, 10);
       const license_no = cleanNumberInput(form.license_no).slice(0, 8);
 
+      if (tel && !tel.startsWith("0")) {
+        setError("เบอร์โทรต้องขึ้นต้นด้วย 0");
+        return;
+      }
+
       if (!employee_code) {
         setError("กรุณากรอกรหัสพนักงาน");
         return;
@@ -308,6 +313,11 @@ export default function ManageUsers() {
     const email = cleanEmailInput(editForm.email);
     const tel = cleanNumberInput(editForm.tel).slice(0, 10);
     const license_no = cleanNumberInput(editForm.license_no).slice(0, 8);
+
+    if (tel && !tel.startsWith("0")) {
+      alert("เบอร์โทรต้องขึ้นต้นด้วย 0");
+      return;
+    }
 
     if (!employee_code) {
       alert("กรุณากรอกรหัสพนักงาน");
