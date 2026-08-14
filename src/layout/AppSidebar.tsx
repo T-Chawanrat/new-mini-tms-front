@@ -41,12 +41,6 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "create contractor",
-        path: "/contractor-create",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-      {
         name: "manage shippers",
         path: "/manage/shippers",
         icon: <File size={20} />,
@@ -67,6 +61,12 @@ const navItems: NavItem[] = [
       {
         name: "manage holidays",
         path: "/manage-holidays",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "create contractor",
+        path: "/contractor-create",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
@@ -110,7 +110,7 @@ const navItems: NavItem[] = [
         name: "Warehouse Scan",
         path: "/warehouse-scan",
         icon: <File size={20} />,
-      roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "Product Warehouse",
