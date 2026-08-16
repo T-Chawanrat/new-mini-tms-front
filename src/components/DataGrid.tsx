@@ -136,6 +136,18 @@ export default function AppDataGrid({
               backgroundColor: "#fcc9c9",
             },
 
+            "& .truck-active-row": {
+              backgroundColor: "#f5f8fb",
+            },
+
+            "& .truck-active-row:hover": {
+              backgroundColor: "#e2e8f0",
+            },
+
+            "& .truck-active-row .MuiDataGrid-cell": {
+              borderBottom: "1px solid #cbd5e1",
+            },
+
             "& .MuiDataGrid-footerContainer": {
               borderTop: "1px solid #e2e8f0",
               backgroundColor: "#ffffff",

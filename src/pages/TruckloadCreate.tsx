@@ -10,6 +10,12 @@ import { formatCodeNameOption, formatThaiDateTime, formatThaiNumber } from "../u
 
 type TruckType = "MAIN" | "EXTRA";
 
+const truckTypeLabels: Record<string, string> = {
+  SHIPPER_TRUCK: "รับสินค้าปลายทาง",
+  DC_TRUCK: "คลัง ไปหา ลูกค้า",
+  DC_TRUCK_DC: "ขนสินค้า ระหว่าง DC",
+};
+
 type Option = {
   id: number | string;
   code?: string | null;
@@ -538,8 +544,8 @@ export default function TruckLoadCreate() {
         headerAlign: "center",
         renderCell: (params) => (
           <div className="flex h-full w-full items-center justify-center">
-            <span className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
-              {params.row.status || "-"}
+            <span className="inline-flex h-7 items-center justify-center rounded-full border border-slate-300 bg-white px-2.5 text-center text-xs font-semibold leading-none text-slate-700">
+              {truckTypeLabels[params.row.status || ""] || params.row.status || "-"}
             </span>
           </div>
         ),
@@ -751,7 +757,9 @@ export default function TruckLoadCreate() {
             getRowId={(row: TruckLoadRow) => row.truck_load_id}
             height="100%"
             pageSize={100}
-            getRowClassName={(params: { row: TruckLoadRow }) => (Number(params.row.serial_count || 0) <= 0 ? "truck-empty-row" : "")}
+            getRowClassName={(params: { row: TruckLoadRow }) =>
+              Number(params.row.serial_count || 0) <= 0 ? "truck-empty-row" : "truck-active-row"
+            }
           />
         </div>
       </section>
