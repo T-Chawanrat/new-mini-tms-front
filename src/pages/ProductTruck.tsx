@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Download, RefreshCcw, Search, Truck } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
 import * as XLSX from "xlsx";
 
 import AxiosInstance from "../utils/AxiosInstance";
-import { filterProductTruckRows } from "../utils/productTruckFilters.js";
 import { formatThaiDateTime, formatThaiNumber } from "../utils/textSanitizer";
 
 type ProductTruckRow = {
@@ -43,6 +42,9 @@ type ProductTruckResponse = {
   success?: boolean;
   message?: string;
   data?: ProductTruckRow[];
+  summary?: {
+    total_items?: number;
+  };
 };
 
 type AxiosLikeError = {
@@ -71,6 +73,7 @@ export default function ProductTruck() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,57 +82,68 @@ export default function ProductTruck() {
     setError(null);
 
     try {
-      const response = await AxiosInstance.get<ProductTruckResponse>("/product-trucks");
+      const response = await AxiosInstance.get<ProductTruckResponse>("/product-trucks", {
+        params: {
+          page: page + 1,
+          limit: rowsPerPage,
+          search: search.trim() || undefined,
+        },
+      });
       setRows(Array.isArray(response.data?.data) ? response.data.data : []);
+      setTotalItems(Number(response.data?.summary?.total_items || 0));
     } catch (loadError) {
       setRows([]);
+      setTotalItems(0);
       setError(getErrorMessage(loadError));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, search]);
 
   useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
-
-  const filteredRows = useMemo(() => {
-    return filterProductTruckRows(rows, search);
-  }, [rows, search]);
-
-  const visibleRows = useMemo(() => filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage), [filteredRows, page, rowsPerPage]);
 
   useEffect(() => {
     setPage(0);
   }, [search]);
 
   useEffect(() => {
-    const lastPage = Math.max(Math.ceil(filteredRows.length / rowsPerPage) - 1, 0);
+    const lastPage = Math.max(Math.ceil(totalItems / rowsPerPage) - 1, 0);
     if (page > lastPage) setPage(lastPage);
-  }, [filteredRows.length, page, rowsPerPage]);
+  }, [totalItems, page, rowsPerPage]);
 
-  const exportExcel = () => {
-    if (!filteredRows.length) return;
+  const exportExcel = async () => {
+    if (!totalItems) return;
 
-    const exportRows = filteredRows.map((row) => ({
-      เลขที่บิล: row.receive_code || "",
-      "Serial No": row.serial_no,
-      เจ้าของงาน: row.customer_name || "",
-      ชื่อคนขับรถ: row.driver_name || "",
-      Username: row.driver_username || "",
-      ทะเบียนรถ: [row.vehicle_model ? `(${row.vehicle_model})` : "", row.license_plate, row.license_plate_province].filter(Boolean).join(" "),
-      ประเภทรถ: getDriverTypeLabel(row.driver_type),
-      "DC ต้นทาง": row.warehouse_name || "",
-      "DC ปลายทาง": row.to_warehouse_name || "",
-      วันที่ขึ้นรถ: formatThaiDateTime(row.created_date),
-    }));
+    try {
+      const response = await AxiosInstance.get<ProductTruckResponse>("/product-trucks", {
+        params: { search: search.trim() || undefined, export: 1 },
+      });
+      const exportRows = (response.data?.data || []).map((row) => ({
+        เลขที่บิล: row.receive_code || "",
+        "Serial No": row.serial_no,
+        เจ้าของงาน: row.customer_name || "",
+        ชื่อคนขับรถ: row.driver_name || "",
+        Username: row.driver_username || "",
+        ทะเบียนรถ: [row.vehicle_model ? `(${row.vehicle_model})` : "", row.license_plate, row.license_plate_province].filter(Boolean).join(" "),
+        ประเภทรถ: getDriverTypeLabel(row.driver_type),
+        "DC ต้นทาง": row.warehouse_name || "",
+        "DC ปลายทาง": row.to_warehouse_name || "",
+        วันที่ขึ้นรถ: formatThaiDateTime(row.created_date),
+      }));
 
-    const worksheet = XLSX.utils.json_to_sheet(exportRows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "สินค้าบนรถ");
+      if (!exportRows.length) return;
 
-    const dateText = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    XLSX.writeFile(workbook, `สินค้าบนรถ_${dateText}.xlsx`);
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "สินค้าบนรถ");
+
+      const dateText = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      XLSX.writeFile(workbook, `สินค้าบนรถ_${dateText}.xlsx`);
+    } catch (exportError) {
+      setError(getErrorMessage(exportError));
+    }
   };
 
   return (
@@ -145,12 +159,12 @@ export default function ProductTruck() {
 
         <div className="flex items-center gap-2">
           <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs text-blue-700">
-            ทั้งหมด <span className="font-bold">{formatThaiNumber(filteredRows.length)}</span> ชิ้น
+            ทั้งหมด <span className="font-bold">{formatThaiNumber(totalItems)}</span> ชิ้น
           </div>
           <button
             type="button"
-            onClick={exportExcel}
-            disabled={loading || filteredRows.length === 0}
+            onClick={() => void exportExcel()}
+            disabled={loading || totalItems === 0}
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download size={13} />
@@ -207,14 +221,14 @@ export default function ProductTruck() {
                     กำลังโหลดข้อมูล...
                   </td>
                 </tr>
-              ) : visibleRows.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="px-3 py-12 text-center text-sm text-slate-500">
                     ไม่พบสินค้าบนรถ
                   </td>
                 </tr>
               ) : (
-                visibleRows.map((row, index) => (
+                rows.map((row, index) => (
                   <tr key={row.product_truck_id} className={index % 2 === 0 ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70 hover:bg-blue-50/40"}>
                     <td className="border-b border-slate-100 px-3 py-2 text-slate-700">{row.receive_code || ""}</td>
                     <td className="border-b border-slate-100 px-3 py-2 font-mono font-semibold text-blue-700">{row.serial_no || "-"}</td>
@@ -246,7 +260,7 @@ export default function ProductTruck() {
         <div className="shrink-0 border-t border-slate-200 bg-white">
           <TablePagination
             component="div"
-            count={filteredRows.length}
+            count={totalItems}
             page={page}
             rowsPerPage={rowsPerPage}
             rowsPerPageOptions={[10, 25, 50, 100]}

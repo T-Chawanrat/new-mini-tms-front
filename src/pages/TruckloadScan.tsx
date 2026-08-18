@@ -210,7 +210,9 @@ export default function TruckloadScan() {
 
       const response = await AxiosInstance.get<VehicleLoadResponse>(`/truck-loads/${truckLoadId}/products`);
 
-      const rows = Array.isArray(response.data?.data) ? response.data.data : [];
+      const rows = (Array.isArray(response.data?.data) ? response.data.data : []).filter(
+        (row) => row.warehouse_id === null || row.to_warehouse_id === null || Number(row.warehouse_id) !== Number(row.to_warehouse_id),
+      );
 
       setPendingRows(rows);
       setScannedRows(Array.isArray(response.data?.loaded) ? response.data.loaded : []);
@@ -471,7 +473,7 @@ export default function TruckloadScan() {
             <select
               value={fromWarehouseFilter}
               onChange={(event) => setFromWarehouseFilter(event.target.value)}
-              disabled={disabled}
+              disabled
               className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
             >
               <option value="">ทั้งหมด</option>

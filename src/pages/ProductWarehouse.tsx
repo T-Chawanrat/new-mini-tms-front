@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Download, PackageOpen, RefreshCcw, Search } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
 import * as XLSX from "xlsx";
@@ -36,6 +36,10 @@ type ProductWarehouseResponse = {
   success?: boolean;
   message?: string;
   data?: ProductWarehouseRow[];
+  summary?: {
+    total_bills?: number;
+    total_items?: number;
+  };
 };
 
 type AxiosLikeError = {
@@ -81,6 +85,8 @@ export default function ProductWarehouse() {
   const [activeReceiveCode, setActiveReceiveCode] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [totalBills, setTotalBills] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,52 +95,30 @@ export default function ProductWarehouse() {
     setError(null);
 
     try {
-      const response = await AxiosInstance.get<ProductWarehouseResponse>("/product-warehouses");
+      const response = await AxiosInstance.get<ProductWarehouseResponse>("/product-warehouses", {
+        params: {
+          page: page + 1,
+          limit: rowsPerPage,
+          search: search.trim() || undefined,
+        },
+      });
+
       setRows(Array.isArray(response.data?.data) ? response.data.data : []);
+      setTotalBills(Number(response.data?.summary?.total_bills || 0));
+      setTotalItems(Number(response.data?.summary?.total_items || 0));
     } catch (loadError) {
       setRows([]);
+      setTotalBills(0);
+      setTotalItems(0);
       setError(getErrorMessage(loadError));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, search]);
 
   useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
-
-  const filteredRows = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    if (!keyword) return rows;
-
-    return rows.filter((row) =>
-      [
-        row.receive_code,
-        row.serial_nos,
-        row.package_names,
-        row.customer_id,
-        row.customer_name,
-        row.recipient_name,
-        row.recipient_code,
-        row.now_warehouse_name,
-        row.to_warehouse_name,
-        row.created_by,
-        row.created_name,
-      ]
-        .filter((value) => value !== null && value !== undefined)
-        .some((value) => String(value).toLowerCase().includes(keyword)),
-    );
-  }, [rows, search]);
-
-  const visibleRows = useMemo(
-    () => filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [filteredRows, page, rowsPerPage],
-  );
-
-  const totalItems = useMemo(
-    () => filteredRows.reduce((sum, row) => sum + Number(row.total_items || 0), 0),
-    [filteredRows],
-  );
 
   useEffect(() => {
     setPage(0);
@@ -142,37 +126,46 @@ export default function ProductWarehouse() {
   }, [search]);
 
   useEffect(() => {
-    const lastPage = Math.max(Math.ceil(filteredRows.length / rowsPerPage) - 1, 0);
+    const lastPage = Math.max(Math.ceil(totalBills / rowsPerPage) - 1, 0);
     if (page > lastPage) setPage(lastPage);
-  }, [filteredRows.length, page, rowsPerPage]);
+  }, [totalBills, page, rowsPerPage]);
 
   const toggleReceive = (receiveCode: string) => {
     setActiveReceiveCode((current) => (current === receiveCode ? "" : receiveCode));
   };
 
-  const exportExcel = () => {
-    if (!filteredRows.length) return;
+  const exportExcel = async () => {
+    if (!totalBills) return;
 
-    const exportRows = filteredRows.map((row) => ({
-      "วันที่ส่ง": formatDeliveryDate(row.delivery_date),
-      "คลังปัจจุบัน": row.now_warehouse_name || "",
-      "DC ปลายทาง": row.to_warehouse_name || "",
-      "เลขที่บิล": row.receive_code || "",
-      "Serial No": row.serial_nos || "",
-      "จำนวนชิ้น": Number(row.total_items || 0),
-      "สินค้า": row.package_names || "",
-      "เจ้าของงาน": row.customer_name || "",
-      "ผู้รับ": row.recipient_name || "",
-      "รหัสผู้รับ": row.recipient_code || "",
-      "ผู้ยิงรับ": row.created_name || "",
-    }));
+    try {
+      const response = await AxiosInstance.get<ProductWarehouseResponse>("/product-warehouses", {
+        params: { search: search.trim() || undefined, export: 1 },
+      });
+      const exportRows = (response.data?.data || []).map((row) => ({
+        "วันที่ส่ง": formatDeliveryDate(row.delivery_date),
+        "คลังปัจจุบัน": row.now_warehouse_name || "",
+        "DC ปลายทาง": row.to_warehouse_name || "",
+        "เลขที่บิล": row.receive_code || "",
+        "Serial No": row.serial_nos || "",
+        "จำนวนชิ้น": Number(row.total_items || 0),
+        "สินค้า": row.package_names || "",
+        "เจ้าของงาน": row.customer_name || "",
+        "ผู้รับ": row.recipient_name || "",
+        "รหัสผู้รับ": row.recipient_code || "",
+        "ผู้ยิงรับ": row.created_name || "",
+      }));
 
-    const worksheet = XLSX.utils.json_to_sheet(exportRows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "สินค้าในคลัง");
+      if (!exportRows.length) return;
 
-    const dateText = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    XLSX.writeFile(workbook, `สินค้าในคลัง_${dateText}.xlsx`);
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "สินค้าในคลัง");
+
+      const dateText = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      XLSX.writeFile(workbook, `สินค้าในคลัง_${dateText}.xlsx`);
+    } catch (exportError) {
+      setError(getErrorMessage(exportError));
+    }
   };
 
   return (
@@ -188,13 +181,13 @@ export default function ProductWarehouse() {
 
         <div className="flex items-center gap-2">
           <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs text-blue-700">
-            ทั้งหมด <span className="font-bold">{formatThaiNumber(filteredRows.length)}</span> บิล,
+            ทั้งหมด <span className="font-bold">{formatThaiNumber(totalBills)}</span> บิล,
             <span className="ml-1 font-bold">{formatThaiNumber(totalItems)}</span> ชิ้น
           </div>
           <button
             type="button"
-            onClick={exportExcel}
-            disabled={loading || filteredRows.length === 0}
+            onClick={() => void exportExcel()}
+            disabled={loading || totalBills === 0}
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download size={13} />
@@ -250,12 +243,12 @@ export default function ProductWarehouse() {
                 <tr>
                   <td colSpan={TABLE_COLUMN_COUNT} className="px-3 py-12 text-center text-sm text-slate-500">กำลังโหลดข้อมูล...</td>
                 </tr>
-              ) : visibleRows.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={TABLE_COLUMN_COUNT} className="px-3 py-12 text-center text-sm text-slate-500">ไม่พบสินค้าในคลัง</td>
                 </tr>
               ) : (
-                visibleRows.map((row, index) => {
+                rows.map((row, index) => {
                   const receiveCode = row.receive_code || `warehouse-bill-${page}-${index}`;
                   const expanded = activeReceiveCode === receiveCode;
                   const absoluteIndex = page * rowsPerPage + index + 1;
@@ -278,7 +271,7 @@ export default function ProductWarehouse() {
         <div className="shrink-0 border-t border-slate-200 bg-white">
           <TablePagination
             component="div"
-            count={filteredRows.length}
+            count={totalBills}
             page={page}
             rowsPerPage={rowsPerPage}
             rowsPerPageOptions={[10, 25, 50, 100]}
