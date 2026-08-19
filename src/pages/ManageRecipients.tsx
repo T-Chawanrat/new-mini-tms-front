@@ -283,6 +283,7 @@ export default function ManageRecipients() {
 
   const [rowCount, setRowCount] = useState(0);
   const [expandedRecipientId, setExpandedRecipientId] = useState<Id | null>(null);
+  const [detailsByRecipientId, setDetailsByRecipientId] = useState<Record<string, RecipientDetail[]>>({});
 
   const [showModal, setShowModal] = useState(false);
 
@@ -316,58 +317,23 @@ export default function ManageRecipients() {
   const selectedCustomer = customers.find((customer) => String(customer.id) === String(customerId));
 
   const groupedRows = useMemo<Recipient[]>(() => {
-    const map = new Map<Id, Recipient>();
-
-    rows.forEach((row) => {
-      if (!row.recipient_id) return;
-
-      const key = row.recipient_id;
-
-      if (!map.has(key)) {
-        map.set(key, {
-          recipient_id: row.recipient_id,
-          recipient_code: row.recipient_code,
-          recipient_type_id: row.recipient_type_id,
-          recipient_type_name: row.recipient_type_name,
-          recipient_name: row.recipient_name,
-
-          customer_id: row.customer_id,
-          recipient_customer_id: row.recipient_customer_id,
-          customer_code: row.customer_code,
-          customer_name: row.customer_name,
-
-          recipient_is_deleted: row.recipient_is_deleted,
-          address_count: Number(row.address_count || 0),
-
-          details: [],
-        });
-      }
-
-      if (row.recipient_detail_id) {
-        map.get(key)?.details.push({
-          recipient_detail_id: row.recipient_detail_id,
-          recipient_detail_name: row.recipient_detail_name,
-          address: row.address,
-
-          subdistrict_id: row.subdistrict_id,
-          district_id: row.district_id,
-          province_id: row.province_id,
-
-          subdistrict_name: row.subdistrict_name,
-          district_name: row.district_name,
-          province_name: row.province_name,
-
-          zip_code: row.zip_code,
-          tel1: row.tel1,
-          line_id: row.line_id,
-
-          detail_is_deleted: row.detail_is_deleted,
-        });
-      }
-    });
-
-    return Array.from(map.values());
-  }, [rows]);
+    return rows
+      .filter((row) => row.recipient_id)
+      .map((row) => ({
+        recipient_id: row.recipient_id as Id,
+        recipient_code: row.recipient_code,
+        recipient_type_id: row.recipient_type_id,
+        recipient_type_name: row.recipient_type_name,
+        recipient_name: row.recipient_name,
+        customer_id: row.customer_id,
+        recipient_customer_id: row.recipient_customer_id,
+        customer_code: row.customer_code,
+        customer_name: row.customer_name,
+        recipient_is_deleted: row.recipient_is_deleted,
+        address_count: Number(row.address_count || 0),
+        details: detailsByRecipientId[String(row.recipient_id)] || [],
+      }));
+  }, [rows, detailsByRecipientId]);
 
   const displayRows = useMemo<DisplayRow[]>(() => {
     const result: DisplayRow[] = [];
@@ -516,6 +482,7 @@ export default function ManageRecipients() {
       setRows([]);
       setRowCount(0);
       setExpandedRecipientId(null);
+      setDetailsByRecipientId({});
       return;
     }
 
@@ -526,6 +493,7 @@ export default function ManageRecipients() {
 
     setPaginationModel(firstPage);
     setExpandedRecipientId(null);
+    setDetailsByRecipientId({});
     fetchData(search, firstPage);
   }, [customerId, user]);
 
@@ -722,6 +690,8 @@ export default function ManageRecipients() {
       }
 
       closeModal();
+      setDetailsByRecipientId({});
+      setExpandedRecipientId(null);
       fetchData(search, paginationModel);
     } catch (err) {
       alert(getErrorMessage(err, "save recipient failed"));
@@ -740,16 +710,41 @@ export default function ManageRecipients() {
       );
 
       closeStatusModal();
+      setDetailsByRecipientId({});
+      setExpandedRecipientId(null);
       fetchData(search, paginationModel);
     } catch (err) {
       alert(getErrorMessage(err, "update recipient detail status failed"));
     }
   };
 
-  const toggleExpandedRecipient = (recipient: DisplayRow) => {
+  const toggleExpandedRecipient = async (recipient: DisplayRow) => {
     if (!recipient || recipient.rowType === "detail") return;
 
-    setExpandedRecipientId((prev) => (String(prev) === String(recipient.recipient_id) ? null : recipient.recipient_id));
+    if (String(expandedRecipientId) === String(recipient.recipient_id)) {
+      setExpandedRecipientId(null);
+      return;
+    }
+
+    const recipientKey = String(recipient.recipient_id);
+
+    if (Object.prototype.hasOwnProperty.call(detailsByRecipientId, recipientKey)) {
+      setExpandedRecipientId(recipient.recipient_id);
+      return;
+    }
+
+    try {
+      const res = await AxiosInstance.get(`/manage/recipients/${customerId}/${recipient.recipient_id}/details`);
+      const details = Array.isArray(res.data?.data) ? res.data.data : [];
+
+      setDetailsByRecipientId((prev) => ({
+        ...prev,
+        [recipientKey]: details,
+      }));
+      setExpandedRecipientId(recipient.recipient_id);
+    } catch (err) {
+      alert(getErrorMessage(err, "fetch recipient details failed"));
+    }
   };
 
   const columns = useMemo<GridColDef<DisplayRow>[]>(
@@ -905,7 +900,7 @@ export default function ManageRecipients() {
         },
       },
     ],
-    [expandedRecipientId],
+    [customerId, detailsByRecipientId, expandedRecipientId],
   );
 
   return (
@@ -956,6 +951,7 @@ export default function ManageRecipients() {
                 setRows([]);
                 setRowCount(0);
                 setExpandedRecipientId(null);
+                setDetailsByRecipientId({});
                 setPaginationModel(firstPage);
               }}
               className="input-modern"
@@ -983,6 +979,7 @@ export default function ManageRecipients() {
 
                 setPaginationModel(firstPage);
                 setExpandedRecipientId(null);
+                setDetailsByRecipientId({});
                 fetchData(e.currentTarget.value, firstPage);
               }
             }}
@@ -998,6 +995,7 @@ export default function ManageRecipients() {
 
               setPaginationModel(firstPage);
               setExpandedRecipientId(null);
+              setDetailsByRecipientId({});
               fetchData(search, firstPage);
             }}
             className="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
@@ -1019,6 +1017,7 @@ export default function ManageRecipients() {
           onPaginationModelChange={(model: GridPaginationModel) => {
             setPaginationModel(model);
             setExpandedRecipientId(null);
+            setDetailsByRecipientId({});
             fetchData(search, model);
           }}
           pageSizeOptions={[10, 25, 50, 100]}
