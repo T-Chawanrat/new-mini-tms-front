@@ -26,6 +26,8 @@ type ProductTruckRow = {
   truck_status: string | null;
   warehouse_id: number | null;
   to_warehouse_id: number | null;
+  route_code: string | null;
+  route_name: string | null;
   is_close: "Y" | "N" | null;
   is_go: "Y" | "N" | null;
   driver_name: string | null;
@@ -52,6 +54,13 @@ type AxiosLikeError = {
   message?: string;
 };
 
+type TruckTypeFilter = "DC_TRUCK_DC" | "DC_TRUCK";
+
+const truckTypeTabs: { value: TruckTypeFilter; label: string }[] = [
+  { value: "DC_TRUCK_DC", label: "ระหว่าง DC" },
+  { value: "DC_TRUCK", label: "รถกระจาย" },
+];
+
 const getErrorMessage = (error: unknown) => {
   if (typeof error !== "object" || error === null) return "ไม่สามารถโหลดสินค้าบนรถได้";
 
@@ -71,11 +80,14 @@ const getDriverTypeLabel = (driverType: ProductTruckRow["driver_type"]) => {
 export default function ProductTruck() {
   const [rows, setRows] = useState<ProductTruckRow[]>([]);
   const [search, setSearch] = useState("");
+  const [truckType, setTruckType] = useState<TruckTypeFilter>("DC_TRUCK_DC");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const showRoute = truckType !== "DC_TRUCK_DC";
+  const showDestinationWarehouse = truckType !== "DC_TRUCK";
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -87,6 +99,7 @@ export default function ProductTruck() {
           page: page + 1,
           limit: rowsPerPage,
           search: search.trim() || undefined,
+          truck_type: truckType,
         },
       });
       setRows(Array.isArray(response.data?.data) ? response.data.data : []);
@@ -98,7 +111,7 @@ export default function ProductTruck() {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, search]);
+  }, [page, rowsPerPage, search, truckType]);
 
   useEffect(() => {
     void loadProducts();
@@ -106,7 +119,7 @@ export default function ProductTruck() {
 
   useEffect(() => {
     setPage(0);
-  }, [search]);
+  }, [search, truckType]);
 
   useEffect(() => {
     const lastPage = Math.max(Math.ceil(totalItems / rowsPerPage) - 1, 0);
@@ -118,7 +131,7 @@ export default function ProductTruck() {
 
     try {
       const response = await AxiosInstance.get<ProductTruckResponse>("/product-trucks", {
-        params: { search: search.trim() || undefined, export: 1 },
+        params: { search: search.trim() || undefined, truck_type: truckType, export: 1 },
       });
       const exportRows = (response.data?.data || []).map((row) => ({
         เลขที่บิล: row.receive_code || "",
@@ -128,8 +141,9 @@ export default function ProductTruck() {
         Username: row.driver_username || "",
         ทะเบียนรถ: [row.vehicle_model ? `(${row.vehicle_model})` : "", row.license_plate, row.license_plate_province].filter(Boolean).join(" "),
         ประเภทรถ: getDriverTypeLabel(row.driver_type),
+        ...(showRoute ? { สายรถ: [row.route_code, row.route_name].filter(Boolean).join(" - ") } : {}),
         "DC ต้นทาง": row.warehouse_name || "",
-        "DC ปลายทาง": row.to_warehouse_name || "",
+        ...(showDestinationWarehouse ? { "DC ปลายทาง": row.to_warehouse_name || "" } : {}),
         วันที่ขึ้นรถ: formatThaiDateTime(row.created_date),
       }));
 
@@ -154,7 +168,7 @@ export default function ProductTruck() {
             <Truck size={18} className="text-blue-600" />
             สินค้าบนรถ
           </h1>
-          <p className="mt-0.5 text-[11px] text-slate-500">ตรวจสอบ Serial No ที่อยู่ภายในใบปิดบรรทุก</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">ตรวจสอบ Serial No ที่อยู่ในรถขนย้ายและรถกระจาย</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -183,15 +197,29 @@ export default function ProductTruck() {
       </section>
 
       <section className="mb-2 shrink-0 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
-        <div className="relative max-w-2xl">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="ค้นหา Serial No, เลขใบปิดบรรทุก, คนขับ, ทะเบียนรถ หรือคลัง"
-            className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full gap-1 overflow-x-auto sm:w-auto">
+            {truckTypeTabs.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setTruckType(tab.value)}
+                className={`h-8 whitespace-nowrap rounded-md px-3 text-xs font-semibold transition ${truckType === tab.value ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full max-w-2xl">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="ค้นหา Serial No, เลขใบรถ, ลูกค้า, สายรถ, คนขับ หรือทะเบียนรถ"
+              className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
         </div>
       </section>
 
@@ -209,21 +237,22 @@ export default function ProductTruck() {
                 <th className="w-[130px] px-3 py-2">Username</th>
                 <th className="w-[250px] px-3 py-2">ทะเบียนรถ</th>
                 <th className="w-[120px] px-3 py-2">ประเภทรถ</th>
+                {showRoute && <th className="w-[190px] px-3 py-2">สายรถ</th>}
                 <th className="w-[190px] px-3 py-2">DC ต้นทาง</th>
-                <th className="w-[190px] px-3 py-2">DC ปลายทาง</th>
+                {showDestinationWarehouse && <th className="w-[190px] px-3 py-2">DC ปลายทาง</th>}
                 <th className="w-[165px] px-3 py-2">วันที่ขึ้นรถ</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="px-3 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={(showRoute ? 1 : 0) + (showDestinationWarehouse ? 10 : 9)} className="px-3 py-12 text-center text-sm text-slate-500">
                     กำลังโหลดข้อมูล...
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-3 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={(showRoute ? 1 : 0) + (showDestinationWarehouse ? 10 : 9)} className="px-3 py-12 text-center text-sm text-slate-500">
                     ไม่พบสินค้าบนรถ
                   </td>
                 </tr>
@@ -243,12 +272,19 @@ export default function ProductTruck() {
                       {[row.vehicle_model ? `(${row.vehicle_model})` : "", row.license_plate, row.license_plate_province].filter(Boolean).join(" ")}
                     </td>
                     <td className="border-b border-slate-100 px-3 py-2 text-slate-700">{getDriverTypeLabel(row.driver_type)}</td>
+                    {showRoute && (
+                      <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={[row.route_code, row.route_name].filter(Boolean).join(" - ")}>
+                        {[row.route_code, row.route_name].filter(Boolean).join(" - ")}
+                      </td>
+                    )}
                     <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={row.warehouse_name || ""}>
                       {row.warehouse_name || ""}
                     </td>
-                    <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={row.to_warehouse_name || ""}>
-                      {row.to_warehouse_name || ""}
-                    </td>
+                    {showDestinationWarehouse && (
+                      <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={row.to_warehouse_name || ""}>
+                        {row.to_warehouse_name || ""}
+                      </td>
+                    )}
                     <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-600">{formatThaiDateTime(row.created_date)}</td>
                   </tr>
                 ))

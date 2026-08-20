@@ -13,7 +13,7 @@ type TruckType = "MAIN" | "EXTRA";
 const truckTypeLabels: Record<string, string> = {
   SHIPPER_TRUCK: "รับสินค้าปลายทาง",
   DC_TRUCK: "คลัง ไปหา ลูกค้า",
-  DC_TRUCK_DC: "ขนสินค้า ระหว่าง DC",
+  DC_TRUCK_DC: "ขนสินค้าระหว่าง DC",
 };
 
 type Option = {
@@ -773,7 +773,7 @@ export default function TruckLoadCreate() {
             }
           }}
         >
-          <div className="w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl">
+          <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
                 <h2 className="text-base font-bold text-slate-800">สร้างใบปิดบรรทุก</h2>
@@ -791,15 +791,26 @@ export default function TruckLoadCreate() {
               </button>
             </div>
 
-            <div className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-5">
-              <ModalSelect label="ประเภทรถ" value={truckType} onChange={(value) => handleTruckTypeChange(value as TruckType)} disabled={creating}>
-                <option value="MAIN">รถหลัก</option>
-
-                <option value="EXTRA">รถเสริม</option>
-              </ModalSelect>
+            <div className="max-h-[70vh] space-y-5 overflow-y-auto px-5 py-5">
+              <section>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">ประเภทรถ</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["MAIN", "EXTRA"] as TruckType[]).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      disabled={creating}
+                      onClick={() => handleTruckTypeChange(type)}
+                      className={`h-11 rounded-lg border px-4 text-left text-sm font-semibold transition disabled:cursor-not-allowed ${truckType === type ? "border-blue-600 bg-blue-600 text-white shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"}`}
+                    >
+                      {type === "MAIN" ? "รถปกติ" : "รถเสริม"}
+                    </button>
+                  ))}
+                </div>
+              </section>
 
               {truckType === "MAIN" ? (
-                <>
+                <div className="grid gap-4 sm:grid-cols-2">
                   <ModalSelect label="พนักงานขับรถ" value={selectedDriver} onChange={setSelectedDriver} disabled={loadingOptions || creating}>
                     <option value="">เลือกพนักงานขับรถ</option>
 
@@ -819,7 +830,7 @@ export default function TruckLoadCreate() {
                       </option>
                     ))}
                   </ModalSelect>
-                </>
+                </div>
               ) : (
                 <ModalSelect
                   label="คนขับ / รถเสริม"
@@ -840,15 +851,17 @@ export default function TruckLoadCreate() {
                 </ModalSelect>
               )}
 
-              <ModalSelect label="To Warehouse" value={selectedToWarehouse} onChange={setSelectedToWarehouse} disabled={loadingOptions || creating}>
-                <option value="">เลือก To Warehouse</option>
+              <section className="rounded-lg border border-blue-100 bg-blue-50/70 p-4">
+                <ModalSelect label="To Warehouse" value={selectedToWarehouse} onChange={setSelectedToWarehouse} disabled={loadingOptions || creating}>
+                  <option value="">เลือก To Warehouse</option>
 
-                {warehouses.map((warehouse) => (
-                  <option key={warehouse.id} value={String(warehouse.id)}>
-                    {formatCodeNameOption(warehouse)}
-                  </option>
-                ))}
-              </ModalSelect>
+                  {warehouses.map((warehouse) => (
+                    <option key={warehouse.id} value={String(warehouse.id)}>
+                      {formatCodeNameOption(warehouse)}
+                    </option>
+                  ))}
+                </ModalSelect>
+              </section>
 
               {loadingOptions && (
                 <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">

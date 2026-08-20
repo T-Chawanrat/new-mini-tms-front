@@ -35,6 +35,9 @@ import DcReceive from "./pages/DcReceive";
 import MoveTk from "./pages/MoveTk";
 import MoveTkScan from "./pages/MoveTkScan";
 import ContractorCreate from "./pages/ContractorCreate";
+import DeliveryTruckCreate from "./pages/DeliveryTruckCreate";
+import DeliveryTruckScan from "./pages/DeliveryTruckScan";
+import DeliveryTruckPrint from "./pages/DeliveryTruckPrint";
 
 export default function App() {
   return (
@@ -116,6 +119,9 @@ export default function App() {
               <Route path="/truck-scan" element={<TruckloadScan />} />
               <Route path="/truck-scan/:truckLoadId" element={<TruckloadScan />} />
               <Route path="/truck-create" element={<TruckLoadCreate />} />
+              <Route path="/delivery-truck-create" element={<DeliveryTruckCreate />} />
+              <Route path="/delivery-truck-scan/:truckLoadId" element={<DeliveryTruckScan />} />
+              <Route path="/delivery-truck-print/:truckLoadId" element={<DeliveryTruckPrint />} />
               <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrint />} />
               <Route path="/dc-receive" element={<DcReceive />} />
               <Route path="/move-tk" element={<MoveTk />} />
