@@ -136,6 +136,8 @@ export default function MoveTkScan() {
       setDestinationWarning(row);
       setMessage("");
       playSound("alert");
+      setAddInput("");
+      return;
     } else {
       moveRow(row, direction);
     }

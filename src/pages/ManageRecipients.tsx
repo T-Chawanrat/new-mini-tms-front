@@ -1,6 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
-import { ChevronDown, ChevronRight, Pencil, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, Plus, X } from "lucide-react";
+import L from "leaflet";
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
@@ -35,6 +41,8 @@ type RecipientDetail = {
   zip_code?: string;
   tel1?: string;
   line_id?: string;
+  longitude?: string | null;
+  latitude?: string | null;
   detail_is_deleted?: YesNo;
 };
 
@@ -62,6 +70,8 @@ type ApiRecipientRow = {
   zip_code?: string;
   tel1?: string;
   line_id?: string;
+  longitude?: string | null;
+  latitude?: string | null;
   detail_is_deleted?: YesNo;
 };
 
@@ -107,6 +117,8 @@ type RecipientForm = {
   zip_code: string;
   tel1: string;
   line_id: string;
+  longitude: string;
+  latitude: string;
 };
 
 type AddressSearchRow = {
@@ -150,6 +162,107 @@ const getErrorMessage = (err: unknown, fallback: string) => {
   return fallback;
 };
 
+const DEFAULT_MAP_POSITION: [number, number] = [13.7563, 100.5018];
+
+const recipientMarkerIcon = L.icon({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const getCoordinates = (latitude: string, longitude: string): [number, number] | null => {
+  if (!latitude.trim() || !longitude.trim()) return null;
+
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+  return [lat, lng];
+};
+
+function MapClickHandler({ onChange }: { onChange: (latitude: string, longitude: string) => void }) {
+  useMapEvents({
+    click(event) {
+      onChange(event.latlng.lat.toFixed(7), event.latlng.lng.toFixed(7));
+    },
+  });
+
+  return null;
+}
+
+function MapViewport({ position }: { position: [number, number] | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (position) map.setView(position, Math.max(map.getZoom(), 16));
+  }, [map, position]);
+
+  return null;
+}
+
+function RecipientLocationPicker({ latitude, longitude, onChange }: { latitude: string; longitude: string; onChange: (latitude: string, longitude: string) => void }) {
+  const [locationError, setLocationError] = useState("");
+  const selectedPosition = useMemo(() => getCoordinates(latitude, longitude), [latitude, longitude]);
+
+  const requestCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError("อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง");
+      return;
+    }
+
+    setLocationError("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => onChange(position.coords.latitude.toFixed(7), position.coords.longitude.toFixed(7)),
+      () => setLocationError("ไม่สามารถอ่านตำแหน่งปัจจุบันได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง หรือตั้งหมุดบนแผนที่"),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }, [onChange]);
+
+  return (
+    <div className="rounded-xl border border-slate-200 overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-3 py-2 bg-slate-50 border-b border-slate-200">
+        <div>
+          <div className="text-sm font-medium text-slate-800">พิกัดจุดจัดส่ง</div>
+          <div className="text-xs text-slate-500">ใช้ตำแหน่งปัจจุบัน หรือคลิกและลากหมุดเพื่อปรับตำแหน่ง</div>
+        </div>
+        <button type="button" onClick={requestCurrentLocation} className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700">
+          ใช้ตำแหน่งปัจจุบัน
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 p-3 bg-white text-xs text-slate-600">
+        <div>Latitude: <span className="font-medium text-slate-800">{latitude || "-"}</span></div>
+        <div>Longitude: <span className="font-medium text-slate-800">{longitude || "-"}</span></div>
+        {locationError && <div className="col-span-2 text-red-600">{locationError}</div>}
+      </div>
+
+      <MapContainer center={selectedPosition || DEFAULT_MAP_POSITION} zoom={selectedPosition ? 16 : 11} className="h-[280px] w-full" scrollWheelZoom>
+        <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <MapClickHandler onChange={onChange} />
+        <MapViewport position={selectedPosition} />
+        {selectedPosition && (
+          <Marker
+            position={selectedPosition}
+            icon={recipientMarkerIcon}
+            draggable
+            eventHandlers={{
+              dragend: (event) => {
+                const position = event.target.getLatLng() as L.LatLng;
+                onChange(position.lat.toFixed(7), position.lng.toFixed(7));
+              },
+            }}
+          />
+        )}
+      </MapContainer>
+    </div>
+  );
+}
+
 function RecipientDetailsInlinePanel({ recipient, onCreateDetail, onEditDetail, onOpenStatus }: RecipientDetailsInlinePanelProps) {
   return (
     <div className="w-full bg-slate-50 px-6 py-4">
@@ -177,8 +290,8 @@ function RecipientDetailsInlinePanel({ recipient, onCreateDetail, onEditDetail, 
         </div>
 
         <div className="overflow-x-auto">
-          <div className="min-w-[1320px]">
-            <div className="grid grid-cols-[220px_320px_140px_140px_140px_100px_130px_150px_110px_90px] gap-3 px-4 py-2 bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-100">
+          <div className="min-w-[1680px]">
+            <div className="grid grid-cols-[220px_320px_140px_140px_140px_100px_130px_150px_110px_90px] gap-3 px-4 py-2 bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-200">
               <div>recipient_detail_name</div>
               <div>address</div>
               <div>subdistrict</div>
@@ -310,6 +423,8 @@ export default function ManageRecipients() {
     zip_code: "",
     tel1: "",
     line_id: "",
+    longitude: "",
+    latitude: "",
   };
 
   const [form, setForm] = useState<RecipientForm>(emptyForm);
@@ -380,6 +495,10 @@ export default function ManageRecipients() {
   const handleChange = (key: keyof RecipientForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  const handleLocationChange = useCallback((latitude: string, longitude: string) => {
+    setForm((prev) => ({ ...prev, latitude, longitude }));
+  }, []);
 
   const handleSelectAddress = (row: AddressSearchRow) => {
     setForm((prev) => ({
@@ -561,6 +680,8 @@ export default function ManageRecipients() {
       zip_code: detail.zip_code || "",
       tel1: detail.tel1 || "",
       line_id: detail.line_id || "",
+      longitude: detail.longitude || "",
+      latitude: detail.latitude || "",
     });
 
     setShowModal(true);
@@ -658,6 +779,8 @@ export default function ManageRecipients() {
           zip_code: form.zip_code || null,
           tel1: form.tel1,
           line_id: form.line_id || null,
+          longitude: form.longitude || null,
+          latitude: form.latitude || null,
         };
 
         await AxiosInstance.post(`/manage/recipients/${customerId}/${editingRecipient.recipient_id}/details`, payload);
@@ -683,6 +806,8 @@ export default function ManageRecipients() {
             zip_code: form.zip_code || null,
             tel1: form.tel1,
             line_id: form.line_id || null,
+            longitude: form.longitude || null,
+            latitude: form.latitude || null,
           },
         };
 
@@ -1106,11 +1231,14 @@ export default function ManageRecipients() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeModal}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn"
+            className="relative bg-white p-6 rounded-2xl shadow-xl w-[min(680px,calc(100vw-2rem))] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
+            <button type="button" onClick={closeModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+              <X size={18} />
+            </button>
             <h3 className="text-lg font-semibold text-slate-800 mb-5">{getModalTitle()}</h3>
 
             {isDetailMode && editingRecipient && (
@@ -1206,6 +1334,12 @@ export default function ManageRecipients() {
                     />
                   </div>
 
+                  <RecipientLocationPicker
+                    latitude={form.latitude}
+                    longitude={form.longitude}
+                    onChange={handleLocationChange}
+                  />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <RequiredLabel required>เบอร์โทร</RequiredLabel>
@@ -1252,7 +1386,7 @@ export default function ManageRecipients() {
             setSelectedStatus(null);
           }}
         >
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
 
             <div className="flex flex-col gap-3">

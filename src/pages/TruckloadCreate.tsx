@@ -765,15 +765,8 @@ export default function TruckLoadCreate() {
       </section>
 
       {isCreateModalOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeCreateModal();
-            }
-          }}
-        >
-          <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl animate-scaleIn">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
                 <h2 className="text-base font-bold text-slate-800">สร้างใบปิดบรรทุก</h2>
@@ -905,7 +898,10 @@ export default function TruckLoadCreate() {
 
       {confirmAction && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
+          <div className="relative w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
+            <button type="button" onClick={() => setConfirmAction(null)} className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+              <X size={18} />
+            </button>
             <h3 className="text-base font-bold text-slate-800">ยืนยันปิดบรรทุกและปล่อยรถ</h3>
             <p className="mt-2 text-sm text-slate-600">
               {`ต้องการปิดบรรทุกและปล่อยรถของใบ ${confirmAction.row.truck_code} ใช่หรือไม่`}

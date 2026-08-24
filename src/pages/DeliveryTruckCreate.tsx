@@ -79,7 +79,9 @@ export default function DeliveryTruckCreate() {
   }, []);
 
   const fetchOptions = useCallback(async () => {
-    const response = await AxiosInstance.get<{ data?: { drivers?: Driver[]; vehicles?: Vehicle[]; contractors?: Contractor[]; routes?: RouteOption[] } }>("/delivery-trucks/options");
+    const response = await AxiosInstance.get<{
+      data?: { drivers?: Driver[]; vehicles?: Vehicle[]; contractors?: Contractor[]; routes?: RouteOption[] };
+    }>("/delivery-trucks/options");
     setDrivers(response.data?.data?.drivers || []);
     setVehicles(response.data?.data?.vehicles || []);
     setContractors(response.data?.data?.contractors || []);
@@ -116,6 +118,28 @@ export default function DeliveryTruckCreate() {
         renderCell: (params: { value?: string }) => <div className="flex h-full items-center font-semibold text-blue-700">{params.value || "-"}</div>,
       },
       {
+        field: "route_name",
+        headerName: "สายรถ",
+        width: 190,
+        renderCell: (params: { row: DeliveryTruckRow }) => (
+          <div className="flex h-full items-center truncate">{[params.row.route_code, params.row.route_name].filter(Boolean).join(" - ") || "-"}</div>
+        ),
+      },
+      {
+        field: "status",
+        headerName: "สถานะ",
+        width: 145,
+        align: "center" as const,
+        headerAlign: "center" as const,
+        renderCell: (params: { value?: string }) => (
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              {truckStatusLabel[params.value || ""] || params.value || "รอจัดสินค้า"}
+            </span>
+          </div>
+        ),
+      },
+      {
         field: "driver_type",
         headerName: "ประเภทรถ",
         width: 130,
@@ -139,29 +163,13 @@ export default function DeliveryTruckCreate() {
         ),
       },
       {
-        field: "route_name",
-        headerName: "สายรถ",
-        width: 190,
-        renderCell: (params: { row: DeliveryTruckRow }) => <div className="flex h-full items-center truncate">{[params.row.route_code, params.row.route_name].filter(Boolean).join(" - ") || "-"}</div>,
-      },
-      {
         field: "count_box",
         headerName: "จำนวนกล่อง",
         width: 105,
         align: "center" as const,
         headerAlign: "center" as const,
-        renderCell: (params: { value?: number }) => <div className="flex h-full w-full items-center justify-center font-semibold">{formatThaiNumber(params.value)}</div>,
-      },
-      {
-        field: "status",
-        headerName: "สถานะ",
-        width: 145,
-        align: "center" as const,
-        headerAlign: "center" as const,
-        renderCell: (params: { value?: string }) => (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">{truckStatusLabel[params.value || ""] || params.value || "รอจัดสินค้า"}</span>
-          </div>
+        renderCell: (params: { value?: number }) => (
+          <div className="flex h-full w-full items-center justify-center font-semibold">{formatThaiNumber(params.value)}</div>
         ),
       },
       {
@@ -182,10 +190,21 @@ export default function DeliveryTruckCreate() {
             >
               <FolderOpen size={16} />
             </button>
-            <button type="button" disabled title="ปิดบรรทุกและปล่อยรถ" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-slate-400">
+            <button
+              type="button"
+              disabled
+              title="ปิดบรรทุกและปล่อยรถ"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-slate-400"
+            >
               <PackageCheck size={16} />
             </button>
-            <button type="button" onClick={() => navigate(`/delivery-truck-print/${params.row.id}`)} title="ปริ๊น" disabled={Number(params.row.count_box || 0) <= 0} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300">
+            <button
+              type="button"
+              onClick={() => navigate(`/delivery-truck-print/${params.row.id}`)}
+              title="ปริ๊น"
+              disabled={Number(params.row.count_box || 0) <= 0}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+            >
               <Printer size={16} />
             </button>
           </div>
@@ -271,37 +290,67 @@ export default function DeliveryTruckCreate() {
               className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-          <div><label className="mb-1 block text-xs font-medium text-slate-600">วันที่เริ่มต้น</label><DatePicker value={dateFrom} onChange={setDateFrom} placeholder="เลือกวันที่เริ่มต้น" variant="compact" /></div>
-          <div><label className="mb-1 block text-xs font-medium text-slate-600">วันที่สิ้นสุด</label><DatePicker value={dateTo} onChange={setDateTo} placeholder="เลือกวันที่สิ้นสุด" variant="compact" /></div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">วันที่เริ่มต้น</label>
+            <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="เลือกวันที่เริ่มต้น" variant="compact" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">วันที่สิ้นสุด</label>
+            <DatePicker value={dateTo} onChange={setDateTo} placeholder="เลือกวันที่สิ้นสุด" variant="compact" />
+          </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => void fetchDeliveryTrucks()} className="h-9 rounded-md bg-slate-800 px-4 text-sm font-semibold text-white hover:bg-slate-900">ค้นหา</button>
-            <button type="button" onClick={() => { setSearch(""); setDateFrom(""); setDateTo(""); }} className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50">ล้าง</button>
+            <button
+              type="button"
+              onClick={() => void fetchDeliveryTrucks()}
+              className="h-9 rounded-md bg-slate-800 px-4 text-sm font-semibold text-white hover:bg-slate-900"
+            >
+              ค้นหา
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setDateFrom("");
+                setDateTo("");
+              }}
+              className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              ล้าง
+            </button>
           </div>
         </div>
       </section>
 
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="min-h-0 flex-1 overflow-hidden">
-          <DataGrid rows={filteredRows} columns={columns} loading={loading} framed={false} getRowId={(row: DeliveryTruckRow) => row.id} height="100%" pageSize={100} getRowClassName={(params) => Number(params.row.count_box || 0) <= 0 ? "truck-empty-row" : "truck-active-row"} />
+          <DataGrid
+            rows={filteredRows}
+            columns={columns}
+            loading={loading}
+            framed={false}
+            getRowId={(row: DeliveryTruckRow) => row.id}
+            height="100%"
+            pageSize={100}
+            getRowClassName={(params) => (Number(params.row.count_box || 0) <= 0 ? "truck-empty-row" : "truck-active-row")}
+          />
         </div>
       </section>
 
       {isCreateModalOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !creating) closeModal();
-          }}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl animate-scaleIn">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
                 <h2 className="text-base font-bold text-slate-800">สร้างใบรถกระจาย</h2>
                 <p className="mt-0.5 text-xs text-slate-500">ระบุประเภทรถ คนขับ ทะเบียนรถ และสายรถ</p>
               </div>
-              <button type="button" onClick={closeModal} disabled={creating} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50" aria-label="ปิด">
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={creating}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="ปิด"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -315,7 +364,11 @@ export default function DeliveryTruckCreate() {
                       key={type}
                       type="button"
                       disabled={creating}
-                      onClick={() => { setDriverType(type); setDriverId(""); setVehicleId(""); }}
+                      onClick={() => {
+                        setDriverType(type);
+                        setDriverId("");
+                        setVehicleId("");
+                      }}
                       className={`h-11 rounded-lg border px-4 text-left text-sm font-semibold transition disabled:cursor-not-allowed ${driverType === type ? "border-blue-600 bg-blue-600 text-white shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"}`}
                     >
                       {driverTypeLabel[type]}
@@ -328,34 +381,58 @@ export default function DeliveryTruckCreate() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <ModalSelect label="พนักงานขับรถ" value={driverId} onChange={setDriverId} disabled={creating}>
                     <option value="">เลือกพนักงานขับรถ</option>
-                    {drivers.map((driver) => <option key={driver.id} value={String(driver.id)}>{[driver.employee_code, driver.first_name, driver.last_name].filter(Boolean).join(" - ")}</option>)}
+                    {drivers.map((driver) => (
+                      <option key={driver.id} value={String(driver.id)}>
+                        {[driver.employee_code, driver.first_name, driver.last_name].filter(Boolean).join(" - ")}
+                      </option>
+                    ))}
                   </ModalSelect>
                   <ModalSelect label="ทะเบียนรถ" value={vehicleId} onChange={setVehicleId} disabled={creating}>
                     <option value="">เลือกทะเบียนรถ</option>
-                    {vehicles.map((vehicle) => <option key={vehicle.id} value={String(vehicle.id)}>{[vehicle.license_plate, vehicle.license_plate_province, vehicle.model].filter(Boolean).join(" - ")}</option>)}
+                    {vehicles.map((vehicle) => (
+                      <option key={vehicle.id} value={String(vehicle.id)}>
+                        {[vehicle.license_plate, vehicle.license_plate_province, vehicle.model].filter(Boolean).join(" - ")}
+                      </option>
+                    ))}
                   </ModalSelect>
                 </div>
               ) : (
                 <ModalSelect label="คนขับ / รถเสริม" value={vehicleId} onChange={setVehicleId} disabled={creating}>
                   <option value="">เลือกคนขับและรถเสริม</option>
-                  {contractors.map((contractor) => <option key={contractor.vehicle_contractor_id} value={String(contractor.vehicle_contractor_id)}>{[contractor.employee_code, contractor.first_name, contractor.last_name].filter(Boolean).join(" ")} - {[contractor.license_plate, contractor.license_plate_province].filter(Boolean).join(" ")}</option>)}
+                  {contractors.map((contractor) => (
+                    <option key={contractor.vehicle_contractor_id} value={String(contractor.vehicle_contractor_id)}>
+                      {[contractor.employee_code, contractor.first_name, contractor.last_name].filter(Boolean).join(" ")} -{" "}
+                      {[contractor.license_plate, contractor.license_plate_province].filter(Boolean).join(" ")}
+                    </option>
+                  ))}
                 </ModalSelect>
               )}
 
               <section className="rounded-lg border border-blue-100 bg-blue-50/70 p-4">
                 <ModalSelect label="สายรถ" value={routeId} onChange={setRouteId} disabled={creating}>
                   <option value="">เลือกสายรถ</option>
-                  {routes.map((route) => <option key={route.route_id} value={String(route.route_id)}>{[route.route_code, route.route_name].filter(Boolean).join(" - ")}</option>)}
+                  {routes.map((route) => (
+                    <option key={route.route_id} value={String(route.route_id)}>
+                      {[route.route_code, route.route_name].filter(Boolean).join(" - ")}
+                    </option>
+                  ))}
                 </ModalSelect>
               </section>
 
               {!creating && driverType === "EMPLOYEE" && drivers.length === 0 && <p className="text-xs text-red-600">ไม่พบข้อมูลพนักงานขับรถ</p>}
               {!creating && driverType === "EMPLOYEE" && vehicles.length === 0 && <p className="text-xs text-red-600">ไม่พบข้อมูลทะเบียนรถ</p>}
-              {!creating && driverType === "CONTRACTOR" && contractors.length === 0 && <p className="text-xs text-red-600">ไม่พบข้อมูลคนขับและรถเสริมที่พร้อมใช้งาน</p>}
+              {!creating && driverType === "CONTRACTOR" && contractors.length === 0 && (
+                <p className="text-xs text-red-600">ไม่พบข้อมูลคนขับและรถเสริมที่พร้อมใช้งาน</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4">
-              <button type="button" onClick={closeModal} disabled={creating} className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={creating}
+                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 ยกเลิก
               </button>
               <button
@@ -387,7 +464,12 @@ function ModalSelect({ label, value, onChange, disabled = false, children }: Mod
   return (
     <div>
       <label className="mb-1.5 block text-sm font-semibold text-slate-700">{label}</label>
-      <select value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100">
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={disabled}
+        className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+      >
         {children}
       </select>
     </div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AxiosInstance from "../utils/AxiosInstance";
 import { useAuth } from "../context/AuthContext";
-import { Pencil } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import DataGrid from "../components/DataGrid";
 import RequiredLabel from "../components/form/RequiredLabel";
 import { cleanCodeInput, cleanNumberInput } from "../utils/textSanitizer";
@@ -731,11 +731,14 @@ export default function ManagePackages() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeModal}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[620px] max-h-[90vh] overflow-auto animate-scaleIn"
+            className="relative bg-white p-6 rounded-2xl shadow-xl w-[620px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
+            <button type="button" onClick={closeModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+              <X size={18} />
+            </button>
             <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไข Package" : "เพิ่ม Package"}</h3>
 
             <div className="space-y-3">
@@ -801,7 +804,7 @@ export default function ManagePackages() {
       )}
 
       {showDetailModal && selectedPackage && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeDetailModal}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div
             className="bg-white p-6 rounded-2xl shadow-xl w-[1180px] max-h-[90vh] overflow-hidden animate-scaleIn flex flex-col"
             onClick={(e) => e.stopPropagation()}
@@ -820,6 +823,9 @@ export default function ManagePackages() {
                     + เพิ่มราคา
                   </button>
                 )}
+                <button type="button" onClick={closeDetailModal} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+                  <X size={18} />
+                </button>
               </div>
             </div>
 
@@ -838,11 +844,14 @@ export default function ManagePackages() {
       )}
 
       {showDetailFormModal && selectedPackage && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={closeDetailFormModal}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]">
           <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[90vh] overflow-auto animate-scaleIn"
+            className="relative bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
+            <button type="button" onClick={closeDetailFormModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+              <X size={18} />
+            </button>
             <h3 className="text-lg font-semibold text-slate-800 mb-1">{editingDetail ? "แก้ไขราคา" : "เพิ่มราคา"}</h3>
             <p className="text-sm text-slate-500 mb-5">ประเภท: {selectedPackageType || "-"}</p>
 
@@ -962,7 +971,7 @@ export default function ManagePackages() {
 
       {statusModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70]" onClick={closeStatusModal}>
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
 
             <div className="flex flex-col gap-3">

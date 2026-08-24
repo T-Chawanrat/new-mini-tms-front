@@ -73,6 +73,8 @@ export default function TruckloadScan() {
   const navigate = useNavigate();
 
   const loadInputRef = useRef<HTMLInputElement | null>(null);
+  const destinationWarningCancelRef = useRef<HTMLButtonElement | null>(null);
+  const destinationWarningConfirmRef = useRef<HTMLButtonElement | null>(null);
 
   const removeInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -117,6 +119,12 @@ export default function TruckloadScan() {
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!destinationWarning) return;
+
+    destinationWarningCancelRef.current?.focus();
+  }, [destinationWarning]);
 
   useEffect(() => {
     successAudioRef.current = new Audio(successSound);
@@ -254,14 +262,14 @@ export default function TruckloadScan() {
   }, [fetchSerials]);
 
   useEffect(() => {
-    if (loading || loadingOptions || saving || truckLoad?.is_close === "Y") return;
+    if (destinationWarning || loading || loadingOptions || saving || truckLoad?.is_close === "Y") return;
 
     if (activeScanSide === "remove" && scannedRows.length > 0) {
       focusRemoveInput();
     } else {
       focusLoadInput();
     }
-  }, [activeScanSide, focusLoadInput, focusRemoveInput, loading, loadingOptions, saving, scannedRows.length, truckLoad?.is_close]);
+  }, [activeScanSide, destinationWarning, focusLoadInput, focusRemoveInput, loading, loadingOptions, saving, scannedRows.length, truckLoad?.is_close]);
 
   const visiblePendingRows = useMemo(
     () => (fromWarehouseFilter ? pendingRows.filter((row) => String(row.warehouse_id || "") === fromWarehouseFilter) : pendingRows),
@@ -313,7 +321,6 @@ export default function TruckloadScan() {
         playSound("alert");
         setDestinationWarning(loadError.response.data.data);
         setLoadSerialInput("");
-        focusLoadInput();
         return;
       }
 
@@ -613,7 +620,22 @@ export default function TruckloadScan() {
       {info && <div className="mb-3 shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{info}</div>}
 
       {destinationWarning && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4">
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4"
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft") {
+              event.preventDefault();
+              destinationWarningCancelRef.current?.focus();
+            }
+
+            if (event.key === "ArrowRight") {
+              event.preventDefault();
+              destinationWarningConfirmRef.current?.focus();
+            }
+
+            if (event.key === "Tab") event.preventDefault();
+          }}
+        >
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl">
             <h3 className="text-base font-bold text-amber-700">แจ้งเตือนปลายทางไม่ตรงกัน</h3>
             <p className="mt-2 text-sm text-slate-700">ของชิ้นนี้ปลายทางไม่ใช่ DC ที่เลือก ยืนยันจะยิงขึ้นรถใช่หรือไม่</p>
@@ -624,21 +646,23 @@ export default function TruckloadScan() {
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button
+                ref={destinationWarningCancelRef}
                 type="button"
                 onClick={() => {
                   setDestinationWarning(null);
                   focusLoadInput();
                 }}
                 disabled={saving}
-                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
               >
                 ไม่
               </button>
               <button
+                ref={destinationWarningConfirmRef}
                 type="button"
                 onClick={() => void handleConfirmDestinationMismatch()}
                 disabled={saving}
-                className="h-9 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 disabled:bg-slate-300"
+                className="h-9 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-300"
               >
                 {saving ? "กำลังบันทึก..." : "ใช่"}
               </button>

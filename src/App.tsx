@@ -38,6 +38,7 @@ import ContractorCreate from "./pages/ContractorCreate";
 import DeliveryTruckCreate from "./pages/DeliveryTruckCreate";
 import DeliveryTruckScan from "./pages/DeliveryTruckScan";
 import DeliveryTruckPrint from "./pages/DeliveryTruckPrint";
+import RouteMap from "./pages/RouteMap";
 
 export default function App() {
   return (
@@ -126,6 +127,7 @@ export default function App() {
               <Route path="/dc-receive" element={<DcReceive />} />
               <Route path="/move-tk" element={<MoveTk />} />
               <Route path="/move-tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScan />} />
+              <Route path="/map" element={<RouteMap />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}
             </Route>

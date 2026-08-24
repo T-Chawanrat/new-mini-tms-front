@@ -201,6 +201,11 @@ export default function ManageShippers() {
     setEditing(null);
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    resetForm();
+  };
+
   const resetROForm = () => {
     setRoEditing(null);
     setRoCode("");
@@ -935,17 +940,14 @@ export default function ManageShippers() {
       </div>
 
       {showModal && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={() => {
-            setShowModal(false);
-            resetForm();
-          }}
-        >
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div
-            className="bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn"
+            className="relative bg-white p-6 rounded-2xl shadow-xl w-[560px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
+            <button type="button" onClick={closeModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+              <X size={18} />
+            </button>
             <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไขผู้ส่ง" : "เพิ่มผู้ส่ง"}</h3>
 
             <div className="space-y-3">
@@ -1198,7 +1200,7 @@ export default function ManageShippers() {
             setSelectedStatus(null);
           }}
         >
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
 
             <div className="flex flex-col gap-3">

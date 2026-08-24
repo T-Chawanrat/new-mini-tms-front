@@ -529,7 +529,7 @@ export default function ManageHolidays() {
             setSelectedStatus(null);
           }}
         >
-          <div className="w-[300px] rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-[300px] rounded-2xl bg-white p-6 shadow-xl animate-scaleIn" onClick={(e) => e.stopPropagation()}>
             <h3 className="mb-4 text-lg font-semibold text-slate-800">สถานะ</h3>
 
             <div className="flex flex-col gap-3">

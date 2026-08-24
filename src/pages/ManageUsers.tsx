@@ -4,7 +4,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import DatePicker from "../components/form/DatePicker";
 import { useAuth } from "../context/AuthContext";
-import { Pencil } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput, cleanEmailInput } from "../utils/textSanitizer";
 import DataGrid from "../components/DataGrid";
 import RequiredLabel from "../components/form/RequiredLabel";
@@ -632,11 +632,14 @@ export default function ManageUsers() {
 
         {/* CREATE MODAL */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeCreateModal}>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
             <div
-              className="bg-white p-6 rounded-2xl shadow-xl w-[720px] max-h-[90vh] overflow-auto animate-scaleIn"
+              className="relative bg-white p-6 rounded-2xl shadow-xl w-[720px] max-h-[90vh] overflow-auto animate-scaleIn"
               onClick={(e) => e.stopPropagation()}
             >
+              <button type="button" onClick={closeCreateModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+                <X size={18} />
+              </button>
               <h3 className="text-lg font-semibold text-slate-800 mb-5">เพิ่มผู้ใช้</h3>
 
               {error && <div className="mb-4 px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm">{error}</div>}
@@ -831,11 +834,14 @@ export default function ManageUsers() {
 
         {/* EDIT MODAL */}
         {editModal && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={closeEditModal}>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
             <div
-              className="bg-white p-6 rounded-2xl shadow-xl w-[720px] max-h-[90vh] overflow-auto animate-scaleIn"
+              className="relative bg-white p-6 rounded-2xl shadow-xl w-[720px] max-h-[90vh] overflow-auto animate-scaleIn"
               onClick={(e) => e.stopPropagation()}
             >
+              <button type="button" onClick={closeEditModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+                <X size={18} />
+              </button>
               <h3 className="text-lg font-semibold text-slate-800 mb-1">แก้ไขผู้ใช้</h3>
 
               <p className="text-sm text-slate-500 mb-5">{editingUser?.username || "-"}</p>
@@ -960,7 +966,7 @@ export default function ManageUsers() {
         {/* STATUS MODAL */}
         {statusModal && (
           <div onClick={closeStatusModal} className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-xl w-[300px]">
+            <div onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn">
               <h3 className="text-lg font-semibold mb-1 text-slate-800">สถานะ</h3>
 
               <div className="flex flex-col gap-3">
