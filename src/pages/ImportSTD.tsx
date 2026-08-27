@@ -422,7 +422,7 @@ export default function BillImport() {
   };
 
   return (
-    <div className={`font-thai min-h-[80vh] w-full bg-slate-50 px-1 py-2 ${loadingFile || saving ? "cursor-wait" : ""}`}>
+    <div className={`font-thai h-[calc(100vh-61px)] w-full bg-slate-50 px-1 py-2 ${loadingFile || saving ? "cursor-wait" : ""}`}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-800">นำเข้าบิลจาก Excel</h2>

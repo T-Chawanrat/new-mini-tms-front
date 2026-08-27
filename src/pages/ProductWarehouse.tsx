@@ -29,6 +29,7 @@ type ProductWarehouseRow = {
   to_warehouse_name: string | null;
   created_by: number | null;
   created_name: string | null;
+  route_name: string | null;
   serial_items?: ProductWarehouseSerialItem[];
 };
 
@@ -47,7 +48,7 @@ type AxiosLikeError = {
   message?: string;
 };
 
-const TABLE_COLUMN_COUNT = 10;
+const TABLE_COLUMN_COUNT = 11;
 
 const getErrorMessage = (error: unknown) => {
   if (typeof error !== "object" || error === null) return "ไม่สามารถโหลดสินค้าในคลังได้";
@@ -222,7 +223,7 @@ export default function ProductWarehouse() {
 
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[1450px] table-fixed border-collapse text-left text-xs">
+          <table className="w-full min-w-[1620px] table-fixed border-collapse text-left text-xs">
             <thead className="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               <tr className="border-b border-slate-200">
                 <th className="w-[42px] px-2 py-2" />
@@ -235,6 +236,7 @@ export default function ProductWarehouse() {
                 <th className="w-[230px] px-3 py-2">เจ้าของงาน</th>
                 <th className="w-[240px] px-3 py-2">ผู้รับ</th>
                 <th className="w-[170px] px-3 py-2">ผู้ยิงรับ</th>
+                <th className="w-[400px] px-3 py-2">สายรถ</th>
               </tr>
             </thead>
 
@@ -332,6 +334,7 @@ function WarehouseBillRows({ row, rowNumber, expanded, onToggle }: WarehouseBill
           <div className="truncate text-[11px] text-slate-400">{row.recipient_code || "-"}</div>
         </td>
         <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={row.created_name || "-"}>{row.created_name || "-"}</td>
+        <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={row.route_name || "-"}>{row.route_name || "-"}</td>
       </tr>
 
       {expanded && (

@@ -59,6 +59,12 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
+        name: "Manage Routes",
+        path: "/manage/routes",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
         name: "Manage Holidays",
         path: "/manage-holidays",
         icon: <File size={20} />,
@@ -145,6 +151,12 @@ const navItems: NavItem[] = [
       {
         name: "Move TK",
         path: "/move-tk",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "Move DT",
+        path: "/move-dt",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },

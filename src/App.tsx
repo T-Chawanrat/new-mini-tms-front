@@ -39,6 +39,8 @@ import DeliveryTruckCreate from "./pages/DeliveryTruckCreate";
 import DeliveryTruckScan from "./pages/DeliveryTruckScan";
 import DeliveryTruckPrint from "./pages/DeliveryTruckPrint";
 import RouteMap from "./pages/RouteMap";
+import ManageRoutes from "./pages/ManageRoutes";
+import MoveDtScan from "./pages/MoveDtScan";
 
 export default function App() {
   return (
@@ -109,6 +111,7 @@ export default function App() {
               <Route path="/manage/shippers" element={<ManageShippers />} />
               <Route path="/manage/recipients" element={<ManageRecipients />} />
               <Route path="/manage/packages" element={<ManagePackages />} />
+              <Route path="/manage/routes" element={<ManageRoutes />} />
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/create-do" element={<CreateReceivePage />} />
               <Route path="/manage-holidays" element={<ManageHolidays />} />
@@ -127,6 +130,8 @@ export default function App() {
               <Route path="/dc-receive" element={<DcReceive />} />
               <Route path="/move-tk" element={<MoveTk />} />
               <Route path="/move-tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScan />} />
+              <Route path="/move-dt" element={<MoveDtScan />} />
+              <Route path="/move-dt/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveDtScan />} />
               <Route path="/map" element={<RouteMap />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}

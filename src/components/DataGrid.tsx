@@ -12,6 +12,7 @@ type AppDataGridProps = {
   height?: number | string;
   pageSize?: number;
   getRowClassName?: (params: any) => string;
+  onRowClick?: (params: any) => void;
   framed?: boolean;
 };
 
@@ -23,6 +24,7 @@ export default function AppDataGrid({
   height = 560,
   pageSize = 100,
   getRowClassName,
+  onRowClick,
   framed = true,
 }: AppDataGridProps) {
   return (
@@ -40,6 +42,7 @@ export default function AppDataGrid({
           loading={loading}
           getRowId={getRowId}
           getRowClassName={getRowClassName}
+          onRowClick={onRowClick}
           disableRowSelectionOnClick
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{
@@ -137,11 +140,11 @@ export default function AppDataGrid({
             },
 
             "& .truck-active-row": {
-              backgroundColor: "#f5f8fb",
+              backgroundColor: "#dbeafe",
             },
 
             "& .truck-active-row:hover": {
-              backgroundColor: "#e2e8f0",
+              backgroundColor: "#bfdbfe",
             },
 
             "& .truck-active-row .MuiDataGrid-cell": {
