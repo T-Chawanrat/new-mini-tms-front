@@ -466,8 +466,9 @@ export default function TruckloadScan() {
         <button
           type="button"
           onClick={() => setDeleteConfirmOpen(true)}
-          disabled={disabled}
-          className="h-9 shrink-0 rounded-md border border-red-300 bg-red-100 px-2.5 text-sm text-red-700 outline-none transition hover:bg-red-200 focus:border-red-500 focus:ring-2 focus:ring-red-100 disabled:bg-slate-100"
+          disabled={disabled || scannedRows.length > 0}
+          title={scannedRows.length > 0 ? "นำสินค้าออกจากรถให้หมดก่อนจึงจะลบใบปิดบรรทุกได้" : undefined}
+          className="h-9 shrink-0 rounded-md border border-red-300 bg-red-100 px-2.5 text-sm text-red-700 outline-none transition hover:bg-red-200 focus:border-red-500 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
         >
           ลบใบปิดบรรทุก
         </button>

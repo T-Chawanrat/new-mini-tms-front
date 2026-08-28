@@ -41,6 +41,7 @@ import DeliveryTruckPrint from "./pages/DeliveryTruckPrint";
 import RouteMap from "./pages/RouteMap";
 import ManageRoutes from "./pages/ManageRoutes";
 import MoveDtScan from "./pages/MoveDtScan";
+import MoveDc from "./pages/MoveDc";
 
 export default function App() {
   return (
@@ -132,6 +133,7 @@ export default function App() {
               <Route path="/move-tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScan />} />
               <Route path="/move-dt" element={<MoveDtScan />} />
               <Route path="/move-dt/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveDtScan />} />
+              <Route path="/move-dc" element={<MoveDc />} />
               <Route path="/map" element={<RouteMap />} />
               {/* <Route path="/vgt" element={<ImportVGT />} />
               <Route path="/adv" element={<ImportADV />} /> */}

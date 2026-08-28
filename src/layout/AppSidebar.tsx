@@ -160,6 +160,12 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
+      {
+        name: "Move DC",
+        path: "/move-dc",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
     ],
   },
   {
