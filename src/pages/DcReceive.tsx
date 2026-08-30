@@ -21,13 +21,11 @@ const countTruckLoads = (rows: DcReceiveRow[]) =>
 
 export default function DcReceive() {
   const receiveInputRef = useRef<HTMLInputElement>(null);
-  const removeInputRef = useRef<HTMLInputElement>(null);
   const successAudioRef = useRef<HTMLAudioElement | null>(null);
   const errorAudioRef = useRef<HTMLAudioElement | null>(null);
   const [pendingRows, setPendingRows] = useState<DcReceiveRow[]>([]);
   const [scannedRows, setScannedRows] = useState<DcReceiveRow[]>([]);
   const [receiveInput, setReceiveInput] = useState("");
-  const [removeInput, setRemoveInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -55,7 +53,7 @@ export default function DcReceive() {
       setError("");
       const response = await AxiosInstance.get("/dc-receives/serials");
       setPendingRows(Array.isArray(response.data?.data) ? response.data.data : []);
-      setScannedRows([]);
+      setScannedRows(Array.isArray(response.data?.received) ? response.data.received : []);
     } catch (requestError: any) {
       setPendingRows([]);
       setError(requestError?.response?.data?.message || "ไม่สามารถโหลดรายการรอรับเข้า DC ได้");
@@ -69,7 +67,7 @@ export default function DcReceive() {
     void loadSerials();
   }, [loadSerials]);
 
-  const scanToRight = () => {
+  const scanToRight = async () => {
     const normalized = normalizeSerialText(receiveInput);
     if (!normalized) return;
     const index = pendingRows.findIndex((row) => normalizeSerialText(row.serial_no) === normalized);
@@ -78,52 +76,22 @@ export default function DcReceive() {
       playSound("error");
     } else {
       const row = pendingRows[index];
-      setPendingRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
-      setScannedRows((current) => [row, ...current]);
-      setError("");
-      setMessage(`ยิง ${row.serial_no} แล้ว`);
-      playSound("success");
+      try {
+        setSaving(true);
+        setError("");
+        const response = await AxiosInstance.post("/dc-receives", { serial_nos: [row.serial_no] });
+        setMessage(response.data?.message || `รับ SN ${row.serial_no} เข้า DC สำเร็จ`);
+        playSound("success");
+        await loadSerials();
+      } catch (requestError: any) {
+        setError(requestError?.response?.data?.message || "ไม่สามารถรับสินค้าเข้า DC ได้");
+        playSound("error");
+      } finally {
+        setSaving(false);
+      }
     }
     setReceiveInput("");
     window.setTimeout(() => receiveInputRef.current?.focus(), 0);
-  };
-
-  const scanToLeft = () => {
-    const normalized = normalizeSerialText(removeInput);
-    if (!normalized) return;
-    const index = scannedRows.findIndex((row) => normalizeSerialText(row.serial_no) === normalized);
-    if (index < 0) {
-      setError(`ไม่พบ Serial No ${removeInput.trim()} ในฝั่งที่ยิงแล้ว`);
-      playSound("error");
-    } else {
-      const row = scannedRows[index];
-      setScannedRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
-      setPendingRows((current) => [row, ...current]);
-      setError("");
-      setMessage(`นำ ${row.serial_no} กลับฝั่งรอยิงแล้ว`);
-      playSound("success");
-    }
-    setRemoveInput("");
-    window.setTimeout(() => removeInputRef.current?.focus(), 0);
-  };
-
-  const save = async () => {
-    if (!scannedRows.length) return;
-    try {
-      setSaving(true);
-      setError("");
-      const response = await AxiosInstance.post("/dc-receives", {
-        serial_nos: scannedRows.map((row) => row.serial_no),
-      });
-      setMessage(response.data?.message || "รับสินค้าเข้า DC สำเร็จ");
-      playSound("success");
-      await loadSerials();
-    } catch (requestError: any) {
-      setError(requestError?.response?.data?.message || "ไม่สามารถรับสินค้าเข้า DC ได้");
-      playSound("error");
-    } finally {
-      setSaving(false);
-    }
   };
 
   const renderTable = (rows: DcReceiveRow[], emptyText: string, color: "red" | "green") => (
@@ -170,11 +138,9 @@ export default function DcReceive() {
     <div className="flex h-[calc(100vh-61px)] flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
       <div className="mb-3 flex items-end justify-between gap-4">
         <div><h1 className="text-lg font-bold text-slate-900">รับสินค้าเข้าคลัง DC</h1><p className="text-xs text-slate-500">ยิง Serial No จากรถลงคลัง DC</p></div>
-        <button type="button" onClick={save} disabled={saving || loading || !scannedRows.length} className="h-9 rounded-md bg-emerald-600 px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300">{saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}</button>
       </div>
-      <div className="mb-3 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm lg:grid-cols-2">
-        <input ref={receiveInputRef} value={receiveInput} onChange={(event) => setReceiveInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); scanToRight(); } }} disabled={loading || saving} placeholder="ยิง SN เพื่อรับเข้า DC" className="h-9 rounded-md border border-slate-300 px-3 font-mono text-sm outline-none focus:border-blue-500" />
-        <input ref={removeInputRef} value={removeInput} onChange={(event) => setRemoveInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); scanToLeft(); } }} disabled={loading || saving || !scannedRows.length} placeholder="ยิง SN เพื่อนำกลับฝั่งซ้าย" className="h-9 rounded-md border border-slate-300 px-3 font-mono text-sm outline-none focus:border-amber-500 disabled:bg-slate-100" />
+      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+        <input ref={receiveInputRef} value={receiveInput} onChange={(event) => setReceiveInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void scanToRight(); } }} disabled={loading || saving} placeholder="ยิง SN เพื่อรับเข้า DC ทันที" className="h-9 w-full rounded-md border border-slate-300 px-3 font-mono text-sm outline-none focus:border-blue-500" />
       </div>
       {error && <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       {message && !error && <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div>}

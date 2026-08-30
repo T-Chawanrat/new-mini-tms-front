@@ -17,19 +17,18 @@ type WarehouseReceiveRow = {
 type WarehouseReceiveResponse = {
   success?: boolean;
   data: WarehouseReceiveRow[];
+  received?: WarehouseReceiveRow[];
   total: number;
 };
 
 export default function WarehouseScan() {
   const receiveInputRef = useRef<HTMLInputElement | null>(null);
-  const removeInputRef = useRef<HTMLInputElement | null>(null);
   const successAudioRef = useRef<HTMLAudioElement | null>(null);
   const errorAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [customerFilter, setCustomerFilter] = useState("");
   const [customerText, setCustomerText] = useState("");
   const [receiveSerialInput, setReceiveSerialInput] = useState("");
-  const [removeSerialInput, setRemoveSerialInput] = useState("");
 
   const [pendingRows, setPendingRows] = useState<WarehouseReceiveRow[]>([]);
   const [scannedRows, setScannedRows] = useState<WarehouseReceiveRow[]>([]);
@@ -75,12 +74,6 @@ export default function WarehouseScan() {
     }, 0);
   }, []);
 
-  const focusRemoveInput = useCallback(() => {
-    window.setTimeout(() => {
-      removeInputRef.current?.focus();
-    }, 0);
-  }, []);
-
   const fetchSerials = useCallback(async () => {
     try {
       setLoading(true);
@@ -96,9 +89,8 @@ export default function WarehouseScan() {
       const rows = Array.isArray(response.data?.data) ? response.data.data : [];
 
       setPendingRows(rows);
-      setScannedRows([]);
+      setScannedRows(Array.isArray(response.data?.received) ? response.data.received : []);
       setReceiveSerialInput("");
-      setRemoveSerialInput("");
     } catch (err) {
       console.error("fetch warehouse receive serials error:", err);
       setPendingRows([]);
@@ -114,7 +106,7 @@ export default function WarehouseScan() {
     fetchSerials();
   }, [fetchSerials]);
 
-  const handleReceiveScan = (value?: string) => {
+  const handleReceiveScan = async (value?: string) => {
     const rawSerial = (value ?? receiveSerialInput).trim();
     const serial = normalizeSerialText(rawSerial);
 
@@ -126,16 +118,6 @@ export default function WarehouseScan() {
     setError(null);
     setInfo(null);
 
-    const alreadyScanned = scannedRows.some((row) => normalizeSerialText(row.serial_no) === serial);
-
-    if (alreadyScanned) {
-      playSound("error");
-      setError(`SN ${rawSerial} อยู่ในรายการที่ยิงแล้ว`);
-      setReceiveSerialInput("");
-      focusReceiveInput();
-      return;
-    }
-
     const targetIndex = pendingRows.findIndex((row) => normalizeSerialText(row.serial_no) === serial);
 
     if (targetIndex === -1) {
@@ -146,82 +128,21 @@ export default function WarehouseScan() {
       return;
     }
 
-    const targetRow = pendingRows[targetIndex];
-
-    playSound("success");
-    setPendingRows((previousRows) => previousRows.filter((_, index) => index !== targetIndex));
-    setScannedRows((previousRows) => [targetRow, ...previousRows]);
-
-    setInfo(`ย้าย SN ${targetRow.serial_no} ไปยังรายการที่ยิงแล้ว`);
-    setReceiveSerialInput("");
-    focusReceiveInput();
-  };
-
-  const handleRemoveScan = (value?: string) => {
-    const rawSerial = (value ?? removeSerialInput).trim();
-    const serial = normalizeSerialText(rawSerial);
-
-    if (!serial) {
-      focusRemoveInput();
-      return;
-    }
-
-    setError(null);
-    setInfo(null);
-
-    const targetIndex = scannedRows.findIndex((row) => normalizeSerialText(row.serial_no) === serial);
-
-    if (targetIndex === -1) {
-      playSound("error");
-      setError(`ไม่พบ SN ${rawSerial} ในรายการที่ยิงแล้ว`);
-      setRemoveSerialInput("");
-      focusRemoveInput();
-      return;
-    }
-
-    const targetRow = scannedRows[targetIndex];
-
-    playSound("success");
-    setScannedRows((previousRows) => previousRows.filter((_, index) => index !== targetIndex));
-    setPendingRows((previousRows) => [targetRow, ...previousRows]);
-
-    setInfo(`นำ SN ${targetRow.serial_no} กลับไปรายการรอยิงแล้ว`);
-    setRemoveSerialInput("");
-    focusRemoveInput();
-  };
-
-  const handleSave = async () => {
-    if (scannedRows.length === 0) {
-      setError("ยังไม่มีรายการที่ยิงแล้วสำหรับบันทึก");
-      focusReceiveInput();
-      return;
-    }
-
     try {
       setSaving(true);
-      setError(null);
-      setInfo(null);
-
-      const receivedCount = scannedRows.length;
-
       const response = await AxiosInstance.post("/warehouse-receives", {
-        serial_nos: scannedRows.map((row) => row.serial_no),
+        serial_nos: [rawSerial],
         resend_date: null,
       });
-
       await fetchSerials();
-
-      setInfo(response.data?.message || `บันทึกรับเข้าคลังสำเร็จ ${formatThaiNumber(receivedCount)} รายการ`);
-
+      setInfo(response.data?.message || `รับ SN ${pendingRows[targetIndex].serial_no} เข้าคลังสำเร็จ`);
       playSound("success");
     } catch (err: any) {
-      console.error("save warehouse receive error:", err);
-
       setError(err?.response?.data?.message || "ไม่สามารถบันทึกรับเข้าคลังได้");
-
       playSound("error");
     } finally {
       setSaving(false);
+      setReceiveSerialInput("");
       focusReceiveInput();
     }
   };
@@ -264,17 +185,9 @@ export default function WarehouseScan() {
 
           <div className="hidden flex-1 sm:block" />
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || loading || scannedRows.length === 0}
-            className="inline-flex h-9 w-full items-center justify-center rounded-md bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
-          >
-            {saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}
-          </button>
         </div>
 
-        <div className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-slate-100 pt-2.5 lg:grid-cols-2">
+        <div className="mt-2.5 border-t border-slate-100 pt-2.5">
           <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-slate-600">ยิงรับสินค้า</label>
             <input
@@ -289,35 +202,11 @@ export default function WarehouseScan() {
                 }
               }}
               disabled={loading || saving}
-              placeholder="ยิง SN เพื่อย้ายไปฝั่งขวา"
+              placeholder="ยิง SN เพื่อรับเข้าคลังทันที"
               className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 font-mono text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
             />
           </div>
 
-          <div className="min-w-0">
-            <label className="mb-1 block text-xs font-medium text-slate-600">ยิงลบรายการ</label>
-            <input
-              ref={removeInputRef}
-              type="text"
-              value={removeSerialInput}
-              onChange={(event) => setRemoveSerialInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleRemoveScan(event.currentTarget.value);
-                }
-              }}
-              disabled={loading || saving || scannedRows.length === 0}
-              placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย"
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 font-mono text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100 disabled:border-slate-200 disabled:bg-slate-100"
-            />
-          </div>
-
-          <div className="hidden" />
-
-          <button type="button" onClick={handleSave} disabled={saving || loading || scannedRows.length === 0} className="hidden">
-            {saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}
-          </button>
         </div>
       </section>
 

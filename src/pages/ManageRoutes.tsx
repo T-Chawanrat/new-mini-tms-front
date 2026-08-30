@@ -16,6 +16,9 @@ type RouteRow = {
   route_detail_id: number | null;
   subdistrict_id: number | null;
   subdistrict_name: string | null;
+  district_name: string | null;
+  province_name: string | null;
+  zip_code: string | null;
   route_detail_day_id: number | null;
   day: string | null;
 };
@@ -24,10 +27,13 @@ type RouteDetail = {
   route_detail_id: number;
   subdistrict_id: number | null;
   subdistrict_name: string | null;
+  district_name: string | null;
+  province_name: string | null;
+  zip_code: string | null;
   days: string[];
 };
 
-type RouteItem = Omit<RouteRow, "route_detail_id" | "subdistrict_id" | "subdistrict_name" | "route_detail_day_id" | "day"> & {
+type RouteItem = Omit<RouteRow, "route_detail_id" | "subdistrict_id" | "subdistrict_name" | "district_name" | "province_name" | "zip_code" | "route_detail_day_id" | "day"> & {
   details: RouteDetail[];
 };
 
@@ -291,6 +297,9 @@ export default function ManageRoutes() {
           route_detail_id: row.route_detail_id,
           subdistrict_id: row.subdistrict_id,
           subdistrict_name: row.subdistrict_name,
+          district_name: row.district_name,
+          province_name: row.province_name,
+          zip_code: row.zip_code,
           days: [],
         };
         route.details.push(detail);
@@ -306,9 +315,9 @@ export default function ManageRoutes() {
 
   const routeColumns = useMemo<GridColDef<RouteItem>[]>(
     () => [
-      { field: "route_code", headerName: "รหัสสายรถ", minWidth: 120, flex: 0.8 },
-      { field: "route_name", headerName: "ชื่อสายรถ", minWidth: 180, flex: 1.2 },
-      { field: "warehouse_name", headerName: "คลัง", minWidth: 150, flex: 1 },
+      { field: "route_code", headerName: "รหัสสายรถ", width: 115 },
+      { field: "route_name", headerName: "ชื่อสายรถ", minWidth: 170, flex: 1 },
+      { field: "warehouse_name", headerName: "คลัง", width: 185 },
       {
         field: "detail_count",
         headerName: "จำนวนตำบล",
@@ -374,7 +383,7 @@ export default function ManageRoutes() {
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_440px] xl:items-stretch">
+      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-stretch">
         <div className="flex min-h-0 flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex shrink-0 flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm font-semibold text-slate-700">รายการสายรถ</div>
@@ -440,11 +449,11 @@ export default function ManageRoutes() {
             ) : !selectedRoute.details.length ? (
               <div className="px-4 py-10 text-center text-sm text-slate-400">สายรถนี้ยังไม่มีตำบล</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-[400px] w-full text-sm">
+              <div className="overflow-x-scroll">
+                <table className="min-w-[500px] w-full text-sm">
                   <thead className="bg-slate-50 text-left text-xs font-semibold text-slate-500">
                     <tr>
-                      <th className="px-4 py-3">ตำบล</th>
+                      <th className="px-4 py-3">ตำบล / อำเภอ / จังหวัด</th>
                       <th className="px-4 py-3">วันที่รถเข้า</th>
                       <th className="px-4 py-3 text-center">แก้ไข</th>
                     </tr>
@@ -452,7 +461,14 @@ export default function ManageRoutes() {
                   <tbody className="divide-y divide-slate-100">
                     {selectedRoute.details.map((detail) => (
                       <tr key={detail.route_detail_id}>
-                        <td className="px-4 py-3 font-medium text-slate-700">{detail.subdistrict_name || "-"}</td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-slate-700">{detail.subdistrict_name || "-"}</div>
+                          <div className="mt-0.5 text-xs text-slate-500">
+                            {[detail.district_name && `อ.${detail.district_name}`, detail.province_name && `จ.${detail.province_name}`, detail.zip_code]
+                              .filter(Boolean)
+                              .join(" · ") || "-"}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 text-slate-600">
                           {detail.days.length ? detail.days.map((day) => thaiDays[day] || day).join(", ") : "-"}
                         </td>
