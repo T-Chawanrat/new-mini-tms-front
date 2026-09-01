@@ -62,14 +62,14 @@ export default function MoveDtScan() {
       setLoading(true);
       setError("");
       const [sourceResponse, targetResponse] = await Promise.all([
-        AxiosInstance.get(`/move-tk/${sourceTruckLoadId}/products`),
-        AxiosInstance.get(`/move-tk/${targetTruckLoadId}/products`, { params: { include_open: "Y" } }),
+        AxiosInstance.get(`/move-dt/${sourceTruckLoadId}/products`),
+        AxiosInstance.get(`/move-dt/${targetTruckLoadId}/products`, { params: { include_open: "Y" } }),
       ]);
       setPendingRows(Array.isArray(sourceResponse.data?.data) ? sourceResponse.data.data : []);
       setMovingRows(Array.isArray(targetResponse.data?.data) ? targetResponse.data.data : []);
       window.setTimeout(() => addInputRef.current?.focus(), 0);
     } catch (requestError: any) {
-      setError(requestError?.response?.data?.message || "ไม่สามารถโหลดสินค้าในใบปิดบรรทุกได้");
+      setError(requestError?.response?.data?.message || "ไม่สามารถโหลดสินค้าในใบรถกระจายได้");
     } finally {
       setLoading(false);
     }
@@ -80,8 +80,8 @@ export default function MoveDtScan() {
       try {
         setLoading(true);
         const [sources, targets] = await Promise.all([
-          AxiosInstance.get("/move-tk/source-trucks"),
-          AxiosInstance.get("/move-tk/target-trucks", { params: { source_truck_load_id: sourceTruckLoadId } }),
+          AxiosInstance.get("/move-dt/source-trucks"),
+          AxiosInstance.get("/move-dt/target-trucks", { params: { source_truck_load_id: sourceTruckLoadId } }),
         ]);
         const sourceRows: MoveTkTruck[] = Array.isArray(sources.data?.data) ? sources.data.data : [];
         const targetRows: MoveTkTruck[] = Array.isArray(targets.data?.data) ? targets.data.data : [];
@@ -90,12 +90,12 @@ export default function MoveDtScan() {
         setSourceTruck(source);
         setTargetTruck(target);
         if (!source || !target) {
-          setError("ไม่พบใบปิดบรรทุกต้นทางหรือปลายทาง");
+          setError("ไม่พบใบรถกระจายต้นทางหรือปลายทาง");
           return;
         }
         await loadProducts();
       } catch (requestError: any) {
-        setError(requestError?.response?.data?.message || "ไม่สามารถโหลดข้อมูลใบปิดบรรทุกได้");
+        setError(requestError?.response?.data?.message || "ไม่สามารถโหลดข้อมูลใบรถกระจายได้");
       } finally {
         setLoading(false);
       }
@@ -107,7 +107,7 @@ export default function MoveDtScan() {
     try {
       setSaving(true);
       setError("");
-      const response = await AxiosInstance.patch("/move-tk/products", {
+      const response = await AxiosInstance.patch("/move-dt/products", {
         source_truck_load_id: Number(sourceTruckLoadId),
         target_truck_load_id: Number(targetTruckLoadId),
         serial_nos: [row.serial_no],
@@ -115,7 +115,7 @@ export default function MoveDtScan() {
       });
       playSound("success");
       if (response.data?.source_deleted) {
-        navigate("/move-tk");
+        navigate("/move-dt");
         return;
       }
       await loadProducts();
@@ -162,16 +162,16 @@ export default function MoveDtScan() {
       <header className="mb-3 shrink-0">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold text-slate-900">ย้ายสินค้าไปใบปิดบรรทุก</h1>
+            <h1 className="text-lg font-bold text-slate-900">ย้ายสินค้าไปใบรถกระจาย</h1>
             <p className="mt-0.5 text-xs text-slate-500">ยิง Barcode เพื่อย้ายสินค้าจากใบต้นทางไปยังใบปลายทางที่เลือก</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={() => navigate("/move-tk")}
+              onClick={() => navigate("/move-dt")}
               className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              เปลี่ยนใบปิดบรรทุก
+              เปลี่ยนใบรถกระจาย
             </button>
           </div>
         </div>

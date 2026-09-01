@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { X } from "lucide-react";
 
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../utils/AxiosInstance";
 import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
 import CustomerDropdown, { type Customer } from "../components/dropdown/CustomerDropdown";
+import ScanInput from "../components/scan/ScanInput";
 
 type WarehouseReceiveRow = {
   serial_no: string;
@@ -17,24 +19,27 @@ type WarehouseReceiveRow = {
 type WarehouseReceiveResponse = {
   success?: boolean;
   data: WarehouseReceiveRow[];
-  received?: WarehouseReceiveRow[];
+  draft?: WarehouseReceiveRow[];
   total: number;
 };
 
 export default function WarehouseScan() {
   const receiveInputRef = useRef<HTMLInputElement | null>(null);
+  const removeInputRef = useRef<HTMLInputElement | null>(null);
   const successAudioRef = useRef<HTMLAudioElement | null>(null);
   const errorAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const [customerFilter, setCustomerFilter] = useState("");
   const [customerText, setCustomerText] = useState("");
   const [receiveSerialInput, setReceiveSerialInput] = useState("");
+  const [removeSerialInput, setRemoveSerialInput] = useState("");
 
   const [pendingRows, setPendingRows] = useState<WarehouseReceiveRow[]>([]);
   const [scannedRows, setScannedRows] = useState<WarehouseReceiveRow[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -74,6 +79,12 @@ export default function WarehouseScan() {
     }, 0);
   }, []);
 
+  const focusRemoveInput = useCallback(() => {
+    window.setTimeout(() => {
+      removeInputRef.current?.focus();
+    }, 0);
+  }, []);
+
   const fetchSerials = useCallback(async () => {
     try {
       setLoading(true);
@@ -87,9 +98,11 @@ export default function WarehouseScan() {
       });
 
       const rows = Array.isArray(response.data?.data) ? response.data.data : [];
+      const draftRows = Array.isArray(response.data?.draft) ? response.data.draft : [];
+      const draftSerials = new Set(draftRows.map((row) => normalizeSerialText(row.serial_no)));
 
-      setPendingRows(rows);
-      setScannedRows(Array.isArray(response.data?.received) ? response.data.received : []);
+      setPendingRows(rows.filter((row) => !draftSerials.has(normalizeSerialText(row.serial_no))));
+      setScannedRows(draftRows);
       setReceiveSerialInput("");
     } catch (err) {
       console.error("fetch warehouse receive serials error:", err);
@@ -128,22 +141,92 @@ export default function WarehouseScan() {
       return;
     }
 
+    const row = pendingRows[targetIndex];
+    setReceiveSerialInput("");
+
     try {
       setSaving(true);
       const response = await AxiosInstance.post("/warehouse-receives", {
-        serial_nos: [rawSerial],
+        action: "DRAFT",
+        serial_no: rawSerial,
         resend_date: null,
       });
-      await fetchSerials();
-      setInfo(response.data?.message || `รับ SN ${pendingRows[targetIndex].serial_no} เข้าคลังสำเร็จ`);
+      setPendingRows((current) => current.filter((item) => normalizeSerialText(item.serial_no) !== serial));
+      setScannedRows((current) =>
+        current.some((item) => normalizeSerialText(item.serial_no) === serial) ? current : [...current, row],
+      );
+      setInfo(response.data?.message || `เพิ่ม SN ${row.serial_no} ในรายการรอยืนยันแล้ว`);
       playSound("success");
     } catch (err: any) {
       setError(err?.response?.data?.message || "ไม่สามารถบันทึกรับเข้าคลังได้");
       playSound("error");
     } finally {
       setSaving(false);
-      setReceiveSerialInput("");
       focusReceiveInput();
+    }
+  };
+
+  const handleSave = async () => {
+    if (!scannedRows.length) {
+      setError("ยังไม่มีรายการรอยืนยัน");
+      focusReceiveInput();
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+      const receivedCount = scannedRows.length;
+      const response = await AxiosInstance.post("/warehouse-receives", {
+        action: "CONFIRM",
+        resend_date: null,
+      });
+      await fetchSerials();
+      setInfo(response.data?.message || `บันทึกรับเข้าคลังสำเร็จ ${formatThaiNumber(receivedCount)} รายการ`);
+      playSound("success");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "ไม่สามารถบันทึกรับเข้าคลังได้");
+      playSound("error");
+    } finally {
+      setSaving(false);
+      setConfirmSaveOpen(false);
+      focusReceiveInput();
+    }
+  };
+
+  const handleRemoveScan = async (value?: string) => {
+    const rawSerial = (value ?? removeSerialInput).trim();
+    const serial = normalizeSerialText(rawSerial);
+
+    if (!serial) {
+      focusRemoveInput();
+      return;
+    }
+
+    const row = scannedRows.find((item) => normalizeSerialText(item.serial_no) === serial);
+    setRemoveSerialInput("");
+
+    try {
+      setSaving(true);
+      setError(null);
+      const response = await AxiosInstance.post("/warehouse-receives", {
+        action: "REMOVE",
+        serial_no: rawSerial,
+      });
+      if (row) {
+        setScannedRows((current) => current.filter((item) => normalizeSerialText(item.serial_no) !== serial));
+        setPendingRows((current) =>
+          current.some((item) => normalizeSerialText(item.serial_no) === serial) ? current : [...current, row],
+        );
+      }
+      setInfo(response.data?.message || `นำ SN ${rawSerial} กลับไปรายการรอยิงแล้ว`);
+      playSound("success");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "ไม่สามารถนำรายการกลับไปรายการรอยิงได้");
+      playSound("error");
+    } finally {
+      setSaving(false);
+      focusRemoveInput();
     }
   };
 
@@ -185,27 +268,38 @@ export default function WarehouseScan() {
 
           <div className="hidden flex-1 sm:block" />
 
+          <button
+            type="button"
+            onClick={() => setConfirmSaveOpen(true)}
+            disabled={saving || loading || scannedRows.length === 0}
+            className="inline-flex h-9 w-full items-center justify-center rounded-md bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
+          >
+            {saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}
+          </button>
+
         </div>
 
-        <div className="mt-2.5 border-t border-slate-100 pt-2.5">
-          <div className="min-w-0">
-            <label className="mb-1 block text-xs font-medium text-slate-600">ยิงรับสินค้า</label>
-            <input
-              ref={receiveInputRef}
-              type="text"
-              value={receiveSerialInput}
-              onChange={(event) => setReceiveSerialInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleReceiveScan(event.currentTarget.value);
-                }
-              }}
-              disabled={loading || saving}
-              placeholder="ยิง SN เพื่อรับเข้าคลังทันที"
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 font-mono text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-            />
-          </div>
+        <div className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-slate-100 pt-2.5 lg:grid-cols-2">
+          <ScanInput
+            label="ยิงรับสินค้า"
+            value={receiveSerialInput}
+            onChange={setReceiveSerialInput}
+            onScan={(value) => void handleReceiveScan(value)}
+            inputRef={receiveInputRef}
+            disabled={loading}
+            placeholder="ยิง SN เพื่อเพิ่มในรายการรอยืนยัน"
+          />
+
+          <ScanInput
+            label="ยิงลบรายการ"
+            value={removeSerialInput}
+            onChange={setRemoveSerialInput}
+            onScan={(value) => void handleRemoveScan(value)}
+            inputRef={removeInputRef}
+            disabled={loading || scannedRows.length === 0}
+            placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย"
+            tone="amber"
+          />
 
         </div>
       </section>
@@ -273,7 +367,7 @@ export default function WarehouseScan() {
 
         <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5">
-            <span className="text-sm font-semibold text-slate-700">รายการที่ยิงแล้ว</span>
+            <span className="text-sm font-semibold text-slate-700">รายการรอยืนยัน</span>
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
               {formatThaiNumber(scannedRows.length)} รายการ
             </span>
@@ -293,7 +387,7 @@ export default function WarehouseScan() {
                 {scannedRows.length === 0 ? (
                   <tr>
                     <td colSpan={3} className="px-3 py-10 text-center text-sm text-slate-500">
-                      ยังไม่มีรายการที่ยิง
+                      ยังไม่มีรายการรอยืนยัน
                     </td>
                   </tr>
                 ) : (
@@ -321,6 +415,46 @@ export default function WarehouseScan() {
           </div>
         </section>
       </div>
+
+      {confirmSaveOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm animate-scaleIn rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h2 className="text-lg font-semibold text-slate-800">ยืนยันรับสินค้าเข้าคลัง</h2>
+              <button
+                type="button"
+                onClick={() => setConfirmSaveOpen(false)}
+                disabled={saving}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
+                title="ปิด"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5 text-sm text-slate-600">
+              ต้องการรับสินค้าเข้าคลัง <strong className="text-slate-800">{formatThaiNumber(scannedRows.length)} รายการ</strong> ใช่หรือไม่
+            </div>
+            <div className="flex justify-end gap-3 border-t border-slate-100 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setConfirmSaveOpen(false)}
+                disabled={saving}
+                className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 disabled:opacity-60"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={saving}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {saving ? "กำลังบันทึก..." : "ยืนยันบันทึก"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

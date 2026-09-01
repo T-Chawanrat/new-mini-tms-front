@@ -35,15 +35,15 @@ export default function MoveDt() {
       setLoading(true);
       setError("");
       const [sources, targets] = await Promise.all([
-        AxiosInstance.get("/move-tk/source-trucks"),
-        AxiosInstance.get("/move-tk/target-trucks", {
+        AxiosInstance.get("/move-dt/source-trucks"),
+        AxiosInstance.get("/move-dt/target-trucks", {
           params: { source_truck_load_id: selectedSourceId || undefined },
         }),
       ]);
       setSourceTrucks(Array.isArray(sources.data?.data) ? sources.data.data : []);
       setTargetTrucks(Array.isArray(targets.data?.data) ? targets.data.data : []);
     } catch (requestError: any) {
-      setError(requestError?.response?.data?.message || "ไม่สามารถโหลดรายการใบปิดบรรทุกได้");
+      setError(requestError?.response?.data?.message || "ไม่สามารถโหลดรายการใบรถกระจายได้");
     } finally {
       setLoading(false);
     }
@@ -76,12 +76,12 @@ export default function MoveDt() {
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
       <header className="mb-3 flex shrink-0 items-end justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold text-slate-900">เลือกใบปิดบรรทุกสำหรับย้ายสินค้า</h1>
+          <h1 className="text-lg font-bold text-slate-900">เลือกใบรถกระจายสำหรับย้ายสินค้า</h1>
           <p className="mt-0.5 text-xs text-slate-500">เลือกใบต้นทางที่ปิดแล้ว และเลือกใบปลายทางก่อนเข้าสู่หน้ายิงสินค้า</p>
         </div>
         <button
           type="button"
-          onClick={() => navigate(`/move-tk/${sourceId}/to/${targetId}`)}
+          onClick={() => navigate(`/move-dt/${sourceId}/to/${targetId}`)}
           disabled={!sourceId || !targetId}
           className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
@@ -144,7 +144,7 @@ export default function MoveDt() {
             rows={visibleSources}
             selectedId={sourceId}
             loading={loading}
-            emptyText="ไม่พบใบปิดบรรทุกต้นทาง"
+            emptyText="ไม่พบใบรถกระจายต้นทาง"
             onSelect={(truck) => void selectSource(truck)}
           />
         </section>
@@ -156,7 +156,7 @@ export default function MoveDt() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-semibold">2. เลือกใบปลายทาง</h2>
-                <p className="text-xs text-slate-500">เฉพาะใบรถขนย้ายระหว่าง DC</p>
+                <p className="text-xs text-slate-500">ใบรถกระจายใน DC เดียวกัน</p>
               </div>
               <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                 {formatThaiNumber(sourceId ? visibleTargets.length : 0)} ใบ
@@ -177,7 +177,7 @@ export default function MoveDt() {
               rows={visibleTargets}
               selectedId={targetId}
               loading={loading}
-              emptyText="ไม่พบใบปิดบรรทุกปลายทาง"
+              emptyText="ไม่พบใบรถกระจายปลายทาง"
               onSelect={(truck) => setTargetId(String(truck.truck_load_id))}
             />
           ) : (

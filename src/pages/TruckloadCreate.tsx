@@ -898,7 +898,7 @@ export default function TruckLoadCreate() {
 
       {confirmAction && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="relative w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
+          <div className="relative w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl animate-scaleIn">
             <button type="button" onClick={() => setConfirmAction(null)} className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
               <X size={18} />
             </button>
