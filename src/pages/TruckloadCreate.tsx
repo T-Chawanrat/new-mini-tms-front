@@ -757,9 +757,10 @@ export default function TruckLoadCreate() {
             getRowId={(row: TruckLoadRow) => row.truck_load_id}
             height="100%"
             pageSize={100}
-            getRowClassName={(params: { row: TruckLoadRow }) =>
-              Number(params.row.serial_count || 0) <= 0 ? "truck-empty-row" : "truck-active-row"
-            }
+            getRowClassName={(params: { row: TruckLoadRow }) => {
+              if (Number(params.row.serial_count || 0) <= 0) return "truck-empty-row";
+              return params.row.is_close === "Y" && params.row.is_go === "Y" ? "truck-active-row" : "";
+            }}
           />
         </div>
       </section>

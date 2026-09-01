@@ -125,7 +125,7 @@ export default function MoveTk() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-semibold">1. เลือกใบต้นทาง</h2>
-                <p className="text-xs text-slate-500">เฉพาะใบที่ปิดบรรทุกแล้ว</p>
+                <p className="text-xs text-slate-500">เฉพาะใบรถขนย้ายระหว่าง DC ที่ปิดบรรทุกแล้ว</p>
               </div>
               <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
                 {formatThaiNumber(visibleSources.length)} ใบ

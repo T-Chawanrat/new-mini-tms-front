@@ -151,6 +151,18 @@ export default function AppDataGrid({
               borderBottom: "1px solid #cbd5e1",
             },
 
+            "& .delivery-truck-closed-row": {
+              backgroundColor: "#dcfce7",
+            },
+
+            "& .delivery-truck-closed-row:hover": {
+              backgroundColor: "#bbf7d0",
+            },
+
+            "& .delivery-truck-closed-row .MuiDataGrid-cell": {
+              borderBottom: "1px solid #bbf7d0",
+            },
+
             "& .MuiDataGrid-footerContainer": {
               borderTop: "1px solid #e2e8f0",
               backgroundColor: "#ffffff",
