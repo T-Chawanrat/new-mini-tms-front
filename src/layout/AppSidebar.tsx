@@ -20,58 +20,58 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Manage",
+    name: "จัดการข้อมูลหลัก",
     subItems: [
       {
-        name: "Manage Users",
+        name: "จัดการผู้ใช้งาน",
         path: "/manage/users",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Manage Customers",
+        name: "จัดการลูกค้า",
         path: "/manage/customers",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Manage Vehicles",
+        name: "จัดการรถ",
         path: "/manage/vehicles",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Manage Shippers",
+        name: "จัดการผู้ส่ง",
         path: "/manage/shippers",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Manage Recipients",
+        name: "จัดการผู้รับ",
         path: "/manage/recipients",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Manage Packages",
+        name: "จัดการแพ็กเกจ",
         path: "/manage/packages",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Manage Routes",
+        name: "จัดการสายรถ",
         path: "/manage/routes",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Manage Holidays",
+        name: "จัดการวันหยุด",
         path: "/manage-holidays",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Create Contractor",
+        name: "สร้างรถเสริม",
         path: "/contractor-create",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -80,29 +80,35 @@ const navItems: NavItem[] = [
   },
   {
     icon: <GridIcon />,
-    name: "Delivery Order",
+    name: "จัดการบิล",
     subItems: [
       {
-        name: "Create Delivery Order",
+        name: "สร้างบิล",
         path: "/create-do",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Import Delivery Order",
+        name: "นำเข้าบิล",
         path: "/std",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Receive Report",
+        name: "รายการบิล",
         path: "/receive-report",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Label Print",
+        name: "พิมพ์สติกเกอร์",
         path: "/label-print",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+          {
+        name: "ปิดงาน",
+        path: "/delivery-complete",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
@@ -110,58 +116,58 @@ const navItems: NavItem[] = [
   },
   {
     icon: <GridIcon />,
-    name: "Warehouse & Transport",
+    name: "คลังสินค้าและขนส่ง",
     subItems: [
       {
-        name: "Warehouse Scan",
+        name: "ยิงรับเข้าคลังต้นทาง",
         path: "/warehouse-scan",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Product Warehouse",
+        name: "สินค้าในคลัง",
         path: "/product-warehouse",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Product Truck",
+        name: "สินค้าบนรถ",
         path: "/product-truck",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Truck Create",
+        name: "ใบปิดบรรทุก",
         path: "/truck-create",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Delivery Truck",
+        name: "ใบรถกระจายสินค้า",
         path: "/delivery-truck-create",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "DC Scan",
+        name: "ยิงรับเข้าคลังปลายทาง",
         path: "/dc-receive",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Move TK",
+        name: "ย้ายสินค้าระหว่างรถบรรทุก",
         path: "/move-tk",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "Move DT",
+        name: "ย้ายสินค้ารถบรรทุกไปรถกระจาย",
         path: "/move-dt",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
-      {
-        name: "Move DC",
+        {
+        name: "ย้ายสินค้าระหว่างคลัง",
         path: "/move-dc",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -170,10 +176,10 @@ const navItems: NavItem[] = [
   },
   {
     icon: <GridIcon />,
-    name: "Map",
+    name: "แผนที่",
     subItems: [
       {
-        name: "Route Map",
+        name: "แผนที่",
         path: "/map",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],

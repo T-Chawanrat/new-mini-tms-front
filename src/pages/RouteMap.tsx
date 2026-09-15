@@ -139,7 +139,11 @@ function MoveMapToPosition({ position, trigger }: { position: [number, number] |
 }
 
 export default function RouteMap() {
-  const [points, setPoints] = useState<RoutePoint[]>([]);
+  const [points, setPoints] = useState<RoutePoint[]>([
+    { id: "demo-dc", name: "กรุงเทพ DC", latitude: 13.7563, longitude: 100.5018 },
+    { id: "demo-stop-1", name: "ร้านตัวอย่าง สาขาสุขุมวิท", latitude: 13.7367, longitude: 100.5860 },
+    { id: "demo-stop-2", name: "ร้านตัวอย่าง สาขาบางนา", latitude: 13.6680, longitude: 100.6040 },
+  ]);
 
   const [isAddingPoint, setIsAddingPoint] = useState(false);
 

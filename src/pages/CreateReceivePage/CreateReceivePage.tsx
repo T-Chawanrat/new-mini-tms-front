@@ -622,7 +622,6 @@ export default function CreateReceivePage() {
           net: totalPrice,
         },
 
-        // ส่งไว้ก่อน สำหรับ step ต่อไปที่จะ insert tm_receive_details / SN
         packageRows: packageRows.map((row) => ({
           package_id: row.package_id || null,
           package_code: row.package_code || null,

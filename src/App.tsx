@@ -42,6 +42,7 @@ import RouteMap from "./pages/RouteMap";
 import ManageRoutes from "./pages/ManageRoutes";
 import MoveDtScan from "./pages/MoveDtScan";
 import MoveDc from "./pages/MoveDc";
+import DeliveryComplete from "./pages/DeliveryComplete";
 
 export default function App() {
   return (
@@ -127,6 +128,7 @@ export default function App() {
               <Route path="/delivery-truck-create" element={<DeliveryTruckCreate />} />
               <Route path="/delivery-truck-scan/:truckLoadId" element={<DeliveryTruckScan />} />
               <Route path="/delivery-truck-print/:truckLoadId" element={<DeliveryTruckPrint />} />
+              <Route path="/delivery-complete" element={<DeliveryComplete />} />
               <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrint />} />
               <Route path="/dc-receive" element={<DcReceive />} />
               <Route path="/move-tk" element={<MoveTk />} />
