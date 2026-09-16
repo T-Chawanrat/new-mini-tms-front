@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { RefreshCcw, Search } from "lucide-react";
+import { RefreshCcw, Search, X } from "lucide-react";
 import type { GridColDef } from "@mui/x-data-grid";
 import AxiosInstance from "../utils/AxiosInstance";
 import DatePicker from "../components/form/DatePicker";
@@ -44,6 +44,7 @@ export default function ReceiveReport() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [serialMap, setSerialMap] = useState<Record<string, ReceiveSerialRow[]>>({});
   const [serialLoadingMap, setSerialLoadingMap] = useState<Record<string, boolean>>({});
+  const [serialDetailTarget, setSerialDetailTarget] = useState<(ReceiveReportRow & { _gridId: string }) | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -66,7 +67,26 @@ export default function ReceiveReport() {
   const reportColumns = useMemo<GridColDef[]>(
     () => [
       { field: "row_number", headerName: "#", width: 60, minWidth: 60, align: "center", headerAlign: "center" },
-      { field: "receive_code", headerName: "Receive Code", width: 170, minWidth: 160 },
+      {
+        field: "receive_code",
+        headerName: "Receive Code",
+        width: 170,
+        minWidth: 160,
+        renderCell: ({ row }) => (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setSerialDetailTarget(row as ReceiveReportRow & { _gridId: string });
+            }}
+            className="font-semibold text-blue-700 hover:text-blue-900 hover:underline"
+            title="กดเพื่อดูรายการ SN"
+          >
+            {getText(row.receive_code)}
+          </button>
+        ),
+      },
+      { field: "reference_no", headerName: "Reference", width: 180, minWidth: 170 },
       {
         field: "receive_date",
         headerName: "Receive Date",
@@ -101,7 +121,7 @@ export default function ReceiveReport() {
         renderCell: (params) => formatMoney(params.row.total_cod),
       },
       { field: "customer_name", headerName: "Customer", width: 200, minWidth: 180 },
-      { field: "customer_type", headerName: "Customer Type", width: 135, minWidth: 125 },
+      { field: "from_warehouse_name", headerName: "From Warehouse", width: 190, minWidth: 175 },
       { field: "to_warehouse_name", headerName: "To Warehouse", width: 190, minWidth: 175 },
       { field: "shipper_name", headerName: "Shipper", width: 180, minWidth: 165 },
       { field: "recipient_name", headerName: "Recipient", width: 200, minWidth: 180 },
@@ -174,6 +194,11 @@ export default function ReceiveReport() {
       await fetchReceiveSerials(row, rowKey);
     }
   };
+
+  useEffect(() => {
+    if (!serialDetailTarget) return;
+    void fetchReceiveSerials(serialDetailTarget, serialDetailTarget._gridId);
+  }, [serialDetailTarget]);
 
   const fetchFilterOptions = async () => {
     try {
@@ -478,6 +503,10 @@ export default function ReceiveReport() {
                             </button>
                           </td>
 
+                          <td className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={getText(row.reference_no)}>
+                            {getText(row.reference_no)}
+                          </td>
+
                           <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{formatDateTime(row.receive_date)}</td>
                           <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{formatDate(row.delivery_date)}</td>
                           <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right font-semibold text-slate-800">
@@ -497,7 +526,12 @@ export default function ReceiveReport() {
                             {getText(row.customer_name || row.customer_id)}
                           </td>
 
-                          <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{getText(row.customer_type)}</td>
+                          <td
+                            className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
+                            title={getText(row.from_warehouse_name || row.from_warehouse_id)}
+                          >
+                            {getText(row.from_warehouse_name || row.from_warehouse_id)}
+                          </td>
 
                           <td
                             className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
@@ -602,6 +636,27 @@ export default function ReceiveReport() {
           </div>
         </div>
       </div>
+
+      {serialDetailTarget && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true">
+          <div className="flex max-h-[85vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl animate-scaleIn">
+            <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+              <div>
+                <h2 className="text-base font-bold text-slate-800">รายการ SN ในบิล</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  {serialDetailTarget.receive_code} {serialDetailTarget.reference_no ? `• ${serialDetailTarget.reference_no}` : ""}
+                </p>
+              </div>
+              <button type="button" onClick={() => setSerialDetailTarget(null)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" aria-label="ปิด">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="overflow-auto px-5 py-4">
+              <SerialTable loading={Boolean(serialLoadingMap[serialDetailTarget._gridId])} serials={serialMap[serialDetailTarget._gridId] || []} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -653,8 +708,8 @@ function SerialTable({ loading, serials }: SerialTableProps) {
               <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 font-medium text-slate-900">{getText(serial.serial_no)}</td>
 
               <td className="max-w-[260px] border-b border-slate-100 px-3 py-2 text-slate-700">
-                <div className="truncate" title={getText(serial.package_name)}>
-                  {getText(serial.package_name)}
+                <div className="truncate font-medium" title={`${getText(serial.package_id)} - ${getText(serial.package_name)}`}>
+                  #{getText(serial.package_id)} - {getText(serial.package_name)}
                 </div>
                 <div className="truncate text-[11px] text-slate-400" title={getText(serial.package_detail_name)}>
                   {getText(serial.package_detail_name)}
@@ -665,7 +720,10 @@ function SerialTable({ loading, serials }: SerialTableProps) {
               <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">{formatMoney(serial.cod)}</td>
 
               <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">
-                {formatNumber(serial.width, 0)} x {formatNumber(serial.length, 0)} x {formatNumber(serial.height, 0)}
+                <div>{formatNumber(serial.width, 0)} x {formatNumber(serial.length, 0)} x {formatNumber(serial.height, 0)} ซม.</div>
+                <div className="mt-0.5 text-[11px] text-slate-400">
+                  {formatNumber(serial.weight, 2)} กก. • {formatNumber(serial.vol, 3)} คิว
+                </div>
               </td>
 
               <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{getReturnedText(serial.is_returned)}</td>

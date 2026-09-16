@@ -7,6 +7,7 @@ export type Option = {
 export type ReceiveSerialRow = {
   receive_business_id: number | null;
   receive_code: string | null;
+  reference_no?: string | null;
 
   serial_id: number | string | null;
   serial_no: string | null;
@@ -20,6 +21,7 @@ export type ReceiveSerialRow = {
   cost: number | string | null;
 
   from_warehouse_id: number | null;
+  from_warehouse_name?: string | null;
   to_warehouse_id: number | null;
   to_warehouse_name?: string | null;
 
@@ -73,6 +75,7 @@ export type ReceiveSerialRow = {
 export type ReceiveReportRow = {
   receive_code: string | null;
   receive_business_id: number | null;
+  reference_no?: string | null;
 
   receive_date: string | null;
   receive_walkin_id: number | null;
@@ -83,6 +86,7 @@ export type ReceiveReportRow = {
   customer_type: string | null;
 
   from_warehouse_id: number | null;
+  from_warehouse_name?: string | null;
   to_warehouse_id: number | null;
   to_warehouse_name?: string | null;
 
