@@ -9,20 +9,20 @@ export const defaultReceiveReportFilters: Filters = {
 };
 export const receiveReportHeaders = [
   "#",
-  "Receive Code",
-  "Reference",
-  "Receive Date",
-  "Delivery Date",
-  "Serial",
-  "Cost",
+  "เลขที่บิล",
+  "REFERENCE",
+  "วันที่สร้าง",
+  "วันที่ส่ง",
+  "SN",
+  "ราคา",
   "COD",
-  "Customer",
-  "From Warehouse",
-  "To Warehouse",
-  "Shipper",
-  "Recipient",
-  "Tel",
-  "Province",
+  "เจ้าของงาน",
+  "คลังต้นทาง",
+  "คลังปลายทาง",
+  "ผู้ส่ง",
+  "ผู้รับ",
+  "เบอร์โทร",
+  "จังหวัด",
 ];
 
 export const receiveReportMinWidths: Record<number, number> = {

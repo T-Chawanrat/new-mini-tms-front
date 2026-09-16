@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateActio
 
 import { ChevronDown, ChevronRight, Printer, RefreshCcw, Search } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
+import { useSearchParams } from "react-router-dom";
 
 import AxiosInstance from "../utils/AxiosInstance";
 
@@ -84,15 +85,18 @@ const RECEIVE_MAX_WIDTHS: Record<number, number> = {
 };
 
 export default function LabelPrintPage() {
+  const [searchParams] = useSearchParams();
+  const receiveCodeFromReport = searchParams.get("receive_code")?.trim() || "";
+  const autoSelectReceiveCodeRef = useRef(receiveCodeFromReport);
   const [receiveRows, setReceiveRows] = useState<LabelReceiveRow[]>([]);
   const [serialRows, setSerialRows] = useState<LabelRow[]>([]);
 
   const [customers, setCustomers] = useState<Option[]>([]);
   const [warehousesTo, setWarehousesTo] = useState<Option[]>([]);
 
-  const [filters, setFilters] = useState<LabelFilters>(defaultLabelFilters);
+  const [filters, setFilters] = useState<LabelFilters>(() => ({ ...defaultLabelFilters, receive_code: receiveCodeFromReport }));
 
-  const [appliedFilters, setAppliedFilters] = useState<LabelFilters>(defaultLabelFilters);
+  const [appliedFilters, setAppliedFilters] = useState<LabelFilters>(() => ({ ...defaultLabelFilters, receive_code: receiveCodeFromReport }));
 
   const [activeReceiveCode, setActiveReceiveCode] = useState("");
   const [serialSearch, setSerialSearch] = useState("");
@@ -467,6 +471,14 @@ export default function LabelPrintPage() {
   useEffect(() => {
     fetchFilterOptions();
   }, []);
+
+  useEffect(() => {
+    const receiveCode = autoSelectReceiveCodeRef.current;
+    if (!receiveCode || receiveLoading || !receiveRows.some((row) => row.receive_code === receiveCode)) return;
+
+    setSelectedReceiveCodes([receiveCode]);
+    autoSelectReceiveCodeRef.current = "";
+  }, [receiveRows, receiveLoading]);
 
   useEffect(() => {
     fetchReceives();

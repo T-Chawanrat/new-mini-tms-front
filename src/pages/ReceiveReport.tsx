@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { RefreshCcw, Search, X } from "lucide-react";
+import { Printer, RefreshCcw, Search, X } from "lucide-react";
 import type { GridColDef } from "@mui/x-data-grid";
+import { useNavigate } from "react-router-dom";
 import AxiosInstance from "../utils/AxiosInstance";
 import DatePicker from "../components/form/DatePicker";
 import DataGrid from "../components/DataGrid";
@@ -22,6 +23,7 @@ import {
 } from "../utils/receiveReportHelpers";
 
 export default function ReceiveReport() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<ReceiveReportRow[]>([]);
   const [summary, setSummary] = useState<ReceiveReportSummary | null>(null);
 
@@ -69,7 +71,7 @@ export default function ReceiveReport() {
       { field: "row_number", headerName: "#", width: 60, minWidth: 60, align: "center", headerAlign: "center" },
       {
         field: "receive_code",
-        headerName: "Receive Code",
+        headerName: "เลขที่บิล",
         width: 170,
         minWidth: 160,
         renderCell: ({ row }) => (
@@ -86,25 +88,25 @@ export default function ReceiveReport() {
           </button>
         ),
       },
-      { field: "reference_no", headerName: "Reference", width: 180, minWidth: 170 },
+      { field: "reference_no", headerName: "REFERENCE", width: 180, minWidth: 170 },
       {
         field: "receive_date",
-        headerName: "Receive Date",
+        headerName: "วันที่สร้าง",
         width: 165,
         minWidth: 155,
         renderCell: (params) => formatDateTime(params.row.receive_date),
       },
       {
         field: "delivery_date",
-        headerName: "Delivery Date",
+        headerName: "วันที่ส่ง",
         width: 140,
         minWidth: 130,
         renderCell: (params) => formatDate(params.row.delivery_date),
       },
-      { field: "total_serial", headerName: "Serial", width: 100, minWidth: 90, align: "right", headerAlign: "right" },
+      { field: "total_serial", headerName: "SN", width: 100, minWidth: 90, align: "right", headerAlign: "right" },
       {
         field: "total_cost",
-        headerName: "Cost",
+        headerName: "ราคา",
         width: 115,
         minWidth: 105,
         align: "right",
@@ -120,13 +122,38 @@ export default function ReceiveReport() {
         headerAlign: "right",
         renderCell: (params) => formatMoney(params.row.total_cod),
       },
-      { field: "customer_name", headerName: "Customer", width: 200, minWidth: 180 },
-      { field: "from_warehouse_name", headerName: "From Warehouse", width: 190, minWidth: 175 },
-      { field: "to_warehouse_name", headerName: "To Warehouse", width: 190, minWidth: 175 },
-      { field: "shipper_name", headerName: "Shipper", width: 180, minWidth: 165 },
-      { field: "recipient_name", headerName: "Recipient", width: 200, minWidth: 180 },
-      { field: "tel", headerName: "Tel", width: 140, minWidth: 130 },
-      { field: "province_name", headerName: "Province", width: 150, minWidth: 140 },
+      { field: "customer_name", headerName: "เจ้าของงาน", width: 200, minWidth: 180 },
+      { field: "from_warehouse_name", headerName: "คลังต้นทาง", width: 190, minWidth: 175 },
+      { field: "to_warehouse_name", headerName: "คลังปลายทาง", width: 190, minWidth: 175 },
+      { field: "shipper_name", headerName: "ผู้ส่ง", width: 180, minWidth: 165 },
+      { field: "recipient_name", headerName: "ผู้รับ", width: 200, minWidth: 180 },
+      { field: "tel", headerName: "เบอร์โทร", width: 140, minWidth: 130 },
+      { field: "province_name", headerName: "จังหวัด", width: 150, minWidth: 140 },
+      {
+        field: "print_labels",
+        headerName: "พิมพ์สติกเกอร์",
+        width: 92,
+        minWidth: 92,
+        sortable: false,
+        filterable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: ({ row }) => (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!row.receive_code) return;
+              navigate(`/label-print?receive_code=${encodeURIComponent(String(row.receive_code))}`);
+            }}
+            disabled={!row.receive_code}
+            className="inline-flex h-8 items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title="พิมพ์สติกเกอร์ทั้งบิล"
+          >
+            <Printer size={14} /> Print
+          </button>
+        ),
+      },
     ],
     [],
   );
