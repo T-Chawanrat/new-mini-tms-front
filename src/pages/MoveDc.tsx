@@ -218,7 +218,7 @@ export default function MoveDc() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
+    <div className="flex h-[calc(100vh-105px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
       <header className="mb-3 shrink-0">
         <div className="flex items-center justify-between gap-3"><div className="flex min-w-0 items-center gap-2"><ArrowRightLeft size={21} className="shrink-0 text-blue-600" /><div><h1 className="text-lg font-bold text-slate-900">ย้ายสินค้าระหว่างคลัง</h1><p className="mt-0.5 text-xs text-slate-500">เลือกเส้นทางย้าย แล้วยิง Barcode เพื่อเพิ่มรายการรอยืนยัน</p></div></div><button type="button" onClick={() => setConfirmSaveOpen(true)} disabled={moving || saving || !hasDrafts} className="h-9 shrink-0 rounded-md bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300">{saving ? "กำลังบันทึก..." : `บันทึก (${movedRows.length})`}</button></div>
       </header>

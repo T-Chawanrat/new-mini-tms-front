@@ -154,25 +154,12 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
-      {
-        name: "ย้ายสินค้าระหว่างรถบรรทุก",
-        path: "/move-tk",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-      {
-        name: "ย้ายสินค้ารถบรรทุกไปรถกระจาย",
-        path: "/move-dt",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-        {
-        name: "ย้ายสินค้าระหว่างคลัง",
-        path: "/move-dc",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
     ],
+  },
+  {
+    icon: <GridIcon />,
+    name: "ย้ายสินค้า",
+    path: "/move",
   },
   {
     icon: <GridIcon />,
@@ -205,7 +192,10 @@ const AppSidebar: React.FC = () => {
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const isActive = useCallback((path: string) => location.pathname === path, [location.pathname]);
+  const isActive = useCallback(
+    (path: string) => location.pathname === path || (path === "/move" && location.pathname.startsWith("/move/")),
+    [location.pathname],
+  );
 
   useEffect(() => {
     let submenuMatched = false;

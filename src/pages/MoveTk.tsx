@@ -73,7 +73,7 @@ export default function MoveTk() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
+    <div className="flex h-[calc(100vh-105px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
       <header className="mb-3 flex shrink-0 items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold text-slate-900">เลือกใบปิดบรรทุกสำหรับย้ายสินค้า</h1>
@@ -81,7 +81,7 @@ export default function MoveTk() {
         </div>
         <button
           type="button"
-          onClick={() => navigate(`/move-tk/${sourceId}/to/${targetId}`)}
+          onClick={() => navigate(`/move/tk/${sourceId}/to/${targetId}`)}
           disabled={!sourceId || !targetId}
           className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         >

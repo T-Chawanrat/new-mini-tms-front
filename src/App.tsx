@@ -32,7 +32,6 @@ import TruckloadScan from "./pages/TruckloadScan";
 import TruckLoadCreate from "./pages/TruckloadCreate";
 import TruckLoadPrint from "./pages/TruckLoadPrint";
 import DcReceive from "./pages/DcReceive";
-import MoveTk from "./pages/MoveTk";
 import MoveTkScan from "./pages/MoveTkScan";
 import ContractorCreate from "./pages/ContractorCreate";
 import DeliveryTruckCreate from "./pages/DeliveryTruckCreate";
@@ -41,8 +40,8 @@ import DeliveryTruckPrint from "./pages/DeliveryTruckPrint";
 import RouteMap from "./pages/RouteMap";
 import ManageRoutes from "./pages/ManageRoutes";
 import MoveDtScan from "./pages/MoveDtScan";
-import MoveDc from "./pages/MoveDc";
 import DeliveryComplete from "./pages/DeliveryComplete";
+import MoveHub from "./pages/MoveHub";
 
 export default function App() {
   return (
@@ -62,48 +61,6 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-
-              {/* <Route
-                path="/import"
-                element={
-                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
-                    <BillImport />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/importvgt"
-                element={
-                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
-                    <BillImportVGT />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/importadv"
-                element={
-                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
-                    <BillImportADV />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/dc-scan"
-                element={
-                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
-                    <BillScanDc />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/report"
-                element={
-                  <ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}>
-                    <BillReport />
-                  </ProtectedRoute>
-                }
-              /> */}
               <Route path="/manage/vehicles" element={<ManageVehicles />} />
               <Route path="/contractor-create" element={<ContractorCreate />} />
               <Route path="/manage/users" element={<ManageUsers />} />
@@ -131,14 +88,10 @@ export default function App() {
               <Route path="/delivery-complete" element={<DeliveryComplete />} />
               <Route path="/truck-print/:truckLoadId" element={<TruckLoadPrint />} />
               <Route path="/dc-receive" element={<DcReceive />} />
-              <Route path="/move-tk" element={<MoveTk />} />
-              <Route path="/move-tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScan />} />
-              <Route path="/move-dt" element={<MoveDtScan />} />
-              <Route path="/move-dt/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveDtScan />} />
-              <Route path="/move-dc" element={<MoveDc />} />
+              <Route path="/move" element={<MoveHub />} />
+              <Route path="/move/tk/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveTkScan />} />
+              <Route path="/move/dt/:sourceTruckLoadId/to/:targetTruckLoadId" element={<MoveDtScan />} />
               <Route path="/map" element={<RouteMap />} />
-              {/* <Route path="/vgt" element={<ImportVGT />} />
-              <Route path="/adv" element={<ImportADV />} /> */}
             </Route>
 
             {/* Auth Layout */}

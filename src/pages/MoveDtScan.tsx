@@ -62,8 +62,8 @@ export default function MoveDtScan() {
       setLoading(true);
       setError("");
       const [sourceResponse, targetResponse] = await Promise.all([
-        AxiosInstance.get(`/move-dt/${sourceTruckLoadId}/products`),
-        AxiosInstance.get(`/move-dt/${targetTruckLoadId}/products`, { params: { include_open: "Y" } }),
+        AxiosInstance.get(`/move-dt/${sourceTruckLoadId}/products`, { params: { role: "source" } }),
+        AxiosInstance.get(`/move-dt/${targetTruckLoadId}/products`, { params: { role: "target" } }),
       ]);
       setPendingRows(Array.isArray(sourceResponse.data?.data) ? sourceResponse.data.data : []);
       setMovingRows(Array.isArray(targetResponse.data?.data) ? targetResponse.data.data : []);
@@ -73,7 +73,7 @@ export default function MoveDtScan() {
     } finally {
       setLoading(false);
     }
-  }, [sourceTruckLoadId]);
+  }, [sourceTruckLoadId, targetTruckLoadId]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -81,7 +81,7 @@ export default function MoveDtScan() {
         setLoading(true);
         const [sources, targets] = await Promise.all([
           AxiosInstance.get("/move-dt/source-trucks"),
-          AxiosInstance.get("/move-dt/target-trucks", { params: { source_truck_load_id: sourceTruckLoadId } }),
+          AxiosInstance.get("/move-dt/target-trucks"),
         ]);
         const sourceRows: MoveTkTruck[] = Array.isArray(sources.data?.data) ? sources.data.data : [];
         const targetRows: MoveTkTruck[] = Array.isArray(targets.data?.data) ? targets.data.data : [];
@@ -90,7 +90,7 @@ export default function MoveDtScan() {
         setSourceTruck(source);
         setTargetTruck(target);
         if (!source || !target) {
-          setError("ไม่พบใบรถกระจายต้นทางหรือปลายทาง");
+          setError("ไม่พบใบรถขนย้ายต้นทางหรือใบรถกระจายปลายทาง");
           return;
         }
         await loadProducts();
@@ -114,10 +114,6 @@ export default function MoveDtScan() {
         confirmed_destination_mismatch_serial_nos: confirmedDestinationMismatch ? [row.serial_no] : [],
       });
       playSound("success");
-      if (response.data?.source_deleted) {
-        navigate("/move-dt");
-        return;
-      }
       await loadProducts();
       setMessage(response.data?.message || `ย้าย SN ${row.serial_no} สำเร็จ`);
     } catch (requestError: any) {
@@ -162,16 +158,16 @@ export default function MoveDtScan() {
       <header className="mb-3 shrink-0">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold text-slate-900">ย้ายสินค้าไปใบรถกระจาย</h1>
-            <p className="mt-0.5 text-xs text-slate-500">ยิง Barcode เพื่อย้ายสินค้าจากใบต้นทางไปยังใบปลายทางที่เลือก</p>
+            <h1 className="text-lg font-bold text-slate-900">ย้ายสินค้าจากรถขนย้ายขึ้นรถกระจาย</h1>
+            <p className="mt-0.5 text-xs text-slate-500">ยิง Barcode เพื่อย้ายสินค้าจากใบรถขนย้ายไปยังใบรถกระจายที่เลือก</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={() => navigate("/move-dt")}
+              onClick={() => navigate("/move?tab=dt")}
               className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              เปลี่ยนใบรถกระจาย
+              เปลี่ยนใบรถ
             </button>
           </div>
         </div>
@@ -180,7 +176,7 @@ export default function MoveDtScan() {
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
         <div className="flex w-full items-stretch gap-3">
           <div className="min-w-0 flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-blue-600">จากใบต้นทาง</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-blue-600">จากรถขนย้าย</div>
             <div className="font-semibold text-slate-800">{sourceTruck?.truck_code || sourceTruckLoadId}</div>
             <div className="text-xs text-slate-500">
               {sourceTruck ? `${sourceTruck.warehouse_name || "-"} → ${sourceTruck.to_warehouse_name || "-"}` : "กำลังโหลดข้อมูล"}
@@ -193,7 +189,7 @@ export default function MoveDtScan() {
             <ArrowLeftRight size={24} strokeWidth={2} />
           </div>
           <div className="min-w-0 flex-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-emerald-600">ไปใบปลายทาง</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-emerald-600">ไปรถกระจาย</div>
             <div className="font-semibold text-slate-800">{targetTruck?.truck_code || targetTruckLoadId}</div>
             <div className="text-xs text-slate-500">
               {targetTruck ? `${targetTruck.warehouse_name || "-"} → ${targetTruck.to_warehouse_name || "-"}` : "กำลังโหลดข้อมูล"}
@@ -246,21 +242,21 @@ export default function MoveDtScan() {
       <div className="grid min-h-0 flex-1 grid-cols-2 gap-3">
         <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5">
-            <span className="text-sm font-semibold text-slate-700">สินค้าในใบต้นทาง</span>
+            <span className="text-sm font-semibold text-slate-700">สินค้าในรถขนย้าย</span>
             <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
               {formatThaiNumber(pendingRows.length)} รายการ
             </span>
           </div>
-          <MoveTkProductTable rows={pendingRows} loading={loading} emptyText="ไม่มีสินค้าในใบต้นทาง" />
+          <MoveTkProductTable rows={pendingRows} loading={loading} emptyText="ไม่มีสินค้าในรถขนย้าย" />
         </section>
         <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-2.5">
-            <span className="text-sm font-semibold text-slate-700">สินค้าในใบปลายทาง</span>
+            <span className="text-sm font-semibold text-slate-700">สินค้าในรถกระจาย</span>
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
               {formatThaiNumber(movingRows.length)} รายการ
             </span>
           </div>
-          <MoveTkProductTable rows={movingRows} moved destinationTruck={targetTruck} emptyText="ยังไม่มีสินค้าในใบปลายทาง" />
+          <MoveTkProductTable rows={movingRows} moved destinationTruck={targetTruck} emptyText="ยังไม่มีสินค้าในรถกระจาย" />
         </section>
       </div>
     </div>

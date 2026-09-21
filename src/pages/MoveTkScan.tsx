@@ -189,7 +189,7 @@ export default function MoveTkScan() {
       });
       playSound("success");
       if (response.data?.source_deleted) {
-        navigate("/move-tk");
+        navigate("/move?tab=tk");
         return;
       }
       await loadProducts();
@@ -250,7 +250,7 @@ export default function MoveTkScan() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/move-tk")}
+              onClick={() => navigate("/move?tab=tk")}
               className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               เปลี่ยนใบปิดบรรทุก
