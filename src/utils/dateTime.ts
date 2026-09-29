@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 export const toInputDateTime = () => {
   const now = new Date();
   const offset = now.getTimezoneOffset();
@@ -15,4 +17,20 @@ export const toThaiDate = (value: string) => {
   if (!value) return "-";
   const parsed = new Date(`${value}T00:00:00`);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
+// ใช้แสดงวันที่ในรายงานด้วยปี ค.ศ. ตามรูปแบบเดิมของหน้ารายงาน
+export const formatReportDate = (value: string | Date | null | undefined, fallback = "-") => {
+  if (!value) return fallback;
+
+  const date = dayjs(value);
+  return date.isValid() ? date.format("DD/MM/YYYY") : fallback;
+};
+
+// ใช้แสดงวันที่และเวลาในรายงานด้วยปี ค.ศ. ตามรูปแบบเดิมของหน้ารายงาน
+export const formatReportDateTime = (value: string | Date | null | undefined, fallback = "-") => {
+  if (!value) return fallback;
+
+  const date = dayjs(value);
+  return date.isValid() ? date.format("DD/MM/YYYY HH:mm") : fallback;
 };

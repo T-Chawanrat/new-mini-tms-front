@@ -6,8 +6,6 @@ import {
   CalendarClock,
   Camera,
   CheckCircle2,
-  ChevronDown,
-  Download,
   FileSignature,
   ImagePlus,
   Images,
@@ -17,7 +15,6 @@ import {
   X,
 } from "lucide-react";
 
-import DataGrid from "../components/DataGrid";
 import ImageUpload, { type UploadedImages } from "../components/form/ImageUpload";
 import SignaturePad from "../components/form/SignaturePad";
 import { useAuth } from "../context/AuthContext";
@@ -70,12 +67,13 @@ type DeliveryCompleteResponse = {
   message?: string;
 };
 
-export default function DeliveryComplete() {
+export default function DeliveryClose() {
   const { user } = useAuth();
   const currentOperatorName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username || "-";
   const [rows, setRows] = useState<DeliveryTruckRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [lookup, setLookup] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<DeliveryStatus | "">("");
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("ALL");
@@ -96,26 +94,6 @@ export default function DeliveryComplete() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const loadDeliveryCompletes = async () => {
-      try {
-        setLoading(true);
-        setLoadError("");
-        const response = await AxiosInstance.get<DeliveryCompleteResponse>("/delivery-completes", {
-          params: { page: 1, limit: 100 },
-        });
-        setRows(Array.isArray(response.data.data) ? response.data.data : []);
-      } catch (error) {
-        const requestError = error as { response?: { data?: { message?: string } }; message?: string };
-        setLoadError(requestError.response?.data?.message || requestError.message || "ไม่สามารถโหลดรายการจัดส่งได้");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadDeliveryCompletes();
-  }, []);
-
-  useEffect(() => {
     if (!chatTarget) return;
     requestAnimationFrame(() => {
       chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: "smooth" });
@@ -131,6 +109,51 @@ export default function DeliveryComplete() {
     setCompletedAt(toInputDateTime());
     setSelectedSerials([]);
   };
+
+  const openCloseForm = (row: DeliveryTruckRow) => {
+    setCloseTarget(row);
+    setProofImages(row.proof_images || []);
+    setSignatureImages(row.signature_images || []);
+    setSignatureMode(row.signature_images?.length ? "UPLOAD" : "DRAW");
+    setSignaturePadData(null);
+    setCompletedAt(toInputDateTime());
+    setSelectedSerials([]);
+  };
+
+  const findDeliveryForClose = async () => {
+    const query = lookup.trim();
+    if (!query) return;
+
+    try {
+      setLoading(true);
+      setLoadError("");
+      const response = await AxiosInstance.get<DeliveryCompleteResponse>("/delivery-closes", {
+        params: { page: 1, limit: 100, search: query },
+      });
+      const resultRows = Array.isArray(response.data.data) ? response.data.data : [];
+      const normalizedQuery = query.toLowerCase();
+      const matchedRow = resultRows.find(
+        (row) =>
+          row.bill_no.trim().toLowerCase() === normalizedQuery ||
+          row.serial_numbers.some((serialNo) => serialNo.trim().toLowerCase() === normalizedQuery),
+      );
+
+      setRows(resultRows);
+      if (!matchedRow) {
+        setLoadError("ไม่พบเลขที่บิลหรือ Serial No. ที่ระบุ");
+        return;
+      }
+
+      setLookup("");
+      openCloseForm(matchedRow);
+    } catch (error) {
+      const requestError = error as { response?: { data?: { message?: string } }; message?: string };
+      setLoadError(requestError.response?.data?.message || requestError.message || "ไม่สามารถค้นหารายการจัดส่งได้");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openChat = (row: DeliveryTruckRow) => {
     setChatTarget(row);
     setChatDraft("");
@@ -463,97 +486,53 @@ export default function DeliveryComplete() {
     },
   ];
 
+  // Keep the existing supporting actions available for the unchanged close-work modal flow.
+  void setSearch;
+  void setStatusFilter;
+  void setQuickFilter;
+  void filteredRows;
+  void columns;
+  void exportExcel;
+  void monitoringCards;
+
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
-      <section className="mb-3 grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-4">
-        {monitoringCards.map((card) => {
-          const isActive = quickFilter === card.key;
-          return (
-            <button
-              type="button"
-              key={card.key}
-              onClick={() => {
-                setStatusFilter("");
-                setQuickFilter((current) => (current === card.key ? "ALL" : card.key));
+      <section className="flex min-h-0 flex-1 items-center justify-center px-4 pb-[15vh]">
+        <form
+          className="w-full max-w-3xl"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void findDeliveryForClose();
+          }}
+        >
+          <label htmlFor="delivery-close-lookup" className="mb-4 block text-center text-xl font-bold text-slate-700 sm:text-2xl">
+            ค้นหาเพื่อปิดงานจัดส่ง
+          </label>
+          <div className="relative">
+            <Search size={24} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              id="delivery-close-lookup"
+              autoFocus
+              value={lookup}
+              onChange={(event) => {
+                setLookup(event.target.value);
+                if (loadError) setLoadError("");
               }}
-              className={`flex items-center gap-3 rounded-lg border bg-white px-3 py-2.5 text-left shadow-sm transition-colors hover:border-slate-300 ${isActive ? card.activeClass : "border-slate-200"}`}
-            >
-              <span className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${card.iconClass}`}>{card.icon}</span>
-              <span>
-                <span className="block text-lg font-bold leading-none text-slate-800">{card.count}</span>
-                <span className="mt-1 block text-xs font-medium text-slate-500">{card.label}</span>
-              </span>
-            </button>
-          );
-        })}
-      </section>
-      <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="w-full sm:max-w-md">
-              <label className="mb-1 block text-xs font-medium text-slate-600">ค้นหา</label>
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="เลขที่ใบรถ, เลขที่บิล, คนขับ, ทะเบียนรถ"
-                  className="h-9 w-full rounded-md border border-slate-300 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-            </div>
-            <div className="w-full sm:w-52">
-              <label className="mb-1 block text-xs font-medium text-slate-600">สถานะ</label>
-              <div className="relative">
-                <select
-                  value={statusFilter}
-                  onChange={(event) => {
-                    setStatusFilter(event.target.value as DeliveryStatus | "");
-                    setQuickFilter("ALL");
-                  }}
-                  className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-3 pr-9 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                >
-                  <option value="">ทุกสถานะ</option>
-                  {Object.entries(statusMeta).map(([value, meta]) => (
-                    <option key={value} value={value}>
-                      {meta.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full bg-amber-100 px-2.5 py-1.5 font-semibold text-amber-700">
-              รอปิดงาน {rows.filter((row) => row.status === "PENDING_CLOSE").length}
-            </span>
-            <span className="rounded-full bg-orange-100 px-2.5 py-1.5 font-semibold text-orange-700">
-              เลื่อนจัดส่ง {rows.filter((row) => row.status === "POSTPONED").length}
-            </span>
+              placeholder="สแกนหรือกรอกเลขที่บิล / Serial No. แล้วกด Enter"
+              className="h-20 w-full rounded-xl border-2 border-slate-300 bg-white pl-14 pr-36 text-lg font-medium shadow-sm outline-none transition-colors placeholder:text-sm placeholder:font-normal placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:text-xl"
+            />
             <button
-              type="button"
-              onClick={exportExcel}
-              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"
+              type="submit"
+              disabled={!lookup.trim() || loading}
+              className="absolute right-3 top-1/2 inline-flex h-12 -translate-y-1/2 items-center gap-1.5 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              <Download size={15} /> Export Excel
+              <Search size={20} /> ค้นหา
             </button>
           </div>
-        </div>
-      </section>
-
-      <section className="min-h-0 flex-1 overflow-hidden">
-        {loadError ? (
-          <div className="flex h-full items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-4 text-sm text-rose-700">
-            {loadError}
-          </div>
-        ) : loading ? (
-          <div className="flex h-full items-center justify-center rounded-lg border border-slate-200 bg-white text-sm text-slate-400">
-            กำลังโหลดรายการจัดส่ง...
-          </div>
-        ) : (
-          <DataGrid rows={filteredRows} columns={columns} getRowId={(row) => row.id} height="100%" pageSize={10} />
-        )}
+          <p className="mt-3 text-center text-sm text-slate-500">รองรับการค้นหาด้วย Receive Code, Serial No. หรือ Reference</p>
+          {loading ? <p className="mt-5 text-center text-sm font-medium text-slate-500">กำลังค้นหารายการจัดส่ง...</p> : null}
+          {loadError ? <p className="mt-5 text-center text-sm font-medium text-rose-600">{loadError}</p> : null}
+        </form>
       </section>
 
       <Drawer

@@ -106,9 +106,15 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
-          {
-        name: "ปิดงาน",
-        path: "/delivery-complete",
+      {
+        name: "ปิดงานจัดส่ง",
+        path: "/delivery-close",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "แชทแจ้งปัญหา",
+        path: "/delivery-issue-chat",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
@@ -151,6 +157,30 @@ const navItems: NavItem[] = [
       {
         name: "ยิงรับเข้าคลังปลายทาง",
         path: "/dc-receive",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+    ],
+  },
+  {
+    icon: <GridIcon />,
+    name: "รายงานค้างส่ง",
+    subItems: [
+      {
+        name: "ตามใบรถกระจาย",
+        path: "/delivery-pending-report/dt",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ตามเลขที่บิล",
+        path: "/delivery-pending-report/receive",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ตาม Serial No.",
+        path: "/delivery-pending-report/sn",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
