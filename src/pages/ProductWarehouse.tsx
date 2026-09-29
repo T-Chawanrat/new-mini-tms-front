@@ -260,6 +260,7 @@ export default function ProductWarehouse() {
                       key={receiveCode}
                       row={row}
                       rowNumber={absoluteIndex}
+                      striped={index % 2 === 1}
                       expanded={expanded}
                       onToggle={() => toggleReceive(receiveCode)}
                     />
@@ -303,18 +304,19 @@ export default function ProductWarehouse() {
 type WarehouseBillRowsProps = {
   row: ProductWarehouseRow;
   rowNumber: number;
+  striped: boolean;
   expanded: boolean;
   onToggle: () => void;
 };
 
-function WarehouseBillRows({ row, rowNumber, expanded, onToggle }: WarehouseBillRowsProps) {
+function WarehouseBillRows({ row, rowNumber, striped, expanded, onToggle }: WarehouseBillRowsProps) {
   const serialItems = getSerialItems(row);
 
   return (
     <>
       <tr
         onClick={onToggle}
-        className={expanded ? "cursor-pointer bg-blue-50/90" : "cursor-pointer bg-white hover:bg-blue-50/40 even:bg-slate-50/70"}
+        className={expanded ? "cursor-pointer bg-blue-50/90" : `cursor-pointer hover:bg-blue-100 ${striped ? "bg-slate-50" : "bg-white"}`}
       >
         <td className="border-b border-slate-100 px-2 py-2 text-center text-slate-500">
           {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -363,7 +365,7 @@ function SerialInlineTable({ items }: { items: ProductWarehouseSerialItem[] }) {
           <tbody>
             {items.length ? (
               items.map((item, index) => (
-                <tr key={`${item.serial_no}-${index}`} className={index % 2 === 0 ? "bg-white" : "bg-slate-50/70"}>
+                <tr key={`${item.serial_no}-${index}`} className={index % 2 === 0 ? "bg-white hover:bg-blue-100" : "bg-slate-50 hover:bg-blue-100"}>
                   <td className="border-b border-slate-100 px-3 py-2 text-center font-semibold text-slate-500">{formatThaiNumber(index + 1)}</td>
                   <td className="border-b border-slate-100 px-3 py-2 font-mono font-semibold text-blue-700">{item.serial_no}</td>
                   <td className="border-b border-slate-100 px-3 py-2 text-slate-700">

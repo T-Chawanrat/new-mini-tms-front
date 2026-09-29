@@ -936,6 +936,8 @@ export default function ManageShippers() {
           getRowId={(row: ShipperGridRow) => row.shipper_id}
           height="100%"
           pageSize={100}
+          striped
+          rowHoverColor="#dbeafe"
         />
       </div>
 
@@ -1184,6 +1186,8 @@ export default function ManageShippers() {
                     getRowId={(row) => row.ro_code_id}
                     height="100%"
                     pageSize={10}
+                    striped
+                    rowHoverColor="#dbeafe"
                   />
                 </div>
               )}

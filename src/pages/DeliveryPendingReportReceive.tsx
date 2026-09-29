@@ -270,6 +270,7 @@ export default function DeliveryPendingReportReceive() {
             columns={columns}
             getRowId={(row) => row.receive_business_id}
             getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 1 ? "bg-slate-50" : "")}
+            rowHoverColor="#dbeafe"
             height="100%"
           />
         )}

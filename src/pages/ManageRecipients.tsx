@@ -307,10 +307,10 @@ function RecipientDetailsInlinePanel({ recipient, onCreateDetail, onEditDetail, 
             {!recipient.details?.length ? (
               <div className="px-4 py-5 text-sm text-slate-400">ยังไม่มีที่อยู่ของผู้รับนี้ กดปุ่ม “เพิ่มที่อยู่” เพื่อเพิ่ม</div>
             ) : (
-              recipient.details.map((detail: RecipientDetail) => (
+              recipient.details.map((detail: RecipientDetail, index: number) => (
                 <div
                   key={detail.recipient_detail_id}
-                  className="grid grid-cols-[220px_320px_140px_140px_140px_100px_130px_150px_110px_90px] items-center gap-3 px-4 py-3 text-sm text-slate-700 border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+                  className={`grid grid-cols-[220px_320px_140px_140px_140px_100px_130px_150px_110px_90px] items-center gap-3 border-b border-slate-100 px-4 py-3 text-sm text-slate-700 last:border-b-0 hover:bg-blue-100 ${index % 2 === 1 ? "bg-slate-50" : ""}`}
                 >
                   <div className="truncate font-medium">{detail.recipient_detail_name || "-"}</div>
 
@@ -1155,7 +1155,11 @@ export default function ManageRecipients() {
 
             return 52;
           }}
-          getRowClassName={(params: any) => (String(params.id).startsWith("detail-") ? "recipient-detail-row" : "")}
+          getRowClassName={(params: any) => {
+            if (String(params.id).startsWith("detail-")) return "recipient-detail-row";
+
+            return params.indexRelativeToCurrentPage % 2 === 1 ? "recipient-striped-row" : "";
+          }}
           onRowClick={(params: any) => {
             if (params.row.rowType === "detail") return;
             toggleExpandedRecipient(params.row);
@@ -1197,8 +1201,12 @@ export default function ManageRecipients() {
             },
 
             "& .MuiDataGrid-row:hover": {
-              backgroundColor: "#f8fafc",
+              backgroundColor: "#dbeafe",
               cursor: "pointer",
+            },
+
+            "& .recipient-striped-row": {
+              backgroundColor: "#f8fafc",
             },
 
             "& .recipient-detail-row": {

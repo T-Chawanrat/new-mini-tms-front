@@ -208,6 +208,7 @@ export default function DeliveryPendingReportDt() {
             columns={columns}
             getRowId={(row) => row.truck_code}
             getRowClassName={(params) => (params.indexRelativeToCurrentPage % 2 === 1 ? "bg-slate-50" : "")}
+            rowHoverColor="#dbeafe"
             height="100%"
           />
         )}

@@ -418,6 +418,8 @@ export default function ManageRoutes() {
                 height="100%"
                 pageSize={100}
                 framed={false}
+                striped
+                rowHoverColor="#dbeafe"
                 onRowClick={(params) => setSelectedRouteId(params.row.route_id)}
               />
             </div>
@@ -459,8 +461,8 @@ export default function ManageRoutes() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {selectedRoute.details.map((detail) => (
-                      <tr key={detail.route_detail_id}>
+                    {selectedRoute.details.map((detail, index) => (
+                      <tr key={detail.route_detail_id} className={index % 2 === 1 ? "bg-slate-50 hover:bg-blue-100" : "hover:bg-blue-100"}>
                         <td className="px-4 py-3">
                           <div className="font-medium text-slate-700">{detail.subdistrict_name || "-"}</div>
                           <div className="mt-0.5 text-xs text-slate-500">

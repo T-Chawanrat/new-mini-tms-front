@@ -518,7 +518,7 @@ export default function ManageHolidays() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <DataGrid rows={gridRows} columns={columns} loading={loading} getRowId={(row: HolidayGridRow) => row.id} height="100%" pageSize={100} />
+        <DataGrid rows={gridRows} columns={columns} loading={loading} getRowId={(row: HolidayGridRow) => row.id} height="100%" pageSize={100} striped rowHoverColor="#dbeafe" />
       </div>
 
       {statusModal && (

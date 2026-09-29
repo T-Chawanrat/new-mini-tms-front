@@ -154,6 +154,31 @@ export default function ReceiveReport() {
           </button>
         ),
       },
+      {
+        field: "print_delivery_note",
+        headerName: "พิมพ์บิล",
+        width: 88,
+        minWidth: 88,
+        sortable: false,
+        filterable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: ({ row }) => (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!row.receive_business_id) return;
+              navigate(`/receive-report-print/${row.receive_business_id}`);
+            }}
+            disabled={!row.receive_business_id}
+            className="inline-flex h-8 items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title="พิมพ์บิลส่งของ"
+          >
+            <Printer size={14} /> Print
+          </button>
+        ),
+      },
     ],
     [],
   );
@@ -448,8 +473,8 @@ export default function ReceiveReport() {
                   </td>
                 </tr>
               ) : (
-                summaryDaily.map((day) => (
-                  <tr key={String(day.receive_date)} className="hover:bg-blue-50/40">
+                summaryDaily.map((day, index) => (
+                  <tr key={String(day.receive_date)} className={index % 2 === 1 ? "bg-slate-50 hover:bg-blue-100" : "hover:bg-blue-100"}>
                     <td className="whitespace-nowrap px-3 py-1.5 font-medium text-slate-800">{formatDate(day.receive_date)}</td>
                     <td className="whitespace-nowrap px-3 py-1.5 text-right font-semibold text-blue-700">{formatNumber(day.total_receive)}</td>
                     <td className="whitespace-nowrap px-3 py-1.5 text-right text-slate-700">{formatNumber(day.total_serial)}</td>
@@ -476,6 +501,8 @@ export default function ReceiveReport() {
               getRowId={(row: { _gridId: string }) => row._gridId}
               height="100%"
               pageSize={100}
+              striped
+              rowHoverColor="#dbeafe"
             />
           )}
         </div>
@@ -730,7 +757,7 @@ function SerialTable({ loading, serials }: SerialTableProps) {
           {serials.map((serial, index) => (
             <tr
               key={`${serial.serial_no || "serial"}-${index}`}
-              className={index % 2 === 0 ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70 hover:bg-blue-50/40"}
+              className={index % 2 === 0 ? "bg-white hover:bg-blue-100" : "bg-slate-50 hover:bg-blue-100"}
             >
               <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 font-medium text-slate-900">{getText(serial.serial_no)}</td>
 

@@ -24,6 +24,7 @@ import ChangePassword from "./pages/ChangePassword";
 import CreateReceivePage from "./pages/CreateReceivePage/CreateReceivePage";
 import ManageHolidays from "./pages/ManageHolidays";
 import ReceiveReport from "./pages/ReceiveReport";
+import ReceiveReportPrint from "./pages/ReceiveReportPrint";
 import LabelPrintPage from "./pages/LabelPrintPage";
 import WarehouseScan from "./pages/WarehouseScan";
 import ProductWarehouse from "./pages/ProductWarehouse";
@@ -80,6 +81,7 @@ export default function App() {
               <Route path="/create-do" element={<CreateReceivePage />} />
               <Route path="/manage-holidays" element={<ManageHolidays />} />
               <Route path="/receive-report" element={<ReceiveReport />} />
+              <Route path="/receive-report-print/:receiveBusinessId" element={<ReceiveReportPrint />} />
               <Route path="/label-print" element={<LabelPrintPage />} />
               <Route path="/warehouse-scan" element={<WarehouseScan />} />
               <Route path="/product-warehouse" element={<ProductWarehouse />} />

@@ -14,6 +14,8 @@ type AppDataGridProps = {
   getRowClassName?: (params: any) => string;
   onRowClick?: (params: any) => void;
   framed?: boolean;
+  rowHoverColor?: string;
+  striped?: boolean;
 };
 
 export default function AppDataGrid({
@@ -26,7 +28,16 @@ export default function AppDataGrid({
   getRowClassName,
   onRowClick,
   framed = true,
+  rowHoverColor = "#f8fafc",
+  striped = false,
 }: AppDataGridProps) {
+  const resolveRowClassName = (params: any) => {
+    const customClassName = getRowClassName?.(params) || "";
+    const stripeClassName = striped && params.indexRelativeToCurrentPage % 2 === 1 ? "app-data-grid-striped-row" : "";
+
+    return [stripeClassName, customClassName].filter(Boolean).join(" ");
+  };
+
   return (
     <div
       className={
@@ -41,7 +52,7 @@ export default function AppDataGrid({
           columns={columns}
           loading={loading}
           getRowId={getRowId}
-          getRowClassName={getRowClassName}
+          getRowClassName={resolveRowClassName}
           onRowClick={onRowClick}
           disableRowSelectionOnClick
           pageSizeOptions={[10, 25, 50, 100]}
@@ -128,6 +139,10 @@ export default function AppDataGrid({
             },
 
             "& .MuiDataGrid-row:hover": {
+              backgroundColor: rowHoverColor,
+            },
+
+            "& .app-data-grid-striped-row": {
               backgroundColor: "#f8fafc",
             },
 

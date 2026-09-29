@@ -258,7 +258,7 @@ export default function ProductTruck() {
                 </tr>
               ) : (
                 rows.map((row, index) => (
-                  <tr key={row.product_truck_id} className={index % 2 === 0 ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70 hover:bg-blue-50/40"}>
+                  <tr key={row.product_truck_id} className={index % 2 === 0 ? "bg-white hover:bg-blue-100" : "bg-slate-50 hover:bg-blue-100"}>
                     <td className="border-b border-slate-100 px-3 py-2 text-slate-700">{row.receive_code || ""}</td>
                     <td className="border-b border-slate-100 px-3 py-2 font-mono font-semibold text-blue-700">{row.serial_no || "-"}</td>
                     <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={row.customer_name || ""}>

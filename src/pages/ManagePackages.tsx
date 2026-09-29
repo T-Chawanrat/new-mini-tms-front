@@ -727,7 +727,7 @@ export default function ManagePackages() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
-        <DataGrid rows={gridRows} columns={packageColumns} loading={loading} getRowId={(row: any) => row.package_id} height="100%" pageSize={100} />
+        <DataGrid rows={gridRows} columns={packageColumns} loading={loading} getRowId={(row: any) => row.package_id} height="100%" pageSize={100} striped rowHoverColor="#dbeafe" />
       </div>
 
       {showModal && (
@@ -837,6 +837,8 @@ export default function ManagePackages() {
                 getRowId={(row: any) => row.id}
                 height="100%"
                 pageSize={100}
+                striped
+                rowHoverColor="#dbeafe"
               />
             </div>
           </div>
