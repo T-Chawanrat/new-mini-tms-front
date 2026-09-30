@@ -1,5 +1,7 @@
 import { Camera, X } from "lucide-react";
 
+import { getUploadUrl } from "../../utils/uploadUrl";
+
 export type UploadedImage = { name: string; preview: string };
 export type UploadedImages = UploadedImage[];
 
@@ -31,7 +33,7 @@ export default function ImageUpload({ label, required, values, onChange, maxImag
       <div className={`grid w-full grid-cols-4 gap-3 ${thumbnailSize === "large" ? "max-w-[440px]" : "max-w-[400px]"}`}>
         {values.map((image, index) => (
           <div key={`${image.preview}-${index}`} className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm">
-            <img src={image.preview} alt={`${label} ${index + 1}`} className="h-full w-full object-contain" />
+            <img src={getUploadUrl(image.preview)} alt={`${label} ${index + 1}`} className="h-full w-full object-contain" />
             <div className="absolute inset-x-0 bottom-0 truncate bg-slate-950/60 px-2 py-1 text-[10px] text-white">{image.name}</div>
             <button type="button" onClick={() => onChange(values.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/70 text-white opacity-100 hover:bg-rose-600 sm:opacity-0 sm:group-hover:opacity-100" aria-label={`ลบรูป ${index + 1}`}>
               <X size={14} />
