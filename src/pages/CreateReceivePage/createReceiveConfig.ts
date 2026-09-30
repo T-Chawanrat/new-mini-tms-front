@@ -230,7 +230,7 @@ export const emptyReceiveForm: ReceiveForm = {
   tel: "",
 
   delivery_date: "",
-  payment_type_id: "3",
+  payment_type_id: "",
   remark: "",
 
   is_cod: "N",

@@ -72,8 +72,8 @@ export default function ReceiveReport() {
       {
         field: "receive_code",
         headerName: "เลขที่บิล",
-        width: 170,
-        minWidth: 160,
+        width: 210,
+        minWidth: 190,
         renderCell: ({ row }) => (
           <button
             type="button"

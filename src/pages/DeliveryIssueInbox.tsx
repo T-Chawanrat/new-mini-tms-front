@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Avatar,
   Badge,
@@ -114,9 +115,30 @@ const StatusChip = ({ value }: { value: IssueStatus }) => (
 );
 
 export default function DeliveryIssueInbox() {
-  const [issues, setIssues] = useState(starterIssues);
+  const [searchParams] = useSearchParams();
+  const billNo = searchParams.get("bill_no")?.trim() || "";
+  const truckCode = searchParams.get("truck_code")?.trim() || "";
+  const initialIssue = useMemo<Issue | null>(() => {
+    if (!billNo) return null;
+
+    return (
+      starterIssues.find((issue) => issue.receiveCode === billNo) || {
+        id: 0,
+        title: "ปัญหาการจัดส่ง",
+        receiveCode: billNo,
+        truckCode: truckCode || "-",
+        recipient: "-",
+        driver: "-",
+        preview: "ยังไม่มีข้อความ",
+        updatedAt: "เมื่อสักครู่",
+        unread: 0,
+        status: "OPEN",
+      }
+    );
+  }, [billNo, truckCode]);
+  const [issues, setIssues] = useState(() => (initialIssue ? [initialIssue, ...starterIssues.filter((issue) => issue.id !== initialIssue.id)] : starterIssues));
   const [messages, setMessages] = useState(starterMessages);
-  const [selectedId, setSelectedId] = useState(1);
+  const [selectedId, setSelectedId] = useState(() => initialIssue?.id ?? 1);
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState<Attachment>();

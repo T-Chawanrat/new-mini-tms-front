@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
 import Drawer from "@mui/material/Drawer";
 import * as XLSX from "xlsx";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarClock,
   Camera,
@@ -69,6 +70,7 @@ type DeliveryCompleteResponse = {
 
 export default function DeliveryClose() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const currentOperatorName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username || "-";
   const [rows, setRows] = useState<DeliveryTruckRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -844,6 +846,19 @@ export default function DeliveryClose() {
               </div>
             </div>
             <ModalFooter
+              leadingAction={
+                <button
+                  type="button"
+                  onClick={() => {
+                    const params = new URLSearchParams({ bill_no: closeTarget.bill_no, truck_code: closeTarget.truck_code });
+                    navigate(`/delivery-issue-chat?${params.toString()}`);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-100"
+                >
+                  <MessageCircle size={16} />
+                  แจ้งปัญหา
+                </button>
+              }
               onCancel={resetCloseForm}
               onConfirm={saveClose}
               disabled={
@@ -881,12 +896,14 @@ function ModalHeader({ title, subtitle, onClose }: { title: string; subtitle: st
 }
 
 function ModalFooter({
+  leadingAction,
   onCancel,
   onConfirm,
   disabled,
   label,
   tone = "green",
 }: {
+  leadingAction?: ReactNode;
   onCancel: () => void;
   onConfirm: () => void;
   disabled: boolean;
@@ -894,23 +911,26 @@ function ModalFooter({
   tone?: "green" | "orange" | "red";
 }) {
   return (
-    <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
-      >
-        ยกเลิก
-      </button>
-      <button
-        type="button"
-        onClick={onConfirm}
-        disabled={disabled}
-        className={`inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 ${tone === "green" ? "bg-emerald-600 hover:bg-emerald-700" : tone === "red" ? "bg-rose-600 hover:bg-rose-700" : "bg-orange-600 hover:bg-orange-700"}`}
-      >
-        <FileSignature size={16} />
-        {label}
-      </button>
+    <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4">
+      <div>{leadingAction}</div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          ยกเลิก
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={disabled}
+          className={`inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 ${tone === "green" ? "bg-emerald-600 hover:bg-emerald-700" : tone === "red" ? "bg-rose-600 hover:bg-rose-700" : "bg-orange-600 hover:bg-orange-700"}`}
+        >
+          <FileSignature size={16} />
+          {label}
+        </button>
+      </div>
     </div>
   );
 }

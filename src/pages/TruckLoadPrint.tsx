@@ -90,7 +90,7 @@ export default function TruckLoadPrint() {
   const [items, setItems] = useState<TruckPrintItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [previewZoom, setPreviewZoom] = useState(1.5);
+  const [previewZoom, setPreviewZoom] = useState(1.2);
 
   const changePreviewZoom = (amount: number) => {
     setPreviewZoom((current) => Math.min(1.5, Math.max(0.5, Number((current + amount).toFixed(2)))));
@@ -208,7 +208,7 @@ export default function TruckLoadPrint() {
         }
       `}</style>
 
-      <div className="mx-auto mb-3 flex max-w-[210mm] items-center justify-between gap-3 print:hidden">
+      <div className="mx-auto mb-3 flex items-center justify-between gap-3 print:hidden" style={{ width: `${210 * previewZoom}mm` }}>
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -218,17 +218,39 @@ export default function TruckLoadPrint() {
         </button>
 
         <div className="flex items-center gap-1.5">
-          <button type="button" onClick={() => changePreviewZoom(-0.1)} disabled={previewZoom <= 0.5} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40" title="ซูมออก">
+          <button
+            type="button"
+            onClick={() => changePreviewZoom(-0.1)}
+            disabled={previewZoom <= 0.5}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            title="ซูมออก"
+          >
             <ZoomOut size={16} />
           </button>
           <span className="min-w-[52px] text-center text-xs font-medium text-slate-600">{Math.round(previewZoom * 100)}%</span>
-          <button type="button" onClick={() => changePreviewZoom(0.1)} disabled={previewZoom >= 1.5} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40" title="ซูมเข้า">
+          <button
+            type="button"
+            onClick={() => changePreviewZoom(0.1)}
+            disabled={previewZoom >= 1.5}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            title="ซูมเข้า"
+          >
             <ZoomIn size={16} />
           </button>
-          <button type="button" onClick={fitPreviewToScreen} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" title="พอดีกับหน้าจอ">
+          <button
+            type="button"
+            onClick={fitPreviewToScreen}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+            title="พอดีกับหน้าจอ"
+          >
             <Maximize2 size={16} />
           </button>
-          <button type="button" onClick={() => setPreviewZoom(1)} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" title="ขนาดจริง">
+          <button
+            type="button"
+            onClick={() => setPreviewZoom(1)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+            title="ขนาดจริง"
+          >
             <RotateCcw size={16} />
           </button>
           <button
@@ -245,154 +267,154 @@ export default function TruckLoadPrint() {
       {error && <div className="mx-auto max-w-[210mm] rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
       <div className="truck-print-preview mx-auto w-fit max-w-none" style={{ zoom: previewZoom } as CSSProperties}>
-      <main id="truck-print-area" className="min-h-[297mm] w-[210mm] bg-white px-[7mm] pb-[7mm] pt-[8mm] font-sans shadow-sm">
-        {loading ? (
-          <div className="py-20 text-center text-sm text-slate-500">กำลังโหลดข้อมูล...</div>
-        ) : truck ? (
-          <>
-            <header className="truck-print-header grid grid-cols-[1fr_58mm] items-start gap-[5mm] border-b border-slate-500 pb-[3mm] text-[11px] leading-[1.4]">
-              <div>
-                <img src="/tms/logo.jpg" alt="Trantech" className="truck-print-logo -mt-[2mm] h-auto w-[40mm] object-contain object-left-top" />
-                <div className="mt-[4mm] text-[11px] leading-[1.4]">
-                  <div className="font-bold">บริษัท ทรานเทค แมนเนจเม้นท์ กรุ๊ป จำกัด</div>
-                  <div>เลขที่ 19/13 หมู่2 ตำบลคลองข่อย อำเภอปากเกร็ด จังหวัดนนทบุรี 11120</div>
-                  <div>เลขประจำตัวผู้เสียภาษีอากร 0105560067074</div>
-                </div>
-              </div>
-
-              <div className="justify-self-end space-y-[1.2mm] text-right">
+        <main id="truck-print-area" className="min-h-[297mm] w-[210mm] bg-white px-[7mm] pb-[7mm] pt-[8mm] font-sans shadow-sm">
+          {loading ? (
+            <div className="py-20 text-center text-sm text-slate-500">กำลังโหลดข้อมูล...</div>
+          ) : truck ? (
+            <>
+              <header className="truck-print-header grid grid-cols-[1fr_58mm] items-start gap-[5mm] border-b border-slate-500 pb-[3mm] text-[11px] leading-[1.4]">
                 <div>
-                  เอกสารใบปิดบรรทุก เลขที่: <strong>{getText(truck.truck_code)}</strong>
+                  <img src="/tms/logo.jpg" alt="Trantech" className="truck-print-logo -mt-[2mm] h-auto w-[40mm] object-contain object-left-top" />
+                  <div className="mt-[4mm] text-[11px] leading-[1.4]">
+                    <div className="font-bold">บริษัท ทรานเทค แมนเนจเม้นท์ กรุ๊ป จำกัด</div>
+                    <div>เลขที่ 19/13 หมู่2 ตำบลคลองข่อย อำเภอปากเกร็ด จังหวัดนนทบุรี 11120</div>
+                    <div>เลขประจำตัวผู้เสียภาษีอากร 0105560067074</div>
+                  </div>
                 </div>
 
-                <div>วันที่ {formatShortDateTime(truck.create_date)}</div>
-
-                <div className="pt-[2mm]">
+                <div className="justify-self-end space-y-[1.2mm] text-right">
                   <div>
-                    ต้นทาง: <strong>{getText(truck.warehouse_name)}</strong>
+                    เอกสารใบปิดบรรทุก เลขที่: <strong>{getText(truck.truck_code)}</strong>
                   </div>
 
+                  <div>วันที่ {formatShortDateTime(truck.create_date)}</div>
+
+                  <div className="pt-[2mm]">
+                    <div>
+                      ต้นทาง: <strong>{getText(truck.warehouse_name)}</strong>
+                    </div>
+
+                    <div>
+                      ปลายทาง: <strong>{getText(truck.to_warehouse_name)}</strong>
+                    </div>
+
+                    <div>เวลาปิดบรรทุก: {formatShortDateTime(truck.close_datetime)}</div>
+                  </div>
+                </div>
+              </header>
+
+              <section className="mt-[5mm] flex justify-between text-[12px] leading-[1.5]">
+                <div>
                   <div>
-                    ปลายทาง: <strong>{getText(truck.to_warehouse_name)}</strong>
+                    พนักงานปิดบรรทุก <strong>{getText(truck.closed_by_name)}</strong>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div>
+                    ทะเบียนรถ <strong>{[truck.license_plate, truck.license_province].filter(Boolean).join(" ") || "-"}</strong>
                   </div>
 
-                  <div>เวลาปิดบรรทุก: {formatShortDateTime(truck.close_datetime)}</div>
+                  <div>{getText(truck.vehicle_type_name || truck.route_name)}</div>
                 </div>
-              </div>
-            </header>
+              </section>
 
-            <section className="mt-[5mm] flex justify-between text-[12px] leading-[1.5]">
-              <div>
-                <div>
-                  พนักงานปิดบรรทุก <strong>{getText(truck.closed_by_name)}</strong>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <div>
-                  ทะเบียนรถ <strong>{[truck.license_plate, truck.license_province].filter(Boolean).join(" ") || "-"}</strong>
-                </div>
-
-                <div>{getText(truck.vehicle_type_name || truck.route_name)}</div>
-              </div>
-            </section>
-
-            <table className="truck-print-items mt-[2mm] w-full table-auto border-collapse text-[11px] leading-[1.35]">
-              <thead>
-                <tr className="align-middle text-center font-normal">
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">เจ้าของงาน</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">รหัสลูกค้า</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ชื่อลูกค้า</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">เลขที่บิล</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">Reference</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ชื่อสินค้า</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">จำนวน</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ที่อยู่</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ตำบล</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">อำเภอ</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">จังหวัด</th>
-                  <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">รหัสไปรษณีย์</th>
-                </tr>
-              </thead>
-
-              <tbody className="text-[10px]">
-                {items.map((item, index) => (
-                  <tr key={item.id || `${item.serial_no}-${index}`} className="truck-print-row align-top">
-                    <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.customer_name)}</td>
-
-                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.customer_code)}</td>
-
-                    <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.recipient_name)}</td>
-
-                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.receive_code)}</td>
-
-                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.reference_no || item.serial_no)}</td>
-
-                    <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.product_name)}</td>
-
-                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm] text-center">{getText(item.qty)}</td>
-
-                    <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.address)}</td>
-
-                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.subdistrict_name)}</td>
-
-                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.district_name)}</td>
-
-                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.province_name)}</td>
-
-                    <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm] text-center">{getText(item.zip_code)}</td>
+              <table className="truck-print-items mt-[2mm] w-full table-auto border-collapse text-[11px] leading-[1.35]">
+                <thead>
+                  <tr className="align-middle text-center font-normal">
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">เจ้าของงาน</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">รหัสลูกค้า</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ชื่อลูกค้า</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">เลขที่บิล</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">Reference</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ชื่อสินค้า</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">จำนวน</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ที่อยู่</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">ตำบล</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">อำเภอ</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">จังหวัด</th>
+                    <th className="whitespace-nowrap border border-black px-[1mm] py-[2mm]">รหัสไปรษณีย์</th>
                   </tr>
-                ))}
+                </thead>
 
-                {!items.length && (
-                  <tr>
-                    <td colSpan={12} className="h-[22mm] border border-black px-3 py-8 text-center text-slate-500">
-                      ไม่มีรายการพัสดุ
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                <tbody className="text-[10px]">
+                  {items.map((item, index) => (
+                    <tr key={item.id || `${item.serial_no}-${index}`} className="truck-print-row align-top">
+                      <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.customer_name)}</td>
 
-            <footer className="truck-print-footer mt-[5mm] pt-[3mm] text-[11px] leading-[1.5]">
-              <div className="grid grid-cols-2 gap-[8mm] px-[40mm] text-center font-bold">
-                <div className="border border-black py-[1mm]">รวมบิลทั้งสิ้น {items.length.toLocaleString("th-TH")} บิล</div>
+                      <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.customer_code)}</td>
 
-                <div className="border border-black py-[1mm]">
-                  จำนวนสินค้า {items.reduce((total, item) => total + Number(item.qty || 0), 0).toLocaleString("th-TH")} กล่อง
+                      <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.recipient_name)}</td>
+
+                      <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.receive_code)}</td>
+
+                      <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.reference_no || item.serial_no)}</td>
+
+                      <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.product_name)}</td>
+
+                      <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm] text-center">{getText(item.qty)}</td>
+
+                      <td className="border border-black px-[1mm] py-[1.4mm]">{getText(item.address)}</td>
+
+                      <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.subdistrict_name)}</td>
+
+                      <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.district_name)}</td>
+
+                      <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm]">{getText(item.province_name)}</td>
+
+                      <td className="whitespace-nowrap border border-black px-[1mm] py-[1.4mm] text-center">{getText(item.zip_code)}</td>
+                    </tr>
+                  ))}
+
+                  {!items.length && (
+                    <tr>
+                      <td colSpan={12} className="h-[22mm] border border-black px-3 py-8 text-center text-slate-500">
+                        ไม่มีรายการพัสดุ
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              <footer className="truck-print-footer mt-[5mm] pt-[3mm] text-[11px] leading-[1.5]">
+                <div className="grid grid-cols-2 gap-[8mm] px-[40mm] text-center font-bold">
+                  <div className="border border-black py-[1mm]">รวมบิลทั้งสิ้น {items.length.toLocaleString("th-TH")} บิล</div>
+
+                  <div className="border border-black py-[1mm]">
+                    จำนวนสินค้า {items.reduce((total, item) => total + Number(item.qty || 0), 0).toLocaleString("th-TH")} กล่อง
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-[9mm] font-bold">พนักงานขับรถได้ทำการตรวจสอบสินค้าตามเอกสารชุดนี้แล้ว</div>
+                <div className="mt-[9mm] font-bold">พนักงานขับรถได้ทำการตรวจสอบสินค้าตามเอกสารชุดนี้แล้ว</div>
 
-              <div className="mt-[6mm] grid grid-cols-2 gap-x-[15mm] gap-y-[6mm] whitespace-nowrap">
-                <div className="flex items-end gap-x-[3mm]">
-                  <span>พนักงานขับรถ ลงชื่อ</span>
-                  <span className="inline-block flex-1 border-b border-black">&nbsp;</span>
+                <div className="mt-[6mm] grid grid-cols-2 gap-x-[15mm] gap-y-[6mm] whitespace-nowrap">
+                  <div className="flex items-end gap-x-[3mm]">
+                    <span>พนักงานขับรถ ลงชื่อ</span>
+                    <span className="inline-block flex-1 border-b border-black">&nbsp;</span>
+                  </div>
+
+                  <div className="flex items-end gap-x-[3mm]">
+                    <span>พนักงานปล่อยรถ ลงชื่อ</span>
+                    <span className="inline-block flex-1 border-b border-black">&nbsp;</span>
+                  </div>
+
+                  <div className="flex items-end gap-x-[3mm]">
+                    <span>พนักงานคลังสินค้าปลายทาง ลงชื่อ</span>
+                    <span className="inline-block flex-1 border-b border-black">&nbsp;</span>
+                  </div>
+
+                  <div className="flex items-end gap-x-[3mm]">
+                    <span>วันที่</span>
+                    <span className="inline-block w-[25mm] border-b border-black">&nbsp;</span>
+
+                    <span className="ml-[3mm]">เวลา</span>
+                    <span className="inline-block w-[25mm] border-b border-black">&nbsp;</span>
+                  </div>
                 </div>
-
-                <div className="flex items-end gap-x-[3mm]">
-                  <span>พนักงานปล่อยรถ ลงชื่อ</span>
-                  <span className="inline-block flex-1 border-b border-black">&nbsp;</span>
-                </div>
-
-                <div className="flex items-end gap-x-[3mm]">
-                  <span>พนักงานคลังสินค้าปลายทาง ลงชื่อ</span>
-                  <span className="inline-block flex-1 border-b border-black">&nbsp;</span>
-                </div>
-
-                <div className="flex items-end gap-x-[3mm]">
-                  <span>วันที่</span>
-                  <span className="inline-block w-[25mm] border-b border-black">&nbsp;</span>
-
-                  <span className="ml-[3mm]">เวลา</span>
-                  <span className="inline-block w-[25mm] border-b border-black">&nbsp;</span>
-                </div>
-              </div>
-            </footer>
-          </>
-        ) : null}
-      </main>
+              </footer>
+            </>
+          ) : null}
+        </main>
       </div>
     </div>
   );

@@ -1002,7 +1002,27 @@ export default function ReceiveModals({
                 <div className="rounded-md border border-slate-200 bg-white p-2.5">
                   <div className="grid grid-cols-[96px_120px] items-center gap-2">
                     <label className="text-[11px] font-medium text-slate-700">จำนวนรายการ</label>
-                    <input className={inputClass} type="number" value={packageForm.qty} onChange={(e) => updatePackageForm("qty", e.target.value)} />
+                    <input
+                      className={inputClass}
+                      type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
+                      value={packageForm.qty}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+
+                        if (nextValue === "") {
+                          updatePackageForm("qty", "");
+                          return;
+                        }
+
+                        const quantity = Number(nextValue);
+                        if (Number.isInteger(quantity) && quantity > 0) {
+                          updatePackageForm("qty", String(quantity));
+                        }
+                      }}
+                    />
                   </div>
                 </div>
               )}

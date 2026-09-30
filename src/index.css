@@ -25,37 +25,6 @@ layer(base);
   z-index: 9999 !important;
 }
 
-@media print {
-  @page {
-    size: 100mm 75mm;  
-    margin: 0;
-  }
-
-  html,
-  body {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-    header,
-  nav,
-  aside {
-    display: none !important;
-  }
-
-   #label-print-area {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-    .label-item {
-    padding: 2mm !important; 
-    box-sizing: border-box !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-   }
-}
-
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
