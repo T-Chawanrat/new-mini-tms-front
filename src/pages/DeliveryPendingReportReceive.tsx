@@ -35,6 +35,7 @@ type DeliveryReceiveRow = {
   remark?: string;
 
   delivered_sn?: number;
+  pending_sn?: number;
   status_message?: string;
 };
 
@@ -87,7 +88,7 @@ export default function DeliveryPendingReportReceive() {
     () => ({
       bills: rows.length,
       serials: rows.reduce((sum, row) => sum + Number(row.total_sn || 0), 0),
-      pending: "-",
+      pending: rows.reduce((sum, row) => sum + Number(row.pending_sn || 0), 0),
       cod: rows.reduce((sum, row) => sum + Number(row.cod || 0), 0),
     }),
     [rows],
@@ -97,25 +98,25 @@ export default function DeliveryPendingReportReceive() {
       { field: "idx", headerName: "ลำดับ", width: 70, align: "center", headerAlign: "center" },
       { field: "receive_code", headerName: "เลขที่บิล", width: 220, valueGetter: (value) => value || "-" },
       { field: "reference_no", headerName: "Reference", width: 135, valueGetter: (value) => value || "-" },
-      { field: "payment_type_name", headerName: "ประเภทการจ่าย", width: 120, valueGetter: (value) => value || "" },
+      { field: "payment_type_name", headerName: "ประเภทการจ่าย", width: 120, valueGetter: (value) => value || "-" },
       { field: "receive_date", headerName: "วันที่บิล", width: 115, valueFormatter: (value) => formatReportDate(value) },
       { field: "delivery_date", headerName: "วันที่กำหนดส่ง", width: 125, valueFormatter: (value) => formatReportDate(value) },
-      { field: "customer_name", headerName: "เจ้าของงาน", width: 100, valueGetter: (value) => value || "" },
+      { field: "customer_name", headerName: "เจ้าของงาน", width: 100, valueGetter: (value) => value || "-" },
       { field: "shipper_name", headerName: "ชื่อผู้ส่ง", width: 140, valueGetter: (value) => value || "-" },
-      { field: "recipient_code", headerName: "รหัสผู้รับ", width: 110, valueGetter: (value) => value || "" },
+      { field: "recipient_code", headerName: "รหัสผู้รับ", width: 110, valueGetter: (value) => value || "-" },
       { field: "recipient_name", headerName: "ชื่อผู้รับ", width: 140, valueGetter: (value) => value || "-" },
       { field: "address", headerName: "ที่อยู่", width: 220, valueGetter: (value) => value || "-" },
-      { field: "subdistrict_name", headerName: "ตำบล", width: 120, valueGetter: (value) => value || "" },
-      { field: "district_name", headerName: "อำเภอ", width: 120, valueGetter: (value) => value || "" },
-      { field: "province_name", headerName: "จังหวัด", width: 120, valueGetter: (value) => value || "" },
-      { field: "zip_code", headerName: "รหัสไปรษณีย์", width: 105, valueGetter: (value) => value || "" },
+      { field: "subdistrict_name", headerName: "ตำบล", width: 120, valueGetter: (value) => value || "-" },
+      { field: "district_name", headerName: "อำเภอ", width: 120, valueGetter: (value) => value || "-" },
+      { field: "province_name", headerName: "จังหวัด", width: 120, valueGetter: (value) => value || "-" },
+      { field: "zip_code", headerName: "รหัสไปรษณีย์", width: 105, valueGetter: (value) => value || "-" },
       {
         field: "total_sn",
         headerName: "จำนวนสินค้า (กล่อง)",
         width: 145,
         align: "right",
         headerAlign: "right",
-        valueFormatter: (value) => formatThaiNumber(value),
+        valueFormatter: (value) => (value == null || value === "" ? "-" : formatThaiNumber(value)),
       },
       {
         field: "total_cost",
@@ -123,10 +124,10 @@ export default function DeliveryPendingReportReceive() {
         width: 110,
         align: "right",
         headerAlign: "right",
-        valueFormatter: (value) => formatThaiNumber(value, 2),
+        valueFormatter: (value) => (value == null || value === "" ? "-" : formatThaiNumber(value, 2)),
       },
-      { field: "cod", headerName: "COD", width: 110, align: "right", headerAlign: "right", valueFormatter: (value) => formatThaiNumber(value, 2) },
-      { field: "remark", headerName: "หมายเหตุ", width: 160, valueGetter: (value) => value || "" },
+      { field: "cod", headerName: "COD", width: 110, align: "right", headerAlign: "right", valueFormatter: (value) => (value == null || value === "" ? "-" : formatThaiNumber(value, 2)) },
+      { field: "remark", headerName: "เงื่อนไขการจัดส่ง", width: 160, valueGetter: (value) => value || "-" },
 
       {
         field: "status_message",
@@ -134,7 +135,7 @@ export default function DeliveryPendingReportReceive() {
         width: 100,
         align: "center",
         headerAlign: "center",
-        valueGetter: (value) => value || "0/0",
+        valueGetter: (value) => value || "-",
       },
     ],
     [],
@@ -161,7 +162,7 @@ export default function DeliveryPendingReportReceive() {
         "จำนวนสินค้า (กล่อง)": row.total_sn ?? "",
         ราคา: row.total_cost || 0,
         COD: row.cod || 0,
-        หมายเหตุ: row.remark || "",
+        เงื่อนไขการจัดส่ง: row.remark || "-",
         จัดส่งสำเร็จ: row.status_message || "",
       })),
     );

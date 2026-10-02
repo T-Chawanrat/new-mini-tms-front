@@ -42,7 +42,6 @@ type DeliverySnRow = {
   remark?: string;
   created_name?: string;
   status_message?: string;
-  status_id?: number;
 };
 
 export default function DeliveryPendingReportSn() {
@@ -50,6 +49,7 @@ export default function DeliveryPendingReportSn() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [search, setSearch] = useState("");
   const [toWarehouseId, setToWarehouseId] = useState("");
+  const [deliveryStatus, setDeliveryStatus] = useState("PENDING");
   const [dateFrom, setDateFrom] = useState<Dayjs | null>(null);
   const [dateTo, setDateTo] = useState<Dayjs | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -71,6 +71,7 @@ export default function DeliveryPendingReportSn() {
           params: {
             search: search || undefined,
             to_warehouse_id: toWarehouseId || undefined,
+            delivery_status: deliveryStatus || undefined,
             date_from: dateFrom?.format("YYYY-MM-DD"),
             date_to: dateTo?.format("YYYY-MM-DD"),
           },
@@ -87,13 +88,12 @@ export default function DeliveryPendingReportSn() {
     return () => {
       active = false;
     };
-  }, [search, toWarehouseId, dateFrom, dateTo, refreshKey]);
+  }, [search, toWarehouseId, deliveryStatus, dateFrom, dateTo, refreshKey]);
 
   const summary = useMemo(
     () => ({
       serials: rows.length,
       bills: new Set(rows.map((row) => row.receive_code)).size,
-      trucks: "-",
       cod: rows.reduce((sum, row) => sum + Number(row.cod || 0), 0),
     }),
     [rows],
@@ -102,39 +102,38 @@ export default function DeliveryPendingReportSn() {
     () => [
       { field: "idx", headerName: "ลำดับ", width: 70, align: "center", headerAlign: "center" },
       { field: "receive_code", headerName: "เลขที่บิล", width: 220, valueGetter: (value) => value || "-" },
-      { field: "serial_no", headerName: "หมายเลขกล่อง (Serial)", width: 250 },
+      { field: "serial_no", headerName: "หมายเลขกล่อง (Serial)", width: 250, valueGetter: (value) => value || "-" },
       { field: "reference_no", headerName: "Reference", width: 125, valueGetter: (value) => value || "-" },
-      { field: "payment_type_name", headerName: "ประเภทการจ่าย", width: 120, valueGetter: (value) => value || "" },
+      { field: "payment_type_name", headerName: "ประเภทการจ่าย", width: 120, valueGetter: (value) => value || "-" },
       { field: "receive_date", headerName: "วันที่บิล", width: 115, valueFormatter: (value) => formatReportDate(value) },
       { field: "delivery_date", headerName: "วันที่กำหนดส่ง", width: 125, valueFormatter: (value) => formatReportDate(value) },
-      { field: "customer_name", headerName: "เจ้าของงาน", width: 100, valueGetter: (value) => value || "" },
-      { field: "shipper_code", headerName: "รหัสผู้ส่ง", width: 110, valueGetter: (value) => value || "" },
-      { field: "shipper_name", headerName: "ชื่อผู้ส่ง", width: 140, valueGetter: (value) => value || "" },
-      { field: "recipient_code", headerName: "รหัสผู้รับ", width: 110, valueGetter: (value) => value || "" },
+      { field: "customer_name", headerName: "เจ้าของงาน", width: 100, valueGetter: (value) => value || "-" },
+      { field: "shipper_code", headerName: "รหัสผู้ส่ง", width: 110, valueGetter: (value) => value || "-" },
+      { field: "shipper_name", headerName: "ชื่อผู้ส่ง", width: 140, valueGetter: (value) => value || "-" },
+      { field: "recipient_code", headerName: "รหัสผู้รับ", width: 110, valueGetter: (value) => value || "-" },
       { field: "recipient_name", headerName: "ชื่อผู้รับ", width: 140, valueGetter: (value) => value || "-" },
       { field: "address", headerName: "ที่อยู่", width: 220, valueGetter: (value) => value || "-" },
-      { field: "subdistrict_name", headerName: "ตำบล", width: 120, valueGetter: (value) => value || "" },
-      { field: "district_name", headerName: "อำเภอ", width: 120, valueGetter: (value) => value || "" },
-      { field: "province_name", headerName: "จังหวัด", width: 120, valueGetter: (value) => value || "" },
-      { field: "zip_code", headerName: "รหัสไปรษณีย์", width: 105, valueGetter: (value) => value || "" },
-      { field: "package_name", headerName: "ประเภทสินค้า", width: 130, valueGetter: (value) => value || "" },
-      { field: "width", headerName: "กว้าง", width: 85, align: "right", headerAlign: "right", valueGetter: (value) => value || "" },
-      { field: "length", headerName: "ยาว", width: 85, align: "right", headerAlign: "right", valueGetter: (value) => value || "" },
-      { field: "height", headerName: "สูง", width: 85, align: "right", headerAlign: "right", valueGetter: (value) => value || "" },
+      { field: "subdistrict_name", headerName: "ตำบล", width: 120, valueGetter: (value) => value || "-" },
+      { field: "district_name", headerName: "อำเภอ", width: 120, valueGetter: (value) => value || "-" },
+      { field: "province_name", headerName: "จังหวัด", width: 120, valueGetter: (value) => value || "-" },
+      { field: "zip_code", headerName: "รหัสไปรษณีย์", width: 105, valueGetter: (value) => value || "-" },
+      { field: "package_name", headerName: "ประเภทสินค้า", width: 130, valueGetter: (value) => value || "-" },
+      { field: "width", headerName: "กว้าง", width: 85, align: "right", headerAlign: "right", valueGetter: (value) => (value == null || value === "" ? "-" : value) },
+      { field: "length", headerName: "ยาว", width: 85, align: "right", headerAlign: "right", valueGetter: (value) => (value == null || value === "" ? "-" : value) },
+      { field: "height", headerName: "สูง", width: 85, align: "right", headerAlign: "right", valueGetter: (value) => (value == null || value === "" ? "-" : value) },
       {
         field: "volume",
         headerName: "ปริมาตร Q",
         width: 125,
         align: "right",
         headerAlign: "right",
-        valueGetter: (_value, row) => (row.width == null || row.length == null || row.height == null ? "" : Number(row.width) * Number(row.length) * Number(row.height)),
+        valueGetter: (_value, row) => (row.width == null || row.length == null || row.height == null ? "-" : Number(row.width) * Number(row.length) * Number(row.height)),
       },
-      { field: "weight", headerName: "น้ำหนัก (kg)", width: 115, align: "right", headerAlign: "right", valueGetter: (value) => value || "" },
-      { field: "cost", headerName: "ราคา", width: 110, align: "right", headerAlign: "right", valueFormatter: (value) => formatThaiNumber(value, 2) },
-      { field: "remark", headerName: "หมายเหตุ", width: 160, valueGetter: (value) => value || "" },
-      { field: "created_name", headerName: "checker", width: 120, valueGetter: (value) => value || "" },
-      { field: "status_message", headerName: "สถานะ", width: 130, valueGetter: (value) => value || "" },
-      { field: "status_id", headerName: "เลขที่สถานะ", width: 110, valueGetter: (value) => value || "" },
+      { field: "weight", headerName: "น้ำหนัก (kg)", width: 115, align: "right", headerAlign: "right", valueGetter: (value) => (value == null || value === "" ? "-" : value) },
+      { field: "cost", headerName: "ราคา", width: 110, align: "right", headerAlign: "right", valueFormatter: (value) => (value == null || value === "" ? "-" : formatThaiNumber(value, 2)) },
+      { field: "remark", headerName: "เงื่อนไขการจัดส่ง", width: 160, valueGetter: (value) => value || "-" },
+      { field: "created_name", headerName: "checker", width: 120, valueGetter: (value) => value || "-" },
+      { field: "status_message", headerName: "สถานะ", width: 130, valueGetter: (value) => value || "-" },
     ],
     [],
   );
@@ -165,10 +164,9 @@ export default function DeliveryPendingReportSn() {
         "ปริมาตร Q": row.width == null || row.length == null || row.height == null ? "" : Number(row.width) * Number(row.length) * Number(row.height),
         "น้ำหนัก (kg)": row.weight || "",
         ราคา: row.cost || 0,
-        หมายเหตุ: row.remark || "",
+        เงื่อนไขการจัดส่ง: row.remark || "-",
         checker: row.created_name || "",
         สถานะ: row.status_message || "",
-        เลขที่สถานะ: row.status_id || "",
       })),
     );
     const workbook = XLSX.utils.book_new();
@@ -178,11 +176,10 @@ export default function DeliveryPendingReportSn() {
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
-      <section className="mb-3 grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-4">
+      <section className="mb-3 grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-3">
         {[
           ["จำนวน SN", summary.serials],
           ["จำนวนบิล", summary.bills],
-          ["ใบรถกระจาย", summary.trucks],
           ["COD", formatThaiNumber(summary.cod, 2)],
         ].map(([label, value]) => (
           <div key={String(label)} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
@@ -197,7 +194,7 @@ export default function DeliveryPendingReportSn() {
         ))}
       </section>
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(160px,0.7fr)_180px_170px_170px_auto] lg:items-end">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(160px,0.7fr)_180px_150px_170px_170px_auto] lg:items-end">
           <label className="block text-xs font-medium text-slate-600">
             ค้นหา
             <span className="relative mt-1 block">
@@ -227,6 +224,18 @@ export default function DeliveryPendingReportSn() {
                   </option>
                 ) : null;
               })}
+            </select>
+          </label>
+          <label className="block text-xs font-medium text-slate-600">
+            สถานะจัดส่ง
+            <select
+              value={deliveryStatus}
+              onChange={(event) => setDeliveryStatus(event.target.value)}
+              className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">ทั้งหมด</option>
+              <option value="PENDING">ค้างส่ง</option>
+              <option value="DELIVERED">จัดส่งสำเร็จ</option>
             </select>
           </label>
           <DatePicker

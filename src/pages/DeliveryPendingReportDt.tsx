@@ -22,6 +22,7 @@ type DeliveryDtRow = {
   license_plate?: string;
   license_plate_province?: string;
   total_sn?: number;
+  delivered_sn?: number;
   created_date?: string;
 };
 
@@ -34,6 +35,7 @@ const getDriverTypeLabel = (driverType?: string) => {
 export default function DeliveryPendingReportDt() {
   const [rows, setRows] = useState<DeliveryDtRow[]>([]);
   const [search, setSearch] = useState("");
+  const [deliveryStatus, setDeliveryStatus] = useState("PENDING");
   const [dateFrom, setDateFrom] = useState<Dayjs | null>(null);
   const [dateTo, setDateTo] = useState<Dayjs | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -49,6 +51,7 @@ export default function DeliveryPendingReportDt() {
         const response = await AxiosInstance.get<{ data?: DeliveryDtRow[] }>("/delivery-reports/dt", {
           params: {
             search: search || undefined,
+            delivery_status: deliveryStatus,
             date_from: dateFrom?.format("YYYY-MM-DD"),
             date_to: dateTo?.format("YYYY-MM-DD"),
           },
@@ -65,12 +68,13 @@ export default function DeliveryPendingReportDt() {
     return () => {
       active = false;
     };
-  }, [search, dateFrom, dateTo, refreshKey]);
+  }, [search, deliveryStatus, dateFrom, dateTo, refreshKey]);
 
   const summary = useMemo(
     () => ({
       trucks: rows.length,
       serials: rows.reduce((sum, row) => sum + Number(row.total_sn || 0), 0),
+      pending: rows.reduce((sum, row) => sum + Math.max(Number(row.total_sn || 0) - Number(row.delivered_sn || 0), 0), 0),
     }),
     [rows],
   );
@@ -78,7 +82,7 @@ export default function DeliveryPendingReportDt() {
   const columns = useMemo<GridColDef<DeliveryDtRow>[]>(
     () => [
       { field: "idx", headerName: "ลำดับ", width: 60, align: "center", headerAlign: "center" },
-      { field: "truck_code", headerName: "เลขใบรถกระจาย", width: 155 },
+      { field: "truck_code", headerName: "เลขใบรถกระจาย", width: 155, valueGetter: (value) => value || "-" },
       {
         field: "route_name",
         headerName: "สายรถ",
@@ -101,7 +105,8 @@ export default function DeliveryPendingReportDt() {
         width: 95,
         align: "right",
         headerAlign: "right",
-        valueFormatter: (value) => formatThaiNumber(value),
+        valueGetter: (_value, row) =>
+          row.total_sn == null ? "-" : `${formatThaiNumber(row.delivered_sn || 0)}/${formatThaiNumber(row.total_sn)}`,
       },
       { field: "created_date", headerName: "วันที่สร้าง", width: 155, valueFormatter: (value) => formatReportDateTime(value) },
     ],
@@ -118,7 +123,7 @@ export default function DeliveryPendingReportDt() {
         คนขับ: row.driver_name || "",
         ทะเบียนรถ: [row.license_plate, row.license_plate_province].filter(Boolean).join(" "),
         Username: row.username || "",
-        จำนวนSN: row.total_sn || 0,
+        จำนวนSN: `${row.delivered_sn || 0}/${row.total_sn || 0}`,
         วันที่สร้าง: formatReportDateTime(row.created_date),
       })),
     );
@@ -129,10 +134,11 @@ export default function DeliveryPendingReportDt() {
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
-      <section className="mb-3 grid shrink-0 grid-cols-2 gap-2">
+      <section className="mb-3 grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-3">
         {[
           ["ใบรถกระจาย", summary.trucks],
           ["จำนวน SN", summary.serials],
+          ["SN ค้างส่ง", summary.pending],
         ].map(([label, value]) => (
           <div key={String(label)} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
@@ -147,7 +153,7 @@ export default function DeliveryPendingReportDt() {
       </section>
 
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(160px,0.7fr)_170px_170px_auto] lg:items-end">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(160px,0.7fr)_150px_170px_170px_auto] lg:items-end">
           <label className="block text-xs font-medium text-slate-600">
             ค้นหา
             <span className="relative mt-1 block">
@@ -159,6 +165,18 @@ export default function DeliveryPendingReportDt() {
                 className="h-9 w-full rounded-md border border-slate-300 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </span>
+          </label>
+          <label className="block text-xs font-medium text-slate-600">
+            สถานะจัดส่ง
+            <select
+              value={deliveryStatus}
+              onChange={(event) => setDeliveryStatus(event.target.value)}
+              className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="ALL">ทั้งหมด</option>
+              <option value="PENDING">ค้างส่ง</option>
+              <option value="DELIVERED">จัดส่งสำเร็จ</option>
+            </select>
           </label>
           <DatePicker
             label="วันที่จัดส่ง ตั้งแต่"

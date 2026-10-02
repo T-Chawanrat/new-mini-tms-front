@@ -164,14 +164,8 @@ const navItems: NavItem[] = [
   },
   {
     icon: <GridIcon />,
-    name: "รายงานค้างส่ง",
+    name: "รายงาน",
     subItems: [
-      {
-        name: "ตามใบรถกระจาย",
-        path: "/delivery-pending-report/dt",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
       {
         name: "ตามเลขที่บิล",
         path: "/delivery-pending-report/receive",
@@ -179,8 +173,14 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "ตาม Serial No.",
+        name: "ตาม S/N",
         path: "/delivery-pending-report/sn",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ตามใบรถกระจาย",
+        path: "/delivery-pending-report/dt",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },

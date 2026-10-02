@@ -22,6 +22,12 @@ import {
   receiveSerialMinWidths,
 } from "../utils/receiveReportHelpers";
 
+const formatOptionalNumber = (value: number | string | null | undefined, digits = 0) =>
+  value === null || value === undefined || value === "" ? "-" : formatNumber(value, digits);
+
+const formatOptionalMoney = (value: number | string | null | undefined) =>
+  value === null || value === undefined || value === "" ? "-" : formatMoney(value);
+
 export default function ReceiveReport() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<ReceiveReportRow[]>([]);
@@ -88,7 +94,7 @@ export default function ReceiveReport() {
           </button>
         ),
       },
-      { field: "reference_no", headerName: "REFERENCE", width: 180, minWidth: 170 },
+      { field: "reference_no", headerName: "REFERENCE", width: 180, minWidth: 170, valueGetter: (value) => getText(value) },
       {
         field: "receive_date",
         headerName: "วันที่สร้าง",
@@ -103,7 +109,15 @@ export default function ReceiveReport() {
         minWidth: 130,
         renderCell: (params) => formatDate(params.row.delivery_date),
       },
-      { field: "total_serial", headerName: "SN", width: 100, minWidth: 90, align: "right", headerAlign: "right" },
+      {
+        field: "total_serial",
+        headerName: "SN",
+        width: 100,
+        minWidth: 90,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => formatOptionalNumber(params.row.total_serial),
+      },
       {
         field: "total_cost",
         headerName: "ราคา",
@@ -111,7 +125,7 @@ export default function ReceiveReport() {
         minWidth: 105,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => formatMoney(params.row.total_cost),
+        renderCell: (params) => formatOptionalMoney(params.row.total_cost),
       },
       {
         field: "total_cod",
@@ -120,15 +134,15 @@ export default function ReceiveReport() {
         minWidth: 105,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => formatMoney(params.row.total_cod),
+        renderCell: (params) => formatOptionalMoney(params.row.total_cod),
       },
-      { field: "customer_name", headerName: "เจ้าของงาน", width: 200, minWidth: 180 },
-      { field: "from_warehouse_name", headerName: "คลังต้นทาง", width: 190, minWidth: 175 },
-      { field: "to_warehouse_name", headerName: "คลังปลายทาง", width: 190, minWidth: 175 },
-      { field: "shipper_name", headerName: "ผู้ส่ง", width: 180, minWidth: 165 },
-      { field: "recipient_name", headerName: "ผู้รับ", width: 200, minWidth: 180 },
-      { field: "tel", headerName: "เบอร์โทร", width: 140, minWidth: 130 },
-      { field: "province_name", headerName: "จังหวัด", width: 150, minWidth: 140 },
+      { field: "customer_name", headerName: "เจ้าของงาน", width: 200, minWidth: 180, valueGetter: (value) => getText(value) },
+      { field: "from_warehouse_name", headerName: "คลังต้นทาง", width: 190, minWidth: 175, valueGetter: (value) => getText(value) },
+      { field: "to_warehouse_name", headerName: "คลังปลายทาง", width: 190, minWidth: 175, valueGetter: (value) => getText(value) },
+      { field: "shipper_name", headerName: "ผู้ส่ง", width: 180, minWidth: 165, valueGetter: (value) => getText(value) },
+      { field: "recipient_name", headerName: "ผู้รับ", width: 200, minWidth: 180, valueGetter: (value) => getText(value) },
+      { field: "tel", headerName: "เบอร์โทร", width: 140, minWidth: 130, valueGetter: (value) => getText(value) },
+      { field: "province_name", headerName: "จังหวัด", width: 150, minWidth: 140, valueGetter: (value) => getText(value) },
       {
         field: "print_labels",
         headerName: "พิมพ์สติกเกอร์",
@@ -436,10 +450,10 @@ export default function ReceiveReport() {
       </div>
 
       <div className="mb-3 grid shrink-0 grid-cols-2 gap-2 md:grid-cols-4">
-        <SummaryCard label="Receive" value={summaryLoading ? "..." : formatNumber(summaryTotal?.total_receive)} accent />
-        <SummaryCard label="Serial" value={summaryLoading ? "..." : formatNumber(summaryTotal?.total_serial)} />
-        <SummaryCard label="Cost" value={summaryLoading ? "..." : formatMoney(summaryTotal?.total_cost)} />
-        <SummaryCard label="COD" value={summaryLoading ? "..." : formatMoney(summaryTotal?.total_cod)} />
+        <SummaryCard label="Receive" value={summaryLoading ? "..." : formatOptionalNumber(summaryTotal?.total_receive)} accent />
+        <SummaryCard label="Serial" value={summaryLoading ? "..." : formatOptionalNumber(summaryTotal?.total_serial)} />
+        <SummaryCard label="Cost" value={summaryLoading ? "..." : formatOptionalMoney(summaryTotal?.total_cost)} />
+        <SummaryCard label="COD" value={summaryLoading ? "..." : formatOptionalMoney(summaryTotal?.total_cod)} />
       </div>
 
       <div className="mb-3 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -476,10 +490,12 @@ export default function ReceiveReport() {
                 summaryDaily.map((day, index) => (
                   <tr key={String(day.receive_date)} className={index % 2 === 1 ? "bg-slate-50 hover:bg-blue-100" : "hover:bg-blue-100"}>
                     <td className="whitespace-nowrap px-3 py-1.5 font-medium text-slate-800">{formatDate(day.receive_date)}</td>
-                    <td className="whitespace-nowrap px-3 py-1.5 text-right font-semibold text-blue-700">{formatNumber(day.total_receive)}</td>
-                    <td className="whitespace-nowrap px-3 py-1.5 text-right text-slate-700">{formatNumber(day.total_serial)}</td>
-                    <td className="whitespace-nowrap px-3 py-1.5 text-right text-slate-700">{formatMoney(day.total_cost)}</td>
-                    <td className="whitespace-nowrap px-3 py-1.5 text-right text-slate-700">{formatMoney(day.total_cod)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5 text-right font-semibold text-blue-700">
+                      {formatOptionalNumber(day.total_receive)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-1.5 text-right text-slate-700">{formatOptionalNumber(day.total_serial)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5 text-right text-slate-700">{formatOptionalMoney(day.total_cost)}</td>
+                    <td className="whitespace-nowrap px-3 py-1.5 text-right text-slate-700">{formatOptionalMoney(day.total_cod)}</td>
                   </tr>
                 ))
               )}
@@ -489,7 +505,6 @@ export default function ReceiveReport() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
-
         <div className="h-full min-h-0 overflow-hidden">
           {error ? (
             <div className="p-6 text-center text-sm text-red-600">{error}</div>
@@ -508,142 +523,147 @@ export default function ReceiveReport() {
         </div>
 
         <div className="hidden">
-        {error ? (
-          <div className="p-6 text-center text-sm text-red-600">{error}</div>
-        ) : (
-          <div className="h-[calc(100%-82px)] overflow-auto">
-            <table className="min-w-max border-collapse text-left text-xs">
-              <ResizableColumns headers={receiveReportHeaders} pageKey="receive-report-main-v1" minWidths={receiveReportMinWidths} />
+          {error ? (
+            <div className="p-6 text-center text-sm text-red-600">{error}</div>
+          ) : (
+            <div className="h-[calc(100%-82px)] overflow-auto">
+              <table className="min-w-max border-collapse text-left text-xs">
+                <ResizableColumns headers={receiveReportHeaders} pageKey="receive-report-main-v1" minWidths={receiveReportMinWidths} />
 
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {loading ? (
-                  <tr>
-                    <td colSpan={receiveReportHeaders.length} className="px-3 py-10 text-center text-sm text-slate-500">
-                      กำลังโหลดข้อมูล...
-                    </td>
-                  </tr>
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={receiveReportHeaders.length} className="px-3 py-10 text-center text-sm text-slate-500">
-                      ไม่พบข้อมูล
-                    </td>
-                  </tr>
-                ) : (
-                  rows.map((row, index) => {
-                    const rowKey = getRowKey(row, index);
-                    const isExpanded = !!expandedRows[rowKey];
-                    const serials = serialMap[rowKey] || [];
-                    const serialLoading = !!serialLoadingMap[rowKey];
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={receiveReportHeaders.length} className="px-3 py-10 text-center text-sm text-slate-500">
+                        กำลังโหลดข้อมูล...
+                      </td>
+                    </tr>
+                  ) : rows.length === 0 ? (
+                    <tr>
+                      <td colSpan={receiveReportHeaders.length} className="px-3 py-10 text-center text-sm text-slate-500">
+                        ไม่พบข้อมูล
+                      </td>
+                    </tr>
+                  ) : (
+                    rows.map((row, index) => {
+                      const rowKey = getRowKey(row, index);
+                      const isExpanded = !!expandedRows[rowKey];
+                      const serials = serialMap[rowKey] || [];
+                      const serialLoading = !!serialLoadingMap[rowKey];
 
-                    return (
-                      <Fragment key={rowKey}>
-                        <tr
-                          className={
-                            isExpanded ? "bg-blue-50/70" : index % 2 === 0 ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70 hover:bg-blue-50/40"
-                          }
-                        >
-                          <td className="w-[60px] min-w-[60px] max-w-[60px] whitespace-nowrap border-b border-slate-100 px-2 py-2 text-center font-semibold text-slate-500">
-                            {formatNumber((pagination.page - 1) * pagination.limit + index + 1)}
-                          </td>
+                      return (
+                        <Fragment key={rowKey}>
+                          <tr
+                            className={
+                              isExpanded ? "bg-blue-50/70" : index % 2 === 0 ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70 hover:bg-blue-50/40"
+                            }
+                          >
+                            <td className="w-[60px] min-w-[60px] max-w-[60px] whitespace-nowrap border-b border-slate-100 px-2 py-2 text-center font-semibold text-slate-500">
+                              {formatNumber((pagination.page - 1) * pagination.limit + index + 1)}
+                            </td>
 
-                          <td className="sticky left-0 z-10 whitespace-nowrap border-b border-slate-100 bg-inherit px-3 py-2">
-                            <button
-                              type="button"
-                              onClick={() => toggleRow(row, rowKey)}
-                              className="font-semibold text-blue-700 underline-offset-2 hover:underline"
-                              title="กดเพื่อดู Serial No"
+                            <td className="sticky left-0 z-10 whitespace-nowrap border-b border-slate-100 bg-inherit px-3 py-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleRow(row, rowKey)}
+                                className="font-semibold text-blue-700 underline-offset-2 hover:underline"
+                                title="กดเพื่อดู Serial No"
+                              >
+                                {getText(row.receive_code)}
+                              </button>
+                            </td>
+
+                            <td
+                              className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
+                              title={getText(row.reference_no)}
                             >
-                              {getText(row.receive_code)}
-                            </button>
-                          </td>
+                              {getText(row.reference_no)}
+                            </td>
 
-                          <td className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={getText(row.reference_no)}>
-                            {getText(row.reference_no)}
-                          </td>
+                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">
+                              {formatDateTime(row.receive_date)}
+                            </td>
+                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{formatDate(row.delivery_date)}</td>
+                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right font-semibold text-slate-800">
+                              {formatNumber(row.total_serial)}
+                            </td>
+                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">
+                              {formatMoney(row.total_cost)}
+                            </td>
+                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">
+                              {formatMoney(row.total_cod)}
+                            </td>
 
-                          <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{formatDateTime(row.receive_date)}</td>
-                          <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{formatDate(row.delivery_date)}</td>
-                          <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right font-semibold text-slate-800">
-                            {formatNumber(row.total_serial)}
-                          </td>
-                          <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">
-                            {formatMoney(row.total_cost)}
-                          </td>
-                          <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">
-                            {formatMoney(row.total_cod)}
-                          </td>
-
-                          <td
-                            className="max-w-[260px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-                            title={getText(row.customer_name || row.customer_id)}
-                          >
-                            {getText(row.customer_name || row.customer_id)}
-                          </td>
-
-                          <td
-                            className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-                            title={getText(row.from_warehouse_name || row.from_warehouse_id)}
-                          >
-                            {getText(row.from_warehouse_name || row.from_warehouse_id)}
-                          </td>
-
-                          <td
-                            className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-                            title={getText(row.to_warehouse_name || row.to_warehouse_id)}
-                          >
-                            {getText(row.to_warehouse_name || row.to_warehouse_id)}
-                          </td>
-
-                          <td className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={getText(row.shipper_name)}>
-                            {getText(row.shipper_name)}
-                          </td>
-
-                          <td className="max-w-[260px] border-b border-slate-100 px-3 py-2 text-slate-800">
-                            <div className="truncate" title={getText(row.recipient_name)}>
-                              {getText(row.recipient_name)}
-                            </div>
-                            <div className="truncate text-[11px] text-slate-400" title={getText(row.recipient_code)}>
-                              {getText(row.recipient_code)}
-                            </div>
-                          </td>
-
-                          <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{getText(row.tel)}</td>
-
-                          <td className="max-w-[240px] border-b border-slate-100 px-3 py-2 text-slate-700">
-                            <div className="truncate" title={getText(row.province_name)}>
-                              {getText(row.province_name)}
-                            </div>
-                            <div
-                              className="truncate text-[11px] text-slate-400"
-                              title={`${getText(row.district_name)} / ${getText(row.subdistrict_name)}`}
+                            <td
+                              className="max-w-[260px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
+                              title={getText(row.customer_name || row.customer_id)}
                             >
-                              {getText(row.district_name)} / {getText(row.subdistrict_name)}
-                            </div>
-                          </td>
-                        </tr>
+                              {getText(row.customer_name || row.customer_id)}
+                            </td>
 
-                        {isExpanded ? (
-                          <tr>
-                            <td colSpan={receiveReportHeaders.length} className="bg-slate-50 px-3 py-3">
-                              <SerialTable loading={serialLoading} serials={serials} />
+                            <td
+                              className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
+                              title={getText(row.from_warehouse_name || row.from_warehouse_id)}
+                            >
+                              {getText(row.from_warehouse_name || row.from_warehouse_id)}
+                            </td>
+
+                            <td
+                              className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
+                              title={getText(row.to_warehouse_name || row.to_warehouse_id)}
+                            >
+                              {getText(row.to_warehouse_name || row.to_warehouse_id)}
+                            </td>
+
+                            <td
+                              className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
+                              title={getText(row.shipper_name)}
+                            >
+                              {getText(row.shipper_name)}
+                            </td>
+
+                            <td className="max-w-[260px] border-b border-slate-100 px-3 py-2 text-slate-800">
+                              <div className="truncate" title={getText(row.recipient_name)}>
+                                {getText(row.recipient_name)}
+                              </div>
+                              <div className="truncate text-[11px] text-slate-400" title={getText(row.recipient_code)}>
+                                {getText(row.recipient_code)}
+                              </div>
+                            </td>
+
+                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{getText(row.tel)}</td>
+
+                            <td className="max-w-[240px] border-b border-slate-100 px-3 py-2 text-slate-700">
+                              <div className="truncate" title={getText(row.province_name)}>
+                                {getText(row.province_name)}
+                              </div>
+                              <div
+                                className="truncate text-[11px] text-slate-400"
+                                title={`${getText(row.district_name)} / ${getText(row.subdistrict_name)}`}
+                              >
+                                {getText(row.district_name)} / {getText(row.subdistrict_name)}
+                              </div>
                             </td>
                           </tr>
-                        ) : null}
-                      </Fragment>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
 
+                          {isExpanded ? (
+                            <tr>
+                              <td colSpan={receiveReportHeaders.length} className="bg-slate-50 px-3 py-3">
+                                <SerialTable loading={serialLoading} serials={serials} />
+                              </td>
+                            </tr>
+                          ) : null}
+                        </Fragment>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         <div className="hidden">
-          <div className="text-[11px] text-slate-500">
-            {null}
-          </div>
+          <div className="text-[11px] text-slate-500">{null}</div>
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
@@ -701,7 +721,12 @@ export default function ReceiveReport() {
                   {serialDetailTarget.receive_code} {serialDetailTarget.reference_no ? `• ${serialDetailTarget.reference_no}` : ""}
                 </p>
               </div>
-              <button type="button" onClick={() => setSerialDetailTarget(null)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100" aria-label="ปิด">
+              <button
+                type="button"
+                onClick={() => setSerialDetailTarget(null)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100"
+                aria-label="ปิด"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -763,20 +788,26 @@ function SerialTable({ loading, serials }: SerialTableProps) {
 
               <td className="max-w-[260px] border-b border-slate-100 px-3 py-2 text-slate-700">
                 <div className="truncate font-medium" title={`${getText(serial.package_id)} - ${getText(serial.package_name)}`}>
-                  #{getText(serial.package_id)} - {getText(serial.package_name)}
+                  {serial.package_id == null && !serial.package_name ? "-" : `#${getText(serial.package_id)} - ${getText(serial.package_name)}`}
                 </div>
                 <div className="truncate text-[11px] text-slate-400" title={getText(serial.package_detail_name)}>
                   {getText(serial.package_detail_name)}
                 </div>
               </td>
 
-              <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">{formatMoney(serial.cost)}</td>
-              <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">{formatMoney(serial.cod)}</td>
+              <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">{formatOptionalMoney(serial.cost)}</td>
+              <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">{formatOptionalMoney(serial.cod)}</td>
 
               <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">
-                <div>{formatNumber(serial.width, 0)} x {formatNumber(serial.length, 0)} x {formatNumber(serial.height, 0)} ซม.</div>
+                <div>
+                  {serial.width == null && serial.length == null && serial.height == null
+                    ? "-"
+                    : `${formatOptionalNumber(serial.width)} x ${formatOptionalNumber(serial.length)} x ${formatOptionalNumber(serial.height)} ซม.`}
+                </div>
                 <div className="mt-0.5 text-[11px] text-slate-400">
-                  {formatNumber(serial.weight, 2)} กก. • {formatNumber(serial.vol, 3)} คิว
+                  {serial.weight == null && serial.vol == null
+                    ? "-"
+                    : `${formatOptionalNumber(serial.weight, 2)} กก. • ${formatOptionalNumber(serial.vol, 3)} คิว`}
                 </div>
               </td>
 

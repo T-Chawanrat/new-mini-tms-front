@@ -116,12 +116,17 @@ export default function DeliveryClose() {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("ALL");
   const [closeTarget, setCloseTarget] = useState<DeliveryTruckRow | null>(null);
   const [closeConfirmationOpen, setCloseConfirmationOpen] = useState(false);
+  const [mediaEditorOpen, setMediaEditorOpen] = useState(false);
   const [closeSaving, setCloseSaving] = useState(false);
   const [closeError, setCloseError] = useState("");
   const [proofImages, setProofImages] = useState<UploadedImages>([]);
   const [signatureImages, setSignatureImages] = useState<UploadedImages>([]);
   const [signatureMode, setSignatureMode] = useState<"DRAW" | "UPLOAD">("DRAW");
   const [signaturePadData, setSignaturePadData] = useState<string | null>(null);
+  const [draftProofImages, setDraftProofImages] = useState<UploadedImages>([]);
+  const [draftSignatureImages, setDraftSignatureImages] = useState<UploadedImages>([]);
+  const [draftSignatureMode, setDraftSignatureMode] = useState<"DRAW" | "UPLOAD">("DRAW");
+  const [draftSignaturePadData, setDraftSignaturePadData] = useState<string | null>(null);
   const [completedAt, setCompletedAt] = useState(toInputDateTime);
   const [selectedSerialIds, setSelectedSerialIds] = useState<string[]>([]);
   const [billDetailTarget, setBillDetailTarget] = useState<DeliveryTruckRow | null>(null);
@@ -143,12 +148,17 @@ export default function DeliveryClose() {
   const resetCloseForm = () => {
     setCloseTarget(null);
     setCloseConfirmationOpen(false);
+    setMediaEditorOpen(false);
     setCloseSaving(false);
     setCloseError("");
     setProofImages([]);
     setSignatureImages([]);
     setSignatureMode("DRAW");
     setSignaturePadData(null);
+    setDraftProofImages([]);
+    setDraftSignatureImages([]);
+    setDraftSignatureMode("DRAW");
+    setDraftSignaturePadData(null);
     setCompletedAt(toInputDateTime());
     setSelectedSerialIds([]);
   };
@@ -156,6 +166,7 @@ export default function DeliveryClose() {
   const openCloseForm = (row: DeliveryTruckRow) => {
     setCloseTarget(row);
     setCloseConfirmationOpen(false);
+    setMediaEditorOpen(false);
     setCloseError("");
     setProofImages(row.proof_images || []);
     setSignatureImages(row.signature_images || []);
@@ -163,6 +174,26 @@ export default function DeliveryClose() {
     setSignaturePadData(null);
     setCompletedAt(toInputDateTime());
     setSelectedSerialIds([]);
+  };
+
+  const openMediaEditor = () => {
+    setDraftProofImages(proofImages);
+    setDraftSignatureImages(signatureImages);
+    setDraftSignatureMode(signatureMode);
+    setDraftSignaturePadData(signaturePadData);
+    setMediaEditorOpen(true);
+  };
+
+  const applyMediaDraft = () => {
+    const resolvedSignature =
+      draftSignatureMode === "DRAW" && draftSignaturePadData
+        ? [{ name: "signature-pad.png", preview: draftSignaturePadData }]
+        : draftSignatureImages;
+    setProofImages(draftProofImages);
+    setSignatureImages(resolvedSignature);
+    setSignatureMode(draftSignatureMode === "DRAW" && draftSignaturePadData ? "UPLOAD" : draftSignatureMode);
+    setSignaturePadData(null);
+    setMediaEditorOpen(false);
   };
 
   const findDeliveryForClose = async () => {
@@ -877,38 +908,62 @@ export default function DeliveryClose() {
                   })}
                 </div>
               </div>
-              <div className="space-y-4">
-                <ImageUpload label="รูปหลักฐานการส่ง" required values={proofImages} onChange={setProofImages} thumbnailSize="large" />
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <div className="mb-3 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSignatureMode("DRAW")}
-                      className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${signatureMode === "DRAW" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}
-                    >
-                      เซ็นบนหน้าจอ
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSignatureMode("UPLOAD")}
-                      className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${signatureMode === "UPLOAD" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}
-                    >
-                      อัปโหลดรูปลายเซ็น
-                    </button>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-700">หลักฐานการส่ง</div>
+                    <div className="mt-0.5 text-xs text-slate-500">รูปและลายเซ็นล่าสุดของบิลนี้</div>
                   </div>
-                  {signatureMode === "DRAW" ? (
-                    <SignaturePad onChange={setSignaturePadData} />
-                  ) : (
-                    <ImageUpload
-                      label="รูปลายเซ็นผู้รับ"
-                      required
-                      values={signatureImages}
-                      onChange={setSignatureImages}
-                      maxImages={1}
-                      thumbnailSize="large"
-                    />
-                  )}
+                  <button
+                    type="button"
+                    onClick={openMediaEditor}
+                    disabled={mediaEditorOpen}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <ImagePlus size={15} /> {mediaEditorOpen ? "กำลังแก้ไข" : proofImages.length || signatureImages.length ? "แก้ไข" : "เพิ่มหลักฐาน"}
+                  </button>
                 </div>
+                {mediaEditorOpen ? (
+                  <div className="space-y-4 rounded-md border border-blue-100 bg-white p-3">
+                    <ImageUpload label="รูปหลักฐานการส่ง" required values={draftProofImages} onChange={setDraftProofImages} thumbnailSize="large" />
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <div className="mb-3 flex items-center gap-2">
+                        <button type="button" onClick={() => setDraftSignatureMode("DRAW")} className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${draftSignatureMode === "DRAW" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                          เซ็นบนหน้าจอ
+                        </button>
+                        <button type="button" onClick={() => setDraftSignatureMode("UPLOAD")} className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${draftSignatureMode === "UPLOAD" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                          อัปโหลดรูปลายเซ็น
+                        </button>
+                      </div>
+                      {draftSignatureMode === "DRAW" ? <SignaturePad onChange={setDraftSignaturePadData} /> : <ImageUpload label="รูปลายเซ็นผู้รับ" required values={draftSignatureImages} onChange={setDraftSignatureImages} maxImages={1} thumbnailSize="large" />}
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={() => setMediaEditorOpen(false)} className="h-8 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50">ยกเลิก</button>
+                      <button type="button" onClick={applyMediaDraft} disabled={!draftProofImages.length || !(draftSignatureMode === "DRAW" ? Boolean(draftSignaturePadData) : draftSignatureImages.length > 0)} className="inline-flex h-8 items-center gap-1.5 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300">
+                        <CheckCircle2 size={15} /> ใช้ชุดนี้
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <div className="mb-1.5 text-xs font-semibold text-slate-600">รูปหลักฐาน {proofImages.length ? `(${proofImages.length})` : ""}</div>
+                      {proofImages.length ? (
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {proofImages.map((image, index) => <img key={`${image.preview}-${index}`} src={getUploadUrl(image.preview)} alt={`รูปหลักฐาน ${index + 1}`} className="h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-white object-cover" />)}
+                        </div>
+                      ) : <div className="flex h-14 items-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-3 text-xs text-slate-400"><Images size={18} /> ยังไม่มีรูปหลักฐาน</div>}
+                    </div>
+                    <div>
+                      <div className="mb-1.5 text-xs font-semibold text-slate-600">ลายเซ็นผู้รับ</div>
+                      {signatureImages.length ? (
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {signatureImages.map((image, index) => <img key={`${image.preview}-${index}`} src={getUploadUrl(image.preview)} alt={`ลายเซ็นผู้รับ ${index + 1}`} className="h-16 w-24 shrink-0 rounded-md border border-slate-200 bg-white object-contain" />)}
+                        </div>
+                      ) : <div className="flex h-14 items-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-3 text-xs text-slate-400"><FileSignature size={18} /> ยังไม่มีลายเซ็น</div>}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
