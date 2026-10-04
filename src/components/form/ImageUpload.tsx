@@ -2,7 +2,7 @@ import { Camera, X } from "lucide-react";
 
 import { getUploadUrl } from "../../utils/uploadUrl";
 
-export type UploadedImage = { name: string; preview: string };
+export type UploadedImage = { id?: number; name: string; preview: string };
 export type UploadedImages = UploadedImage[];
 
 type ImageUploadProps = {
@@ -10,13 +10,15 @@ type ImageUploadProps = {
   required?: boolean;
   values: UploadedImages;
   onChange: (value: UploadedImages) => void;
+  onRemove?: (image: UploadedImage, index: number) => void | Promise<void>;
+  disabled?: boolean;
   maxImages?: number;
   thumbnailSize?: "normal" | "large";
 };
 
-export default function ImageUpload({ label, required, values, onChange, maxImages = 8, thumbnailSize = "normal" }: ImageUploadProps) {
+export default function ImageUpload({ label, required, values, onChange, onRemove, disabled = false, maxImages = 8, thumbnailSize = "normal" }: ImageUploadProps) {
   const selectFiles = (files: FileList | null) => {
-    if (!files) return;
+    if (!files || disabled) return;
     const remaining = maxImages - values.length;
     if (remaining <= 0) return;
     const selected = Array.from(files).slice(0, remaining).map((file) => ({ name: file.name, preview: URL.createObjectURL(file) }));
@@ -35,12 +37,14 @@ export default function ImageUpload({ label, required, values, onChange, maxImag
           <div key={`${image.preview}-${index}`} className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm">
             <img src={getUploadUrl(image.preview)} alt={`${label} ${index + 1}`} className="h-full w-full object-contain" />
             <div className="absolute inset-x-0 bottom-0 truncate bg-slate-950/60 px-2 py-1 text-[10px] text-white">{image.name}</div>
-            <button type="button" onClick={() => onChange(values.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/70 text-white opacity-100 hover:bg-rose-600 sm:opacity-0 sm:group-hover:opacity-100" aria-label={`ลบรูป ${index + 1}`}>
-              <X size={14} />
-            </button>
+            {!disabled ? (
+              <button type="button" onClick={() => onRemove ? void onRemove(image, index) : onChange(values.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/70 text-white opacity-100 hover:bg-rose-600 sm:opacity-0 sm:group-hover:opacity-100" aria-label={`ลบรูป ${index + 1}`}>
+                <X size={14} />
+              </button>
+            ) : null}
           </div>
         ))}
-        {values.length < maxImages && (
+        {!disabled && values.length < maxImages && (
           <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-center transition-colors hover:border-blue-400 hover:bg-blue-50">
             <Camera size={22} className="mb-1.5 text-blue-500" />
             <span className="text-xs font-semibold text-slate-600">เพิ่มรูป</span>

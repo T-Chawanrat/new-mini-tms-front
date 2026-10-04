@@ -10,6 +10,7 @@ import {
   FileSignature,
   ImagePlus,
   Images,
+  LoaderCircle,
   MessageCircle,
   Send,
   Search,
@@ -102,6 +103,14 @@ type DeliveryCompleteResponse = {
   message?: string;
 };
 
+type DeliverySaveResponse = {
+  data?: {
+    proof_images?: UploadedImages;
+    signature_images?: UploadedImages;
+  };
+  message?: string;
+};
+
 export default function DeliveryClose() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -116,17 +125,12 @@ export default function DeliveryClose() {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("ALL");
   const [closeTarget, setCloseTarget] = useState<DeliveryTruckRow | null>(null);
   const [closeConfirmationOpen, setCloseConfirmationOpen] = useState(false);
-  const [mediaEditorOpen, setMediaEditorOpen] = useState(false);
   const [closeSaving, setCloseSaving] = useState(false);
   const [closeError, setCloseError] = useState("");
   const [proofImages, setProofImages] = useState<UploadedImages>([]);
   const [signatureImages, setSignatureImages] = useState<UploadedImages>([]);
-  const [signatureMode, setSignatureMode] = useState<"DRAW" | "UPLOAD">("DRAW");
+  const [signatureMode, setSignatureMode] = useState<"DRAW" | "UPLOAD">("UPLOAD");
   const [signaturePadData, setSignaturePadData] = useState<string | null>(null);
-  const [draftProofImages, setDraftProofImages] = useState<UploadedImages>([]);
-  const [draftSignatureImages, setDraftSignatureImages] = useState<UploadedImages>([]);
-  const [draftSignatureMode, setDraftSignatureMode] = useState<"DRAW" | "UPLOAD">("DRAW");
-  const [draftSignaturePadData, setDraftSignaturePadData] = useState<string | null>(null);
   const [completedAt, setCompletedAt] = useState(toInputDateTime);
   const [selectedSerialIds, setSelectedSerialIds] = useState<string[]>([]);
   const [billDetailTarget, setBillDetailTarget] = useState<DeliveryTruckRow | null>(null);
@@ -145,20 +149,24 @@ export default function DeliveryClose() {
     });
   }, [chatTarget, chatMessages]);
 
+  useEffect(() => {
+    if (!closeSaving) return;
+    const previousCursor = document.body.style.cursor;
+    document.body.style.cursor = "wait";
+    return () => {
+      document.body.style.cursor = previousCursor;
+    };
+  }, [closeSaving]);
+
   const resetCloseForm = () => {
     setCloseTarget(null);
     setCloseConfirmationOpen(false);
-    setMediaEditorOpen(false);
     setCloseSaving(false);
     setCloseError("");
     setProofImages([]);
     setSignatureImages([]);
-    setSignatureMode("DRAW");
+    setSignatureMode("UPLOAD");
     setSignaturePadData(null);
-    setDraftProofImages([]);
-    setDraftSignatureImages([]);
-    setDraftSignatureMode("DRAW");
-    setDraftSignaturePadData(null);
     setCompletedAt(toInputDateTime());
     setSelectedSerialIds([]);
   };
@@ -166,34 +174,13 @@ export default function DeliveryClose() {
   const openCloseForm = (row: DeliveryTruckRow) => {
     setCloseTarget(row);
     setCloseConfirmationOpen(false);
-    setMediaEditorOpen(false);
     setCloseError("");
     setProofImages(row.proof_images || []);
     setSignatureImages(row.signature_images || []);
-    setSignatureMode(row.signature_images?.length ? "UPLOAD" : "DRAW");
+    setSignatureMode("UPLOAD");
     setSignaturePadData(null);
     setCompletedAt(toInputDateTime());
     setSelectedSerialIds([]);
-  };
-
-  const openMediaEditor = () => {
-    setDraftProofImages(proofImages);
-    setDraftSignatureImages(signatureImages);
-    setDraftSignatureMode(signatureMode);
-    setDraftSignaturePadData(signaturePadData);
-    setMediaEditorOpen(true);
-  };
-
-  const applyMediaDraft = () => {
-    const resolvedSignature =
-      draftSignatureMode === "DRAW" && draftSignaturePadData
-        ? [{ name: "signature-pad.png", preview: draftSignaturePadData }]
-        : draftSignatureImages;
-    setProofImages(draftProofImages);
-    setSignatureImages(resolvedSignature);
-    setSignatureMode(draftSignatureMode === "DRAW" && draftSignaturePadData ? "UPLOAD" : draftSignatureMode);
-    setSignaturePadData(null);
-    setMediaEditorOpen(false);
   };
 
   const findDeliveryForClose = async () => {
@@ -394,17 +381,10 @@ export default function DeliveryClose() {
         headerAlign: "center",
         renderCell: ({ row }) =>
           row.status === "COMPLETED" ? (
-            <div className="flex h-full w-full items-center justify-center gap-2">
+            <div className="flex h-full w-full items-center justify-center">
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
                 <CheckCircle2 size={16} /> จัดส่งสำเร็จ
               </span>
-              <button
-                type="button"
-                onClick={() => openCloseForm(row)}
-                className="inline-flex h-7 items-center rounded-md border border-slate-300 bg-white px-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
-              >
-                แก้ไขรูป
-              </button>
             </div>
           ) : row.status === "RETURN_TO_SHIPPER" ? (
             <span className="inline-flex h-full items-center text-xs font-semibold text-rose-600">ส่งคืนผู้ส่ง</span>
@@ -452,9 +432,36 @@ export default function DeliveryClose() {
     [unreadChats],
   );
 
+  const removeBillMedia = async (type: "proof" | "signature", image: UploadedImages[number], index: number) => {
+    const setImages = type === "proof" ? setProofImages : setSignatureImages;
+    if (!image.id) {
+      setImages((current) => current.filter((_, imageIndex) => imageIndex !== index));
+      return;
+    }
+    if (!closeTarget) return;
+
+    try {
+      setCloseError("");
+      await AxiosInstance.delete(`/delivery-closes/media/${image.id}`, { data: { receive_code: closeTarget.bill_no } });
+      setImages((current) => current.filter((currentImage) => currentImage.id !== image.id));
+      setRows((current) =>
+        current.map((row) =>
+          row.id !== closeTarget.id
+            ? row
+            : type === "proof"
+              ? { ...row, proof_images: (row.proof_images || []).filter((currentImage) => currentImage.id !== image.id) }
+              : { ...row, signature_images: (row.signature_images || []).filter((currentImage) => currentImage.id !== image.id) },
+        ),
+      );
+    } catch (error) {
+      const requestError = error as { response?: { data?: { message?: string } }; message?: string };
+      setCloseError(requestError.response?.data?.message || requestError.message || "ไม่สามารถลบรูปได้");
+    }
+  };
+
   const saveClose = async () => {
     const resolvedSignatureImages =
-      signatureMode === "DRAW" && signaturePadData ? [{ name: "signature-pad.png", preview: signaturePadData }] : signatureImages;
+      signatureMode === "DRAW" && signaturePadData ? [...signatureImages, { name: "signature-pad.png", preview: signaturePadData }] : signatureImages;
     if (
       !closeTarget ||
       !proofImages.length ||
@@ -473,9 +480,11 @@ export default function DeliveryClose() {
       if (location.lat !== undefined) formData.append("lat", String(location.lat));
       if (location.lng !== undefined) formData.append("lng", String(location.lng));
       if (location.accuracy_m !== undefined) formData.append("accuracy_m", String(location.accuracy_m));
-      for (const image of proofImages) formData.append("proof_images", await previewToFile(image));
-      for (const image of resolvedSignatureImages) formData.append("sign_images", await previewToFile(image));
-      await AxiosInstance.post("/delivery-closes/statuses", formData);
+      for (const image of proofImages.filter((image) => !image.id)) formData.append("proof_images", await previewToFile(image));
+      for (const image of resolvedSignatureImages.filter((image) => !image.id)) formData.append("sign_images", await previewToFile(image));
+      const response = await AxiosInstance.post<DeliverySaveResponse>("/delivery-closes/statuses", formData);
+      const savedProofImages = response.data.data?.proof_images || proofImages;
+      const savedSignatureImages = response.data.data?.signature_images || resolvedSignatureImages;
 
       setRows((current) =>
         current.map((row) => {
@@ -488,8 +497,8 @@ export default function DeliveryClose() {
             ...row,
             status: isComplete ? "COMPLETED" : "PENDING_CLOSE",
             completed_at: isComplete ? toThaiDateTime(completedAt) : undefined,
-            proof_images: proofImages,
-            signature_images: resolvedSignatureImages,
+            proof_images: savedProofImages,
+            signature_images: savedSignatureImages,
             delivered_serial_numbers: delivered,
             delivered_serial_ids: deliveredIds,
             operator_name: currentOperatorName,
@@ -509,6 +518,7 @@ export default function DeliveryClose() {
   const previouslyDeliveredSerialIds = closeTarget?.delivered_serial_ids || [];
   const selectableSerialItems = closeTarget?.serial_items.filter((item) => !previouslyDeliveredSerialIds.includes(item.serial_id)) || [];
   const selectedTotal = previouslyDeliveredSerialIds.length + selectedSerialIds.length;
+  const isClosedBill = closeTarget?.status === "COMPLETED";
 
   const exportExcel = () => {
     const data = filteredRows.map((row) => ({
@@ -909,61 +919,30 @@ export default function DeliveryClose() {
                 </div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="mb-3">
                   <div>
                     <div className="text-sm font-semibold text-slate-700">หลักฐานการส่ง</div>
-                    <div className="mt-0.5 text-xs text-slate-500">รูปและลายเซ็นล่าสุดของบิลนี้</div>
+                    <div className="mt-0.5 text-xs text-slate-500">เพิ่มหรือลบรูปของบิลนี้ได้ทันที</div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={openMediaEditor}
-                    disabled={mediaEditorOpen}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <ImagePlus size={15} /> {mediaEditorOpen ? "กำลังแก้ไข" : proofImages.length || signatureImages.length ? "แก้ไข" : "เพิ่มหลักฐาน"}
-                  </button>
                 </div>
-                {mediaEditorOpen ? (
-                  <div className="space-y-4 rounded-md border border-blue-100 bg-white p-3">
-                    <ImageUpload label="รูปหลักฐานการส่ง" required values={draftProofImages} onChange={setDraftProofImages} thumbnailSize="large" />
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                      <div className="mb-3 flex items-center gap-2">
-                        <button type="button" onClick={() => setDraftSignatureMode("DRAW")} className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${draftSignatureMode === "DRAW" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}>
-                          เซ็นบนหน้าจอ
-                        </button>
-                        <button type="button" onClick={() => setDraftSignatureMode("UPLOAD")} className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${draftSignatureMode === "UPLOAD" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"}`}>
-                          อัปโหลดรูปลายเซ็น
-                        </button>
-                      </div>
-                      {draftSignatureMode === "DRAW" ? <SignaturePad onChange={setDraftSignaturePadData} /> : <ImageUpload label="รูปลายเซ็นผู้รับ" required values={draftSignatureImages} onChange={setDraftSignatureImages} maxImages={1} thumbnailSize="large" />}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <button type="button" onClick={() => setMediaEditorOpen(false)} className="h-8 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50">ยกเลิก</button>
-                      <button type="button" onClick={applyMediaDraft} disabled={!draftProofImages.length || !(draftSignatureMode === "DRAW" ? Boolean(draftSignaturePadData) : draftSignatureImages.length > 0)} className="inline-flex h-8 items-center gap-1.5 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300">
-                        <CheckCircle2 size={15} /> ใช้ชุดนี้
+                <div className="space-y-4">
+                  <ImageUpload label="รูปหลักฐานการส่ง" required values={proofImages} onChange={setProofImages} onRemove={(image, index) => removeBillMedia("proof", image, index)} disabled={isClosedBill} maxImages={8} thumbnailSize="large" />
+                  <div className="border-t border-slate-200 pt-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <button type="button" onClick={() => setSignatureMode("UPLOAD")} disabled={isClosedBill} className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${signatureMode === "UPLOAD" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-50`}>
+                        อัปโหลดรูปลายเซ็น
+                      </button>
+                      <button type="button" onClick={() => setSignatureMode("DRAW")} disabled={isClosedBill || signatureImages.length >= 4} className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${signatureMode === "DRAW" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-50`}>
+                        เซ็นบนหน้าจอ
                       </button>
                     </div>
+                    {signatureMode === "UPLOAD" ? (
+                      <ImageUpload label="ลายเซ็นผู้รับ" required values={signatureImages} onChange={setSignatureImages} onRemove={(image, index) => removeBillMedia("signature", image, index)} disabled={isClosedBill} maxImages={4} thumbnailSize="large" />
+                    ) : !isClosedBill ? (
+                      <SignaturePad onChange={setSignaturePadData} />
+                    ) : null}
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div>
-                      <div className="mb-1.5 text-xs font-semibold text-slate-600">รูปหลักฐาน {proofImages.length ? `(${proofImages.length})` : ""}</div>
-                      {proofImages.length ? (
-                        <div className="flex gap-2 overflow-x-auto pb-1">
-                          {proofImages.map((image, index) => <img key={`${image.preview}-${index}`} src={getUploadUrl(image.preview)} alt={`รูปหลักฐาน ${index + 1}`} className="h-16 w-16 shrink-0 rounded-md border border-slate-200 bg-white object-cover" />)}
-                        </div>
-                      ) : <div className="flex h-14 items-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-3 text-xs text-slate-400"><Images size={18} /> ยังไม่มีรูปหลักฐาน</div>}
-                    </div>
-                    <div>
-                      <div className="mb-1.5 text-xs font-semibold text-slate-600">ลายเซ็นผู้รับ</div>
-                      {signatureImages.length ? (
-                        <div className="flex gap-2 overflow-x-auto pb-1">
-                          {signatureImages.map((image, index) => <img key={`${image.preview}-${index}`} src={getUploadUrl(image.preview)} alt={`ลายเซ็นผู้รับ ${index + 1}`} className="h-16 w-24 shrink-0 rounded-md border border-slate-200 bg-white object-contain" />)}
-                        </div>
-                      ) : <div className="flex h-14 items-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-3 text-xs text-slate-400"><FileSignature size={18} /> ยังไม่มีลายเซ็น</div>}
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">
@@ -993,13 +972,14 @@ export default function DeliveryClose() {
               }
               onCancel={resetCloseForm}
               onConfirm={() => setCloseConfirmationOpen(true)}
+              loading={closeSaving}
               disabled={
                 closeSaving ||
                 !proofImages.length ||
-                !(signatureMode === "DRAW" ? Boolean(signaturePadData) : signatureImages.length > 0) ||
+                !(signatureImages.length || Boolean(signaturePadData)) ||
                 !selectedSerialIds.length
               }
-              label="ปิดงาน"
+              label={closeSaving ? "กำลังปิดงาน..." : "ปิดงาน"}
             />
           </div>
         </div>
@@ -1071,6 +1051,7 @@ function ModalFooter({
   onConfirm,
   disabled,
   label,
+  loading = false,
   tone = "green",
 }: {
   leadingAction?: ReactNode;
@@ -1078,6 +1059,7 @@ function ModalFooter({
   onConfirm: () => void;
   disabled: boolean;
   label: string;
+  loading?: boolean;
   tone?: "green" | "orange" | "red";
 }) {
   return (
@@ -1087,6 +1069,7 @@ function ModalFooter({
         <button
           type="button"
           onClick={onCancel}
+          disabled={loading}
           className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
           ยกเลิก
@@ -1094,10 +1077,10 @@ function ModalFooter({
         <button
           type="button"
           onClick={onConfirm}
-          disabled={disabled}
+          disabled={disabled || loading}
           className={`inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 ${tone === "green" ? "bg-emerald-600 hover:bg-emerald-700" : tone === "red" ? "bg-rose-600 hover:bg-rose-700" : "bg-orange-600 hover:bg-orange-700"}`}
         >
-          <FileSignature size={16} />
+          {loading ? <LoaderCircle size={16} className="animate-spin" /> : <FileSignature size={16} />}
           {label}
         </button>
       </div>

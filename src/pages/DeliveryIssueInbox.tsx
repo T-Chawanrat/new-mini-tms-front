@@ -74,37 +74,7 @@ export default function DeliveryIssueInbox() {
       <List disablePadding sx={{ overflowY: "auto", flex: 1, p: 1 }}>{!filtered.length ? <Typography sx={{ p: 2, fontSize: 13, color: "#94a3b8" }}>ยังไม่มีข้อความ</Typography> : filtered.map((item) => <ListItemButton key={item.receive_code} selected={item.receive_code === selectedCode} onClick={() => setSelectedCode(item.receive_code)} sx={{ borderRadius: 2.5, gap: 1.25, alignItems: "flex-start", mb: .5, "&.Mui-selected": { bgcolor: "#edf5ff" } }}><Badge badgeContent={item.unread_count} color="error"><Avatar sx={{ width: 36, height: 36, bgcolor: "#e8f1ff", color: "#2563eb" }}>{item.receive_code.slice(0, 1)}</Avatar></Badge><Box sx={{ minWidth: 0, flex: 1 }}><Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}><Typography noWrap sx={{ fontSize: 12, fontWeight: 800, color: "#386ac2" }}>{item.receive_code}</Typography><Typography sx={{ fontSize: 11, color: "#94a3b8" }}>{time(item.updated_at)}</Typography></Box><Typography noWrap sx={{ mt: .3, fontSize: 13, fontWeight: item.unread_count ? 800 : 700 }}>{item.title}</Typography><Typography noWrap sx={{ mt: .35, fontSize: 12, color: "#7c899d" }}>{item.last_message || "แนบรูปภาพ"}</Typography></Box></ListItemButton>)}</List>
     </Box>
     <Box sx={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", bgcolor: "#f9fbfd" }}>{selectedCode ? <><Box sx={{ px: 3, py: 2, bgcolor: "#fff" }}><Typography sx={{ fontWeight: 800 }}>{selected?.title || "แชทแจ้งปัญหาการจัดส่ง"}</Typography><Typography sx={{ mt: .4, fontSize: 12, color: "#2563eb", fontWeight: 700 }}>{selectedCode}</Typography><Typography sx={{ mt: .3, fontSize: 12, color: "#718096" }}>ผู้รับ: {recipient}</Typography></Box><Divider />
-      <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto", p: 3 }}>
-        {loading ? <Typography align="center" sx={{ color: "#94a3b8" }}>กำลังโหลด...</Typography> : null}
-        {!loading && !messages.length ? <Typography align="center" sx={{ color: "#94a3b8" }}>เริ่มต้นการสนทนาของบิลนี้ได้เลย</Typography> : null}
-        {messages.map((message) => {
-          const mine = message.sender_user_id === Number(user?.id ?? user?.user_id);
-
-          return (
-            <Box key={message.delivery_status_message_id} sx={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", mb: 2 }}>
-              <Box sx={{ position: "relative", width: "fit-content", maxWidth: "min(540px, 78%)", pt: 2 }}>
-                <Typography
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    ...(mine ? { right: 0, textAlign: "right" } : { left: 0, textAlign: "left" }),
-                    whiteSpace: "nowrap",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#718096",
-                  }}
-                >
-                  {message.sender_name} · {time(message.created_date)}
-                </Typography>
-                <Box sx={{ width: "fit-content", maxWidth: "100%", px: 1.5, py: 1.25, borderRadius: mine ? "16px 4px 16px 16px" : "4px 16px 16px 16px", bgcolor: mine ? "#2563eb" : "#fff", color: mine ? "#fff" : "#334155", border: mine ? "none" : "1px solid #e5eaf1" }}>
-                  <Typography sx={{ whiteSpace: "pre-wrap", fontSize: 14 }}>{message.message_text}</Typography>
-                  {message.media.map((media) => <Box key={media.file_path} component="img" src={getUploadUrl(media.file_path)} alt={media.file_name} sx={{ mt: 1, display: "block", width: "100%", maxWidth: 360, maxHeight: 300, objectFit: "cover", borderRadius: 2 }} />)}
-                </Box>
-              </Box>
-            </Box>
-          );
-        })}
-      </Box>
+      <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto", p: 3 }}>{loading ? <Typography align="center" sx={{ color: "#94a3b8" }}>กำลังโหลด...</Typography> : null}{!loading && !messages.length ? <Typography align="center" sx={{ color: "#94a3b8" }}>เริ่มต้นการสนทนาของบิลนี้ได้เลย</Typography> : null}{messages.map((message) => { const mine = message.sender_user_id === Number(user?.id ?? user?.user_id); return <Box key={message.delivery_status_message_id} sx={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", mb: 2 }}><Box sx={{ width: "fit-content", maxWidth: "min(540px, 78%)" }}><Typography sx={{ mb: .5, fontSize: 11, fontWeight: 700, color: "#718096", textAlign: mine ? "right" : "left" }}>{message.sender_name} · {time(message.created_date)}</Typography><Box sx={{ px: 1.5, py: 1.25, borderRadius: mine ? "16px 4px 16px 16px" : "4px 16px 16px 16px", bgcolor: mine ? "#2563eb" : "#fff", color: mine ? "#fff" : "#334155", border: mine ? "none" : "1px solid #e5eaf1" }}><Typography sx={{ whiteSpace: "pre-wrap", fontSize: 14 }}>{message.message_text}</Typography>{message.media.map((media) => <Box key={media.file_path} component="img" src={getUploadUrl(media.file_path)} alt={media.file_name} sx={{ mt: 1, display: "block", width: "100%", maxWidth: 360, maxHeight: 300, objectFit: "cover", borderRadius: 2 }} />)}</Box></Box></Box>; })}</Box>
       <Box sx={{ p: 2, bgcolor: "#fff", borderTop: "1px solid #e6ebf2" }}>{file ? <Box sx={{ mb: 1, display: "flex", gap: 1, alignItems: "center" }}><Box component="img" src={preview} alt={file.name} sx={{ width: 58, height: 58, borderRadius: 2, objectFit: "cover" }} /><Button size="small" onClick={clearFile}>เอาออก</Button></Box> : null}{error ? <Typography sx={{ mb: 1, fontSize: 12, color: "#dc2626" }}>{error}</Typography> : null}<Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}><input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(event) => chooseFile(event.target.files?.[0])} /><IconButton color="primary" onClick={() => fileRef.current?.click()}><ImagePlus size={21} /></IconButton><TextField multiline maxRows={4} fullWidth size="small" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }} placeholder="พิมพ์ข้อความ..." /><Button variant="contained" disabled={sending || (!draft.trim() && !file)} onClick={() => void send()} sx={{ minWidth: 44, width: 44, height: 40, p: 0 }}><Send size={17} /></Button></Box></Box>
     </> : <Box sx={{ flex: 1, display: "grid", placeItems: "center", color: "#94a3b8" }}>เลือกบิลจากรายการแชท</Box>}</Box>
   </Paper></Box>;

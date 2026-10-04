@@ -25,7 +25,6 @@ import CreateReceivePage from "./pages/CreateReceivePage/CreateReceivePage";
 import ManageHolidays from "./pages/ManageHolidays";
 import ReceiveReport from "./pages/ReceiveReport";
 import ReceiveReportPrint from "./pages/ReceiveReportPrint";
-import ReceiveReportPrintTest from "./pages/ReceiveReportPrintTest";
 import LabelPrintPage from "./pages/LabelPrintPage";
 import WarehouseScan from "./pages/WarehouseScan";
 import ProductWarehouse from "./pages/ProductWarehouse";
@@ -42,7 +41,6 @@ import DeliveryTruckPrint from "./pages/DeliveryTruckPrint";
 import RouteMap from "./pages/RouteMap";
 import ManageRoutes from "./pages/ManageRoutes";
 import MoveDtScan from "./pages/MoveDtScan";
-import DeliveryComplete from "./pages/DeliveryComplete";
 import MoveHub from "./pages/MoveHub";
 import DeliveryClose from "./pages/DeliveryClose";
 import DeliveryIssueInbox from "./pages/DeliveryIssueInbox";
@@ -83,7 +81,6 @@ export default function App() {
               <Route path="/manage-holidays" element={<ManageHolidays />} />
               <Route path="/receive-report" element={<ReceiveReport />} />
               <Route path="/receive-report-print/:receiveBusinessId" element={<ReceiveReportPrint />} />
-              <Route path="/receive-report-print-test/:receiveBusinessId" element={<ReceiveReportPrintTest />} />
               <Route path="/label-print" element={<LabelPrintPage />} />
               <Route path="/warehouse-scan" element={<WarehouseScan />} />
               <Route path="/product-warehouse" element={<ProductWarehouse />} />
@@ -94,7 +91,6 @@ export default function App() {
               <Route path="/delivery-truck-create" element={<DeliveryTruckCreate />} />
               <Route path="/delivery-truck-scan/:truckLoadId" element={<DeliveryTruckScan />} />
               <Route path="/delivery-truck-print/:truckLoadId" element={<DeliveryTruckPrint />} />
-              <Route path="/delivery-complete" element={<DeliveryComplete />} />
               <Route path="/delivery-close" element={<DeliveryClose />} />
               <Route path="/delivery-issue-chat" element={<DeliveryIssueInbox />} />
               <Route path="/delivery-pending-report/dt" element={<DeliveryPendingReportDt />} />
