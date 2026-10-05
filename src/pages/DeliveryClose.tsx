@@ -865,18 +865,26 @@ export default function DeliveryClose() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl animate-scaleIn">
             <ModalHeader
-              title="ปิดงานขนส่ง"
+              title="ปิดงานจัดส่ง"
               subtitle={`Receive Code ${closeTarget.bill_no}${closeTarget.reference_no !== "-" ? ` • Reference ${closeTarget.reference_no}` : ""}`}
               onClose={resetCloseForm}
             />
             <div className="min-h-[430px] max-h-[65vh] space-y-4 overflow-y-auto px-4 py-4">
+              {isClosedBill ? (
+                <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-800">
+                  <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-emerald-600" />
+                  <div>
+                    <div className="text-sm font-bold">ปิดงานจัดส่งครบแล้ว</div>
+                    <div className="mt-0.5 text-xs text-emerald-700">ส่งสำเร็จครบ {closeTarget.serial_items.length}/{closeTarget.serial_items.length} SN</div>
+                  </div>
+                </div>
+              ) : null}
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="text-sm font-semibold text-slate-700">
-                      เลือกกล่องที่จัดส่งสำเร็จ<span className="ml-1 text-red-500">*</span>
+                      เลือกกล่องที่ต้องการปิดงาน<span className="ml-1 text-red-500">*</span>
                     </div>
-                    <div className="mt-0.5 text-xs text-slate-500">เลือก SN ของกล่องที่ส่งสำเร็จในบิลนี้</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">
@@ -919,12 +927,6 @@ export default function DeliveryClose() {
                 </div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-700">หลักฐานการส่ง</div>
-                    <div className="mt-0.5 text-xs text-slate-500">เพิ่มหรือลบรูปของบิลนี้ได้ทันที</div>
-                  </div>
-                </div>
                 <div className="space-y-4">
                   <ImageUpload label="รูปหลักฐานการส่ง" required values={proofImages} onChange={setProofImages} onRemove={(image, index) => removeBillMedia("proof", image, index)} disabled={isClosedBill} maxImages={8} thumbnailSize="large" />
                   <div className="border-t border-slate-200 pt-4">
@@ -975,11 +977,12 @@ export default function DeliveryClose() {
               loading={closeSaving}
               disabled={
                 closeSaving ||
+                isClosedBill ||
                 !proofImages.length ||
                 !(signatureImages.length || Boolean(signaturePadData)) ||
                 !selectedSerialIds.length
               }
-              label={closeSaving ? "กำลังปิดงาน..." : "ปิดงาน"}
+              label={closeSaving ? "กำลังปิดงาน..." : isClosedBill ? "ปิดงานเรียบร้อย" : "ปิดงาน"}
             />
           </div>
         </div>
