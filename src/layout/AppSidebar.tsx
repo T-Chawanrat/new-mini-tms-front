@@ -113,8 +113,26 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
+        name: "แก้ไขรูปปิดงาน",
+        path: "/delivery-close-media",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
         name: "แชทแจ้งปัญหา",
         path: "/delivery-issue-chat",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ตัวอย่างแจ้งปัญหา",
+        path: "/delivery-issue-mockup",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ตัวอย่างระบบคนขับ",
+        path: "/driver-mockup",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },

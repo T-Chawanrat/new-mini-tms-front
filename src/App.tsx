@@ -43,7 +43,10 @@ import ManageRoutes from "./pages/ManageRoutes";
 import MoveDtScan from "./pages/MoveDtScan";
 import MoveHub from "./pages/MoveHub";
 import DeliveryClose from "./pages/DeliveryClose";
+import DeliveryCloseMediaEdit from "./pages/DeliveryCloseMediaEdit";
 import DeliveryIssueInbox from "./pages/DeliveryIssueInbox";
+import DeliveryIssueMockup from "./pages/DeliveryIssueMockup";
+import DriverMockup from "./pages/Driver/DriverMockup";
 import DeliveryPendingReportDt from "./pages/DeliveryPendingReportDt";
 import DeliveryPendingReportReceive from "./pages/DeliveryPendingReportReceive";
 import DeliveryPendingReportSn from "./pages/DeliveryPendingReportSn";
@@ -92,7 +95,10 @@ export default function App() {
               <Route path="/delivery-truck-scan/:truckLoadId" element={<DeliveryTruckScan />} />
               <Route path="/delivery-truck-print/:truckLoadId" element={<DeliveryTruckPrint />} />
               <Route path="/delivery-close" element={<DeliveryClose />} />
+              <Route path="/delivery-close-media" element={<DeliveryCloseMediaEdit />} />
               <Route path="/delivery-issue-chat" element={<DeliveryIssueInbox />} />
+              <Route path="/delivery-issue-mockup" element={<DeliveryIssueMockup />} />
+              <Route path="/driver-mockup" element={<DriverMockup />} />
               <Route path="/delivery-pending-report/dt" element={<DeliveryPendingReportDt />} />
               <Route path="/delivery-pending-report/receive" element={<DeliveryPendingReportReceive />} />
               <Route path="/delivery-pending-report/sn" element={<DeliveryPendingReportSn />} />

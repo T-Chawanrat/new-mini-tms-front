@@ -1,21 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import type { GridColDef } from "@mui/x-data-grid";
 import Drawer from "@mui/material/Drawer";
 import * as XLSX from "xlsx";
-import { useNavigate } from "react-router-dom";
-import {
-  CalendarClock,
-  Camera,
-  CheckCircle2,
-  FileSignature,
-  ImagePlus,
-  Images,
-  LoaderCircle,
-  MessageCircle,
-  Send,
-  Search,
-  X,
-} from "lucide-react";
+import { CalendarClock, Camera, CheckCircle2, FileSignature, ImagePlus, Images, LoaderCircle, MessageCircle, Send, Search, X } from "lucide-react";
 
 import ImageUpload, { type UploadedImages } from "../components/form/ImageUpload";
 import SignaturePad from "../components/form/SignaturePad";
@@ -206,7 +194,9 @@ export default function DeliveryClose() {
 
       setRows(resultRows);
       if (!matchedRow) {
-        setLoadError(`ไม่พบ${lookupType === "receive_code" ? " Receive Code" : lookupType === "reference_no" ? " Reference" : " Serial No."} ที่ระบุ`);
+        setLoadError(
+          `ไม่พบ${lookupType === "receive_code" ? " Receive Code" : lookupType === "reference_no" ? " Reference" : " Serial No."} ที่ระบุ`,
+        );
         return;
       }
       if (matchedRows.length > 1) {
@@ -269,7 +259,9 @@ export default function DeliveryClose() {
         const query = search.trim().toLowerCase();
         const matchesSearch =
           !query ||
-          [row.truck_code, row.bill_no, row.reference_no, row.driver_name, row.license_plate, row.route_name].some((value) => value.toLowerCase().includes(query));
+          [row.truck_code, row.bill_no, row.reference_no, row.driver_name, row.license_plate, row.route_name].some((value) =>
+            value.toLowerCase().includes(query),
+          );
         const deliveredCount = row.delivered_serial_numbers?.length || 0;
         const matchesQuickFilter =
           quickFilter === "ALL" ||
@@ -349,7 +341,11 @@ export default function DeliveryClose() {
                   onClick={() =>
                     setEvidenceModal({
                       title: `รูปประกอบ • ${row.bill_no}`,
-                      images: row.proof_images?.length ? row.proof_images : row.postpone_images?.length ? row.postpone_images : row.return_images || [],
+                      images: row.proof_images?.length
+                        ? row.proof_images
+                        : row.postpone_images?.length
+                          ? row.postpone_images
+                          : row.return_images || [],
                     })
                   }
                   className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100"
@@ -459,16 +455,22 @@ export default function DeliveryClose() {
     }
   };
 
+  const openTestIssueChat = async () => {
+    if (!closeTarget) return;
+    try {
+      setCloseError("");
+      await AxiosInstance.post(`/delivery-issues/${encodeURIComponent(closeTarget.bill_no)}`, { issue_type: "ทดสอบแจ้งปัญหา" });
+      const params = new URLSearchParams({ bill_no: closeTarget.bill_no, truck_code: closeTarget.truck_code });
+      navigate(`/delivery-issue-chat?${params.toString()}`);
+    } catch (error: any) {
+      setCloseError(error?.response?.data?.message || "ไม่สามารถสร้างแชททดสอบได้");
+    }
+  };
+
   const saveClose = async () => {
     const resolvedSignatureImages =
       signatureMode === "DRAW" && signaturePadData ? [...signatureImages, { name: "signature-pad.png", preview: signaturePadData }] : signatureImages;
-    if (
-      !closeTarget ||
-      !proofImages.length ||
-      !resolvedSignatureImages.length ||
-      !selectedSerialIds.length
-    )
-      return;
+    if (!closeTarget || !proofImages.length || !resolvedSignatureImages.length || !selectedSerialIds.length) return;
     try {
       setCloseSaving(true);
       setCloseError("");
@@ -637,7 +639,13 @@ export default function DeliveryClose() {
                 setLookup(event.target.value);
                 if (loadError) setLoadError("");
               }}
-              placeholder={lookupType === "receive_code" ? "สแกนหรือกรอก Receive Code แล้วกด Enter" : lookupType === "reference_no" ? "สแกนหรือกรอก Reference แล้วกด Enter" : "สแกนหรือกรอก Serial No. แล้วกด Enter"}
+              placeholder={
+                lookupType === "receive_code"
+                  ? "สแกนหรือกรอก Receive Code แล้วกด Enter"
+                  : lookupType === "reference_no"
+                    ? "สแกนหรือกรอก Reference แล้วกด Enter"
+                    : "สแกนหรือกรอก Serial No. แล้วกด Enter"
+              }
               className="h-20 w-full rounded-xl border-2 border-slate-300 bg-white pl-14 pr-36 text-lg font-medium shadow-sm outline-none transition-colors placeholder:text-sm placeholder:font-normal placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:text-xl"
             />
             <button
@@ -648,7 +656,6 @@ export default function DeliveryClose() {
               <Search size={20} /> ค้นหา
             </button>
           </div>
-          <p className="mt-3 text-center text-sm text-slate-500">เลือกชนิดข้อมูลก่อนค้นหา เพื่อให้ได้รายการที่ตรงที่สุด</p>
           {loading ? <p className="mt-5 text-center text-sm font-medium text-slate-500">กำลังค้นหารายการจัดส่ง...</p> : null}
           {loadError ? <p className="mt-5 text-center text-sm font-medium text-rose-600">{loadError}</p> : null}
         </form>
@@ -875,7 +882,9 @@ export default function DeliveryClose() {
                   <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-emerald-600" />
                   <div>
                     <div className="text-sm font-bold">ปิดงานจัดส่งครบแล้ว</div>
-                    <div className="mt-0.5 text-xs text-emerald-700">ส่งสำเร็จครบ {closeTarget.serial_items.length}/{closeTarget.serial_items.length} SN</div>
+                    <div className="mt-0.5 text-xs text-emerald-700">
+                      ส่งสำเร็จครบ {closeTarget.serial_items.length}/{closeTarget.serial_items.length} SN
+                    </div>
                   </div>
                 </div>
               ) : null}
@@ -892,7 +901,11 @@ export default function DeliveryClose() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setSelectedSerialIds(selectedSerialIds.length === selectableSerialItems.length ? [] : selectableSerialItems.map((item) => item.serial_id))}
+                      onClick={() =>
+                        setSelectedSerialIds(
+                          selectedSerialIds.length === selectableSerialItems.length ? [] : selectableSerialItems.map((item) => item.serial_id),
+                        )
+                      }
                       disabled={!selectableSerialItems.length}
                       className="text-xs font-semibold text-blue-600 hover:text-blue-800"
                     >
@@ -914,7 +927,9 @@ export default function DeliveryClose() {
                           checked={checked}
                           disabled={wasDelivered}
                           onChange={() =>
-                            setSelectedSerialIds((current) => (checked ? current.filter((value) => value !== serial.serial_id) : [...current, serial.serial_id]))
+                            setSelectedSerialIds((current) =>
+                              checked ? current.filter((value) => value !== serial.serial_id) : [...current, serial.serial_id],
+                            )
                           }
                           className={`h-4 w-4 rounded border-slate-300 focus:ring-blue-500 ${wasDelivered ? "text-emerald-600" : "text-blue-600"}`}
                         />
@@ -928,18 +943,46 @@ export default function DeliveryClose() {
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="space-y-4">
-                  <ImageUpload label="รูปหลักฐานการส่ง" required values={proofImages} onChange={setProofImages} onRemove={(image, index) => removeBillMedia("proof", image, index)} disabled={isClosedBill} maxImages={8} thumbnailSize="large" />
+                  <ImageUpload
+                    label="รูปหลักฐานการส่ง"
+                    required
+                    values={proofImages}
+                    onChange={setProofImages}
+                    onRemove={(image, index) => removeBillMedia("proof", image, index)}
+                    disabled={isClosedBill}
+                    maxImages={8}
+                    thumbnailSize="large"
+                  />
                   <div className="border-t border-slate-200 pt-4">
                     <div className="mb-3 flex items-center gap-2">
-                      <button type="button" onClick={() => setSignatureMode("UPLOAD")} disabled={isClosedBill} className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${signatureMode === "UPLOAD" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-50`}>
+                      <button
+                        type="button"
+                        onClick={() => setSignatureMode("UPLOAD")}
+                        disabled={isClosedBill}
+                        className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${signatureMode === "UPLOAD" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
                         อัปโหลดรูปลายเซ็น
                       </button>
-                      <button type="button" onClick={() => setSignatureMode("DRAW")} disabled={isClosedBill || signatureImages.length >= 4} className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${signatureMode === "DRAW" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-50`}>
+                      <button
+                        type="button"
+                        onClick={() => setSignatureMode("DRAW")}
+                        disabled={isClosedBill || signatureImages.length >= 4}
+                        className={`h-8 rounded-md px-3 text-xs font-semibold transition-colors ${signatureMode === "DRAW" ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
                         เซ็นบนหน้าจอ
                       </button>
                     </div>
                     {signatureMode === "UPLOAD" ? (
-                      <ImageUpload label="ลายเซ็นผู้รับ" required values={signatureImages} onChange={setSignatureImages} onRemove={(image, index) => removeBillMedia("signature", image, index)} disabled={isClosedBill} maxImages={4} thumbnailSize="large" />
+                      <ImageUpload
+                        label="ลายเซ็นผู้รับ"
+                        required
+                        values={signatureImages}
+                        onChange={setSignatureImages}
+                        onRemove={(image, index) => removeBillMedia("signature", image, index)}
+                        disabled={isClosedBill}
+                        maxImages={4}
+                        thumbnailSize="large"
+                      />
                     ) : !isClosedBill ? (
                       <SignaturePad onChange={setSignaturePadData} />
                     ) : null}
@@ -962,10 +1005,7 @@ export default function DeliveryClose() {
               leadingAction={
                 <button
                   type="button"
-                  onClick={() => {
-                    const params = new URLSearchParams({ bill_no: closeTarget.bill_no, truck_code: closeTarget.truck_code });
-                    navigate(`/delivery-issue-chat?${params.toString()}`);
-                  }}
+                  onClick={() => void openTestIssueChat()}
                   className="inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-100"
                 >
                   <MessageCircle size={16} />
@@ -989,12 +1029,19 @@ export default function DeliveryClose() {
       )}
 
       {closeTarget && closeConfirmationOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-close-title">
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-close-title"
+        >
           <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl animate-scaleIn">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
               <CheckCircle2 size={26} />
             </div>
-            <h2 id="confirm-close-title" className="mt-4 text-center text-lg font-bold text-slate-800">ยืนยันปิดงาน?</h2>
+            <h2 id="confirm-close-title" className="mt-4 text-center text-lg font-bold text-slate-800">
+              ยืนยันปิดงาน?
+            </h2>
             <p className="mt-2 text-center text-sm text-slate-600">
               Receive Code <span className="font-semibold text-slate-800">{closeTarget.bill_no}</span>
               <br />
@@ -1024,7 +1071,6 @@ export default function DeliveryClose() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

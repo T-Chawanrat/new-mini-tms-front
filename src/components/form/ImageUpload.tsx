@@ -12,11 +12,12 @@ type ImageUploadProps = {
   onChange: (value: UploadedImages) => void;
   onRemove?: (image: UploadedImage, index: number) => void | Promise<void>;
   disabled?: boolean;
+  allowAdd?: boolean;
   maxImages?: number;
   thumbnailSize?: "normal" | "large";
 };
 
-export default function ImageUpload({ label, required, values, onChange, onRemove, disabled = false, maxImages = 8, thumbnailSize = "normal" }: ImageUploadProps) {
+export default function ImageUpload({ label, required, values, onChange, onRemove, disabled = false, allowAdd = true, maxImages = 8, thumbnailSize = "normal" }: ImageUploadProps) {
   const selectFiles = (files: FileList | null) => {
     if (!files || disabled) return;
     const remaining = maxImages - values.length;
@@ -44,7 +45,7 @@ export default function ImageUpload({ label, required, values, onChange, onRemov
             ) : null}
           </div>
         ))}
-        {!disabled && values.length < maxImages && (
+        {!disabled && allowAdd && values.length < maxImages && (
           <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-center transition-colors hover:border-blue-400 hover:bg-blue-50">
             <Camera size={22} className="mb-1.5 text-blue-500" />
             <span className="text-xs font-semibold text-slate-600">เพิ่มรูป</span>
