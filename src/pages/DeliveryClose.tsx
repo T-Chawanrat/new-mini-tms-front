@@ -585,7 +585,7 @@ export default function DeliveryClose() {
     },
   ];
 
-  // Keep the existing supporting actions available for the unchanged close-work modal flow.
+  // Keep the existing supporting actions available for the close-work page flow.
   void setSearch;
   void setStatusFilter;
   void setQuickFilter;
@@ -595,8 +595,8 @@ export default function DeliveryClose() {
   void monitoringCards;
 
   return (
-    <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
-      <section className="flex min-h-0 flex-1 items-center justify-center px-4 pb-[15vh]">
+    <div className={closeTarget ? "min-h-[calc(100vh-61px)] w-full bg-slate-50 text-slate-800" : "flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800"}>
+      {!closeTarget ? <section className="flex min-h-0 flex-1 items-center justify-center px-4 pb-[15vh]">
         <form
           className="w-full max-w-3xl"
           onSubmit={(event) => {
@@ -659,7 +659,7 @@ export default function DeliveryClose() {
           {loading ? <p className="mt-5 text-center text-sm font-medium text-slate-500">กำลังค้นหารายการจัดส่ง...</p> : null}
           {loadError ? <p className="mt-5 text-center text-sm font-medium text-rose-600">{loadError}</p> : null}
         </form>
-      </section>
+      </section> : null}
 
       <Drawer
         anchor="right"
@@ -869,14 +869,14 @@ export default function DeliveryClose() {
       )}
 
       {closeTarget && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl animate-scaleIn">
+        <section className="w-full px-3 py-3 lg:px-4 lg:py-4">
+          <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <ModalHeader
               title="ปิดงานจัดส่ง"
               subtitle={`Receive Code ${closeTarget.bill_no}${closeTarget.reference_no !== "-" ? ` • Reference ${closeTarget.reference_no}` : ""}`}
               onClose={resetCloseForm}
             />
-            <div className="min-h-[430px] max-h-[65vh] space-y-4 overflow-y-auto px-4 py-4">
+            <div className="space-y-4 px-4 py-4">
               {isClosedBill ? (
                 <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-800">
                   <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-emerald-600" />
@@ -951,7 +951,8 @@ export default function DeliveryClose() {
                     onRemove={(image, index) => removeBillMedia("proof", image, index)}
                     disabled={isClosedBill}
                     maxImages={8}
-                    thumbnailSize="large"
+                    thumbnailSize="full"
+                    layout="eight"
                   />
                   <div className="border-t border-slate-200 pt-4">
                     <div className="mb-3 flex items-center gap-2">
@@ -981,7 +982,8 @@ export default function DeliveryClose() {
                         onRemove={(image, index) => removeBillMedia("signature", image, index)}
                         disabled={isClosedBill}
                         maxImages={4}
-                        thumbnailSize="large"
+                        thumbnailSize="full"
+                        layout="eight"
                       />
                     ) : !isClosedBill ? (
                       <SignaturePad onChange={setSignaturePadData} />
@@ -1025,7 +1027,7 @@ export default function DeliveryClose() {
               label={closeSaving ? "กำลังปิดงาน..." : isClosedBill ? "ปิดงานเรียบร้อย" : "ปิดงาน"}
             />
           </div>
-        </div>
+        </section>
       )}
 
       {closeTarget && closeConfirmationOpen && (

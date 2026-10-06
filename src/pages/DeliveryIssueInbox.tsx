@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, ImagePlus, MessageCircle, Search, Send, UserRound } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, ImagePlus, MessageCircle, Search, Send, UserRound, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AxiosInstance from "../utils/AxiosInstance";
 import { getUploadUrl } from "../utils/uploadUrl";
 
 type IssueStatus = "NEW" | "IN_PROGRESS" | "RESOLVED";
-type Thread = { receive_code: string; issue_type: string; issue_status: IssueStatus; driver_name?: string; updated_at: string; last_message: string; unread_count: number };
+type Thread = {
+  receive_code: string;
+  issue_type: string;
+  issue_status: IssueStatus;
+  driver_name?: string;
+  updated_at: string;
+  last_message: string;
+  unread_count: number;
+};
 type Message = {
   delivery_status_message_id: number;
   sender_user_id: number;
@@ -77,25 +85,40 @@ export default function DeliveryIssueInbox() {
     if (!selectedCode) return;
     try {
       await AxiosInstance.patch(`/delivery-issues/${encodeURIComponent(selectedCode)}/status`, { issue_status: issueStatus });
-      setThreads((current) => current.map((thread) => thread.receive_code === selectedCode ? { ...thread, issue_status: issueStatus } : thread));
-    } catch (requestError: any) { setError(requestError?.response?.data?.message || "ไม่สามารถเปลี่ยนสถานะได้"); }
+      setThreads((current) => current.map((thread) => (thread.receive_code === selectedCode ? { ...thread, issue_status: issueStatus } : thread)));
+    } catch (requestError: any) {
+      setError(requestError?.response?.data?.message || "ไม่สามารถเปลี่ยนสถานะได้");
+    }
   };
   const send = async () => {
     if (!selectedCode || (!draft.trim() && !file) || sending) return;
     try {
-      setSending(true); setError("");
-      const form = new FormData(); if (draft.trim()) form.append("message_text", draft.trim()); if (file) form.append("images", file);
+      setSending(true);
+      setError("");
+      const form = new FormData();
+      if (draft.trim()) form.append("message_text", draft.trim());
+      if (file) form.append("images", file);
       await AxiosInstance.post(`/delivery-issues/${encodeURIComponent(selectedCode)}/messages`, form);
-      setDraft(""); if (preview) URL.revokeObjectURL(preview); setPreview(""); setFile(null);
+      setDraft("");
+      if (preview) URL.revokeObjectURL(preview);
+      setPreview("");
+      setFile(null);
       await Promise.all([loadMessages(selectedCode), loadThreads()]);
-    } catch (requestError: any) { setError(requestError?.response?.data?.message || "ไม่สามารถส่งข้อความได้"); }
-    finally { setSending(false); }
+    } catch (requestError: any) {
+      setError(requestError?.response?.data?.message || "ไม่สามารถส่งข้อความได้");
+    } finally {
+      setSending(false);
+    }
   };
   const selected = threads.find((thread) => thread.receive_code === selectedCode);
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
     const statusMatched = threads.filter((thread) => statusFilter === "ALL" || thread.issue_status === statusFilter);
-    return term ? statusMatched.filter((thread) => [thread.receive_code, thread.last_message, thread.issue_type].some((value) => value.toLowerCase().includes(term))) : statusMatched;
+    return term
+      ? statusMatched.filter((thread) =>
+          [thread.receive_code, thread.last_message, thread.issue_type].some((value) => value.toLowerCase().includes(term)),
+        )
+      : statusMatched;
   }, [query, statusFilter, threads]);
   const unreadCount = threads.filter((thread) => thread.unread_count > 0).length;
   const currentUserId = Number(user?.id ?? user?.user_id);
@@ -106,7 +129,9 @@ export default function DeliveryIssueInbox() {
         <aside className="border-b border-slate-200 lg:border-b-0 lg:border-r">
           <div className="border-b border-slate-100 p-4">
             <div className="mb-3 flex items-center justify-between gap-2 font-bold text-slate-700">
-              <span className="inline-flex items-center gap-2"><MessageCircle size={19} className="text-blue-600" /> รายการแจ้งปัญหา</span>
+              <span className="inline-flex items-center gap-2">
+                <MessageCircle size={19} className="text-blue-600" /> รายการแจ้งปัญหา
+              </span>
               {unreadCount ? <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs text-rose-700">{unreadCount} ใหม่</span> : null}
             </div>
             <div className="relative">
@@ -119,7 +144,16 @@ export default function DeliveryIssueInbox() {
               />
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {(["ALL", "NEW", "IN_PROGRESS", "RESOLVED"] as const).map((status) => <button key={status} type="button" onClick={() => setStatusFilter(status)} className={`rounded-md px-2.5 py-1 text-xs font-semibold ${statusFilter === status ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>{status === "ALL" ? "ทั้งหมด" : status === "NEW" ? "ใหม่" : status === "IN_PROGRESS" ? "กำลังดำเนินการ" : "แก้ไขแล้ว"}</button>)}
+              {(["ALL", "NEW", "IN_PROGRESS", "RESOLVED"] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setStatusFilter(status)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-semibold ${statusFilter === status ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}
+                >
+                  {status === "ALL" ? "ทั้งหมด" : status === "NEW" ? "ใหม่" : status === "IN_PROGRESS" ? "รับเรื่องแล้ว" : "เสร็จสิ้นแล้ว"}
+                </button>
+              ))}
             </div>
           </div>
           <div className="max-h-[420px] overflow-y-auto p-2 lg:max-h-[610px]">
@@ -154,7 +188,7 @@ export default function DeliveryIssueInbox() {
             )}
           </div>
         </aside>
-        <section className="flex min-w-0 flex-col bg-slate-50">
+        <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-slate-50">
           {selectedCode ? (
             <>
               <div className="border-b border-slate-200 bg-white px-4 py-4 lg:px-6">
@@ -175,7 +209,19 @@ export default function DeliveryIssueInbox() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">{(["NEW", "IN_PROGRESS", "RESOLVED"] as const).map((status) => <button key={status} type="button" onClick={() => void updateStatus(status)} className={`inline-flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-semibold ${selected?.issue_status === status ? status === "NEW" ? "bg-rose-100 text-rose-700" : status === "IN_PROGRESS" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700" : "border border-slate-200 bg-white text-slate-500"}`}>{status === "RESOLVED" ? <CheckCircle2 size={15} /> : null}{status === "NEW" ? "ใหม่" : status === "IN_PROGRESS" ? "กำลังดำเนินการ" : "แก้ไขแล้ว"}</button>)}</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(["NEW", "IN_PROGRESS", "RESOLVED"] as const).map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => void updateStatus(status)}
+                        className={status === "IN_PROGRESS" ? "inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700" : status === "RESOLVED" ? "inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white" : `inline-flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-semibold ${selected?.issue_status === status ? "bg-rose-100 text-rose-700" : "border border-slate-200 bg-white text-slate-500"}`}
+                      >
+                        {status === "IN_PROGRESS" ? <Clock3 size={16} /> : status === "RESOLVED" ? <CheckCircle2 size={16} /> : null}
+                        {status === "NEW" ? "ใหม่" : status === "IN_PROGRESS" ? "รับเรื่องแล้ว" : "เสร็จสิ้นแล้ว"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4 lg:p-6">
@@ -185,12 +231,12 @@ export default function DeliveryIssueInbox() {
                   const mine = message.sender_user_id === currentUserId;
                   return (
                     <div key={message.delivery_status_message_id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                      <div className={`w-fit max-w-[85%] lg:max-w-[68%] ${mine ? "ml-auto" : ""}`}>
+                      <div className={`w-fit max-w-[85%] lg:max-w-[68%] ${mine ? "ml-auto text-right" : ""}`}>
                         <div className={`mb-1 text-xs font-semibold text-slate-500 ${mine ? "text-right" : ""}`}>
                           {message.sender_name} · {time(message.created_date)}
                         </div>
                         <div
-                          className={`rounded-2xl px-4 py-3 text-sm ${mine ? "rounded-tr-sm bg-blue-600 text-white" : "rounded-tl-sm border border-slate-200 bg-white text-slate-700"}`}
+                          className={`inline-block text-left rounded-2xl px-4 py-3 text-sm ${mine ? "rounded-tr-sm bg-blue-600 text-white" : "rounded-tl-sm border border-slate-200 bg-white text-slate-700"}`}
                         >
                           {message.message_text ? <p className="whitespace-pre-wrap break-words">{message.message_text}</p> : null}
                           {message.media.map((media) => (
@@ -207,7 +253,71 @@ export default function DeliveryIssueInbox() {
                   );
                 })}
               </div>
-              <div className="border-t border-slate-200 bg-white p-3 lg:p-4">{preview ? <div className="mb-2 flex items-center gap-2"><img src={preview} alt={file?.name || "รูปแนบ"} className="h-12 w-12 rounded-lg object-cover" /><button type="button" onClick={() => { if (preview) URL.revokeObjectURL(preview); setPreview(""); setFile(null); }} className="text-xs font-semibold text-rose-600">เอาออก</button></div> : null}<div className="flex items-end gap-2"><input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(event) => { const selectedFile = event.target.files?.[0]; if (!selectedFile) return; if (preview) URL.revokeObjectURL(preview); setFile(selectedFile); setPreview(URL.createObjectURL(selectedFile)); }} /><button type="button" onClick={() => fileRef.current?.click()} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="แนบรูป"><ImagePlus size={20} /></button><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }} rows={1} placeholder="พิมพ์ข้อความถึงคนขับ..." className="min-h-10 flex-1 resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /><button type="button" onClick={() => void send()} disabled={sending || (!draft.trim() && !file)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white disabled:cursor-not-allowed disabled:opacity-40" aria-label="ส่งข้อความ"><Send size={18} /></button></div></div>
+              <div className="border-t border-slate-200 bg-white p-3 lg:p-4">
+                {preview ? (
+                  <div className="mb-2 flex items-center gap-2">
+                    <img src={preview} alt={file?.name || "รูปแนบ"} className="h-12 w-12 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (preview) URL.revokeObjectURL(preview);
+                        setPreview("");
+                        setFile(null);
+                      }}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                      aria-label="ลบรูปที่แนบ"
+                      title="ลบรูป"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : null}
+                <div className="flex items-end gap-2">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                    onChange={(event) => {
+                      const selectedFile = event.target.files?.[0];
+                      if (!selectedFile) return;
+                      if (preview) URL.revokeObjectURL(preview);
+                      setFile(selectedFile);
+                      setPreview(URL.createObjectURL(selectedFile));
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                    aria-label="แนบรูป"
+                  >
+                    <ImagePlus size={20} />
+                  </button>
+                  <textarea
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        void send();
+                      }
+                    }}
+                    rows={1}
+                    placeholder="พิมพ์ข้อความถึงคนขับ..."
+                    className="min-h-10 flex-1 resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void send()}
+                    disabled={sending || (!draft.trim() && !file)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="ส่งข้อความ"
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
+              </div>
               {error ? <p className="border-t border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
             </>
           ) : (
@@ -220,9 +330,28 @@ export default function DeliveryIssueInbox() {
               </div>
               <div className="border-t border-slate-200 bg-white p-3 lg:p-4">
                 <div className="flex items-end gap-2">
-                  <button type="button" disabled className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-300" aria-label="แนบรูป"><ImagePlus size={20} /></button>
-                  <textarea disabled rows={1} placeholder="เลือกเคสก่อนพิมพ์ข้อความ..." className="min-h-10 flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400 outline-none" />
-                  <button type="button" disabled className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-white" aria-label="ส่งข้อความ"><Send size={18} /></button>
+                  <button
+                    type="button"
+                    disabled
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-300"
+                    aria-label="แนบรูป"
+                  >
+                    <ImagePlus size={20} />
+                  </button>
+                  <textarea
+                    disabled
+                    rows={1}
+                    placeholder="เลือกเคสก่อนพิมพ์ข้อความ..."
+                    className="min-h-10 flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400 outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-white"
+                    aria-label="ส่งข้อความ"
+                  >
+                    <Send size={18} />
+                  </button>
                 </div>
               </div>
             </>

@@ -14,10 +14,15 @@ type ImageUploadProps = {
   disabled?: boolean;
   allowAdd?: boolean;
   maxImages?: number;
-  thumbnailSize?: "normal" | "large";
+  thumbnailSize?: "normal" | "large" | "wide" | "full";
+  layout?: "four" | "eight" | "fill";
+  showLabel?: boolean;
+  showCounter?: boolean;
+  gridClassName?: string;
+  relaxedRowGap?: boolean;
 };
 
-export default function ImageUpload({ label, required, values, onChange, onRemove, disabled = false, allowAdd = true, maxImages = 8, thumbnailSize = "normal" }: ImageUploadProps) {
+export default function ImageUpload({ label, required, values, onChange, onRemove, disabled = false, allowAdd = true, maxImages = 8, thumbnailSize = "normal", layout = "four", showLabel = true, showCounter = true, gridClassName = "", relaxedRowGap = false }: ImageUploadProps) {
   const selectFiles = (files: FileList | null) => {
     if (!files || disabled) return;
     const remaining = maxImages - values.length;
@@ -28,12 +33,12 @@ export default function ImageUpload({ label, required, values, onChange, onRemov
 
   return (
     <div>
-      <div className="mb-1.5 text-sm font-semibold text-slate-700">
+      {showLabel ? <div className="mb-1.5 text-sm font-semibold text-slate-700">
         {label}
         {required ? <span className="ml-1 text-red-500">*</span> : null}
-      </div>
-      <div className="mb-2 text-xs text-slate-400">อัปโหลดได้สูงสุด {maxImages} รูป ({values.length}/{maxImages})</div>
-      <div className={`grid w-full grid-cols-4 gap-3 ${thumbnailSize === "large" ? "max-w-[440px]" : "max-w-[400px]"}`}>
+      </div> : null}
+      {showCounter ? <div className="mb-2 text-xs text-slate-400">อัปโหลดได้สูงสุด {maxImages} รูป ({values.length}/{maxImages})</div> : null}
+      <div className={`grid w-full ${layout === "fill" ? "grid-cols-[repeat(auto-fill,minmax(140px,1fr))]" : layout === "eight" ? "grid-cols-8" : "grid-cols-4"} gap-x-3 ${relaxedRowGap ? "gap-y-6" : "gap-y-3"} ${thumbnailSize === "full" ? "max-w-none" : thumbnailSize === "wide" ? "max-w-[580px]" : thumbnailSize === "large" ? "max-w-[440px]" : "max-w-[400px]"} ${gridClassName}`}>
         {values.map((image, index) => (
           <div key={`${image.preview}-${index}`} className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm">
             <img src={getUploadUrl(image.preview)} alt={`${label} ${index + 1}`} className="h-full w-full object-contain" />

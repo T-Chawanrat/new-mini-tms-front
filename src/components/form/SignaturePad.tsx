@@ -1,6 +1,6 @@
 import { useRef, type PointerEvent } from "react";
 
-export default function SignaturePad({ onChange }: { onChange: (signature: string | null) => void }) {
+export default function SignaturePad({ onChange, showHint = true, showLabel = true, heightClass = "h-32", fillAvailableHeight = false }: { onChange: (signature: string | null) => void; showHint?: boolean; showLabel?: boolean; heightClass?: string; fillAvailableHeight?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
@@ -45,13 +45,13 @@ export default function SignaturePad({ onChange }: { onChange: (signature: strin
   };
 
   return (
-    <div>
-      <div className="mb-1.5 flex items-center justify-between text-sm font-semibold text-slate-700">
+    <div className={fillAvailableHeight ? "flex h-full w-full flex-col" : undefined}>
+      {showLabel ? <div className="mb-1.5 flex items-center justify-between text-sm font-semibold text-slate-700">
         <span>ลายเซ็นผู้รับ<span className="ml-1 text-red-500">*</span></span>
         <button type="button" onClick={clear} className="text-xs font-semibold text-rose-600 hover:text-rose-700">ล้างลายเซ็น</button>
-      </div>
-      <canvas ref={canvasRef} width={800} height={260} onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={finishDrawing} onPointerLeave={finishDrawing} className="h-32 w-full touch-none rounded-lg border-2 border-dashed border-slate-300 bg-white" />
-      <p className="mt-1.5 text-xs text-slate-400">ใช้เมาส์หรือนิ้วลากเพื่อเซ็นชื่อ</p>
+      </div> : <div className="mb-1.5 flex justify-end"><button type="button" onClick={clear} className="text-xs font-semibold text-rose-600 hover:text-rose-700">ล้างลายเซ็น</button></div>}
+      <canvas ref={canvasRef} width={800} height={260} onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={finishDrawing} onPointerLeave={finishDrawing} className={`${fillAvailableHeight ? "min-h-0 flex-1" : heightClass} w-full touch-none rounded-lg border-2 border-dashed border-slate-300 bg-white`} />
+      {showHint ? <p className="mt-1.5 text-xs text-slate-400">ใช้เมาส์หรือนิ้วลากเพื่อเซ็นชื่อ</p> : null}
     </div>
   );
 }
