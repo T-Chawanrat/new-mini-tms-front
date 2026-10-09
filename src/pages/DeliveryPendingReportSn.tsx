@@ -5,8 +5,8 @@ import type { Dayjs } from "dayjs";
 import { Barcode, Download, RefreshCw, Search } from "lucide-react";
 import * as XLSX from "xlsx";
 
-import DataGrid from "../components/DataGrid";
-import AxiosInstance from "../utils/AxiosInstance";
+import DataGrid from "../components/tms/table/DataGrid";
+import AxiosInstance from "../services/apiClient";
 import { formatReportDate } from "../utils/dateTime";
 import { formatThaiNumber } from "../utils/textSanitizer";
 

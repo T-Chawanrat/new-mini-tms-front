@@ -5,12 +5,12 @@ import Drawer from "@mui/material/Drawer";
 import * as XLSX from "xlsx";
 import { CalendarClock, Camera, CheckCircle2, FileSignature, ImagePlus, Images, LoaderCircle, MessageCircle, Send, Search, X } from "lucide-react";
 
-import ImageUpload, { type UploadedImages } from "../components/form/ImageUpload";
-import SignaturePad from "../components/form/SignaturePad";
+import ImageUpload, { type UploadedImages } from "../components/tms/form/ImageUpload";
+import SignaturePad from "../components/tms/form/SignaturePad";
 import { useAuth } from "../context/AuthContext";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { toInputDateTime, toThaiDateTime } from "../utils/dateTime";
-import { getUploadUrl } from "../utils/uploadUrl";
+import { getUploadUrl } from "../services/uploadUrl";
 
 type DeliveryStatus = "PENDING_CLOSE" | "POSTPONED" | "COMPLETED" | "RETURN_TO_SHIPPER";
 type QuickFilter = "ALL" | "UNREAD" | "PARTIAL" | "POSTPONED" | "PENDING";

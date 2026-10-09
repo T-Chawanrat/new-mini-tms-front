@@ -2,10 +2,10 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { Printer, RefreshCcw, Search, X } from "lucide-react";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
-import AxiosInstance from "../utils/AxiosInstance";
-import DatePicker from "../components/form/DatePicker";
-import DataGrid from "../components/DataGrid";
-import ResizableColumns from "../components/ResizableColumns";
+import AxiosInstance from "../services/apiClient";
+import DatePicker from "../components/tms/form/DatePicker";
+import DataGrid from "../components/tms/table/DataGrid";
+import ResizableColumns from "../components/tms/table/ResizableColumns";
 import type { Filters, Option, Pagination, ReceiveReportRow, ReceiveReportSummary, ReceiveSerialRow } from "../types/receiveReport";
 import {
   buildReceiveReportQueryParams,
@@ -20,7 +20,7 @@ import {
   receiveReportMinWidths,
   receiveSerialHeaders,
   receiveSerialMinWidths,
-} from "../utils/receiveReportHelpers";
+} from "../utils/receiveReport";
 
 const formatOptionalNumber = (value: number | string | null | undefined, digits = 0) =>
   value === null || value === undefined || value === "" ? "-" : formatNumber(value, digits);

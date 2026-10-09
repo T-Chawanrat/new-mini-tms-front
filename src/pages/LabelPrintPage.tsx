@@ -4,12 +4,12 @@ import { ChevronDown, ChevronRight, Printer, RefreshCcw, Search } from "lucide-r
 import TablePagination from "@mui/material/TablePagination";
 import { useSearchParams } from "react-router-dom";
 
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 
-import DatePicker from "../components/form/DatePicker";
-import LabelCard from "../components/labels/LabelCard";
-import LabelPrintStyle from "../components/labels/LabelPrintStyle";
-import ResizableColumns from "../components/ResizableColumns";
+import DatePicker from "../components/tms/form/DatePicker";
+import LabelCard from "../components/tms/labels/LabelCard";
+import LabelPrintStyle from "../components/tms/labels/LabelPrintStyle";
+import ResizableColumns from "../components/tms/table/ResizableColumns";
 
 import type {
   LabelFilters,

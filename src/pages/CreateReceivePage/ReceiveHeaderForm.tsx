@@ -1,11 +1,7 @@
 import dayjs from "dayjs";
-import DatePicker from "../../components/form/DatePicker";
-import RequiredLabel from "../../components/form/RequiredLabel";
+import DatePicker from "../../components/tms/form/DatePicker";
+import RequiredLabel from "../../components/tms/form/RequiredLabel";
 import {
-  type PaymentOption,
-  type ReceiveForm,
-  type ShipperROCodeOption,
-  type UpdateReceiveForm,
   buttonInputClass,
   checkboxInputClass,
   datePickerWrapClass,
@@ -17,6 +13,7 @@ import {
   readOnlyInputClass,
   selectClass,
 } from "./createReceiveConfig";
+import type { PaymentOption, ReceiveForm, ShipperROCodeOption, UpdateReceiveForm } from "../../types/receive";
 
 type ReceiveHeaderFormProps = {
   form: ReceiveForm;

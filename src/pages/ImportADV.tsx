@@ -2,10 +2,10 @@ import React from "react";
 import { useState, ChangeEvent, useMemo } from "react";
 import * as XLSX from "xlsx";
 import axios from "axios";
-import ResizableColumns from "../components/ResizableColumns";
+import ResizableColumns from "../components/tms/table/ResizableColumns";
 // import { format } from "date-fns";
 import { useAuth } from "../context/AuthContext";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { DownloadIcon } from "lucide-react";
 
 type ImportRow = {

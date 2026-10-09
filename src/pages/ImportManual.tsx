@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import ResizableColumns from "../components/ResizableColumns";
+import ResizableColumns from "../components/tms/table/ResizableColumns";
 import { format } from "date-fns";
 import DatePicker from "react-datepicker";
 import { useAuth } from "../context/AuthContext";
 import AddressSearchDropdown, {
   type ZipAddressRow,
-} from "../components/dropdown/AddressSearchDropdown";
-import AxiosInstance from "../utils/AxiosInstance";
-import CustomerDropdown from "../components/dropdown/CustomerDropdown";
-import WarehouseDropdown from "../components/dropdown/WarehouseDropdown";
+} from "../components/tms/dropdown/AddressSearchDropdown";
+import AxiosInstance from "../services/apiClient";
+import CustomerDropdown from "../components/tms/dropdown/CustomerDropdown";
+import WarehouseDropdown from "../components/tms/dropdown/WarehouseDropdown";
 
 type ImportRow = {
   no_bill: string;

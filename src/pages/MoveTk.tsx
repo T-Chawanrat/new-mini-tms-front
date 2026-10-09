@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import MoveTkTruckTable from "../components/moveTk/MoveTkTruckTable";
-import type { MoveTkTruck } from "../components/moveTk/types";
-import AxiosInstance from "../utils/AxiosInstance";
+import MoveTkTruckTable from "../components/tms/movement/moveTk/MoveTkTruckTable";
+import type { MoveTkTruck } from "../components/tms/movement/moveTk/types";
+import AxiosInstance from "../services/apiClient";
 import { formatThaiNumber } from "../utils/textSanitizer";
 
 const filterTrucks = (rows: MoveTkTruck[], searchValue: string) => {

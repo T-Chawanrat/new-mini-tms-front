@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { CheckCircle2, LoaderCircle, Search } from "lucide-react";
-import ImageUpload, { type UploadedImage, type UploadedImages } from "../components/form/ImageUpload";
-import SignaturePad from "../components/form/SignaturePad";
-import AxiosInstance from "../utils/AxiosInstance";
-import { getUploadUrl } from "../utils/uploadUrl";
+import ImageUpload, { type UploadedImage, type UploadedImages } from "../components/tms/form/ImageUpload";
+import SignaturePad from "../components/tms/form/SignaturePad";
+import AxiosInstance from "../services/apiClient";
+import { getUploadUrl } from "../services/uploadUrl";
 
 type LookupType = "receive_code" | "serial_no" | "reference_no";
 type CompletedBill = {

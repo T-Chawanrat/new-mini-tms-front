@@ -3,9 +3,10 @@ import { X } from "lucide-react";
 
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
-import AxiosInstance from "../utils/AxiosInstance";
-import { formatThaiDateTime, formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
-import ScanInput from "../components/scan/ScanInput";
+import AxiosInstance from "../services/apiClient";
+import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
+import { formatThaiDateTime } from "../utils/dateTime";
+import ScanInput from "../components/tms/scan/ScanInput";
 
 type DcReceiveRow = {
   serial_id: string;

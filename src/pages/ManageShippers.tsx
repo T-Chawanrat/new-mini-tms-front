@@ -1,100 +1,23 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { useAuth } from "../context/AuthContext";
-import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
+import AddressSearchDropdown from "../components/tms/dropdown/AddressSearchDropdown";
 import { FileImage, Pencil, Trash2, X } from "lucide-react";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput } from "../utils/textSanitizer";
-import DataGrid from "../components/DataGrid";
-import RequiredLabel from "../components/form/RequiredLabel";
-
-type Id = string | number;
-type StatusValue = "ACTIVE" | "INACTIVE";
-type YesNo = "Y" | "N" | string;
-
-type Customer = {
-  id: Id;
-  code?: string;
-  name?: string;
-};
-
-type AddressSearchRow = {
-  subdistrict_id?: Id;
-  district_id?: Id;
-  province_id?: Id;
-  subdistrict_name?: string;
-  district_name?: string;
-  province_name?: string;
-  zip_code?: string;
-};
-
-type ShipperForm = {
-  shipper_code: string;
-  shipper_type_id: string;
-  shipper_name: string;
-  address: string;
-
-  subdistrict_id: string;
-  district_id: string;
-  province_id: string;
-
-  subdistrict_name: string;
-  district_name: string;
-  province_name: string;
-
-  zip_code: string;
-  tel: string;
-  fax: string;
-};
-
-type ShipperRow = {
-  shipper_id: Id;
-  shipper_code?: string;
-  shipper_type_id?: Id | string;
-  shipper_name?: string;
-  address?: string;
-
-  subdistrict_id?: Id | string;
-  district_id?: Id | string;
-  province_id?: Id | string;
-
-  subdistrict_name?: string;
-  district_name?: string;
-  province_name?: string;
-
-  zip_code?: string;
-  tel?: string;
-  fax?: string;
-  is_deleted?: YesNo;
-};
-
-type ShipperGridRow = ShipperRow & {
-  id: Id;
-  no: number;
-};
-
-type ROImage = {
-  ro_image_id?: Id;
-  image_url: string;
-  image_order?: number;
-};
-
-type RORow = {
-  ro_code_id: Id;
-  ro_code?: string;
-  ro_name?: string;
-  images?: ROImage[];
-};
-
-type ROGridRow = RORow & {
-  id: Id;
-  no: number;
-  image_count: number;
-};
-
-type SelectedStatus = {
-  shipper_id: Id;
-  current: StatusValue;
-};
+import DataGrid from "../components/tms/table/DataGrid";
+import RequiredLabel from "../components/tms/form/RequiredLabel";
+import type {
+  ROGridRow,
+  RORow,
+  ShipperAddressSearchRow as AddressSearchRow,
+  ShipperCustomer as Customer,
+  ShipperForm,
+  ShipperGridRow,
+  ShipperId as Id,
+  ShipperRow,
+  ShipperSelectedStatus as SelectedStatus,
+  ShipperStatusValue as StatusValue,
+} from "../types/shipper";
 
 type GridCellParams<T> = {
   value?: string | number | null;

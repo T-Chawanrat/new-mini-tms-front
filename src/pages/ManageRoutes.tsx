@@ -1,56 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { Pencil, Plus, Route, Trash2, X } from "lucide-react";
-import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
-import DataGrid from "../components/DataGrid";
+import AddressSearchDropdown from "../components/tms/dropdown/AddressSearchDropdown";
+import DataGrid from "../components/tms/table/DataGrid";
 import { type GridColDef } from "@mui/x-data-grid";
-
-type RouteRow = {
-  route_id: number;
-  warehouse_id: number | null;
-  warehouse_name: string | null;
-  route_code: string | null;
-  route_name: string | null;
-  cost_oil: string | number | null;
-  is_deleted: "Y" | "N";
-  route_detail_id: number | null;
-  subdistrict_id: number | null;
-  subdistrict_name: string | null;
-  district_name: string | null;
-  province_name: string | null;
-  zip_code: string | null;
-  route_detail_day_id: number | null;
-  day: string | null;
-};
-
-type RouteDetail = {
-  route_detail_id: number;
-  subdistrict_id: number | null;
-  subdistrict_name: string | null;
-  district_name: string | null;
-  province_name: string | null;
-  zip_code: string | null;
-  days: string[];
-};
-
-type RouteItem = Omit<RouteRow, "route_detail_id" | "subdistrict_id" | "subdistrict_name" | "district_name" | "province_name" | "zip_code" | "route_detail_day_id" | "day"> & {
-  details: RouteDetail[];
-};
-
-type Warehouse = {
-  id: number;
-  name: string;
-};
-
-type StatusTarget = {
-  route_id: number;
-  is_deleted: "Y" | "N";
-};
-
-type DeleteDetailTarget = {
-  route_detail_id: number;
-  subdistrict_name: string | null;
-};
+import type {
+  DeleteRouteDetailTarget as DeleteDetailTarget,
+  RouteDetail,
+  RouteItem,
+  RouteRow,
+  RouteStatusTarget as StatusTarget,
+  RouteWarehouse as Warehouse,
+} from "../types/route";
 
 const thaiDays: Record<string, string> = {
   Monday: "จ",

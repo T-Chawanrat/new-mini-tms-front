@@ -3,7 +3,7 @@ import JsBarcode from "jsbarcode";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 
 type ReceivePrintItem = {
   receive_business_id?: number | null;

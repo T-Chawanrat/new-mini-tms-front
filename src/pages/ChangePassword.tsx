@@ -1,5 +1,5 @@
 import { useState } from "react";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { Eye, EyeOff, KeyRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 

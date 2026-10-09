@@ -3,12 +3,24 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { FolderOpen, PackageCheck, Plus, Printer, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import DataGrid from "../components/DataGrid";
-import DatePicker from "../components/form/DatePicker";
-import AxiosInstance from "../utils/AxiosInstance";
-import { formatCodeNameOption, formatThaiDateTime, formatThaiNumber } from "../utils/textSanitizer";
-
-type TruckType = "MAIN" | "EXTRA";
+import DataGrid from "../components/tms/table/DataGrid";
+import DatePicker from "../components/tms/form/DatePicker";
+import AxiosInstance from "../services/apiClient";
+import { formatCodeNameOption, formatThaiNumber } from "../utils/textSanitizer";
+import { formatThaiDateTime } from "../utils/dateTime";
+import type {
+  ContractorVehicle,
+  ContractorVehiclesResponse,
+  CreateTruckLoadResponse,
+  DriverUsersResponse,
+  TruckLoadResponse,
+  TruckLoadRow,
+  TruckloadDriverUser as DriverUser,
+  TruckloadOption as Option,
+  TruckloadVehicle as Vehicle,
+  TruckType,
+  VehiclesResponse,
+} from "../types/truckload";
 
 const truckTypeLabels: Record<string, string> = {
   SHIPPER_TRUCK: "รับสินค้าปลายทาง",
@@ -16,125 +28,8 @@ const truckTypeLabels: Record<string, string> = {
   DC_TRUCK_DC: "ขนสินค้าระหว่าง DC",
 };
 
-type Option = {
-  id: number | string;
-  code?: string | null;
-  name: string;
-};
-
-type DriverUser = {
-  id?: number;
-  user_id?: number;
-  employee_code: string | null;
-  first_name: string | null;
-  last_name: string | null;
-};
-
-type Vehicle = {
-  id?: number;
-  vehicle_id?: number;
-  license_plate: string;
-  license_plate_province: string | null;
-  model: string | null;
-};
-
-type ContractorVehicle = {
-  vehicle_contractor_id: number;
-  user_truck_id: number;
-  employee_code: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  tel: string | null;
-  license_plate: string;
-  license_plate_province_id: number;
-  license_plate_province: string | null;
-  model: string | null;
-};
-
-type TruckLoadRow = {
-  truck_load_id: number;
-  truck_code: string;
-  create_date: string | null;
-
-  user_truck_id: number | null;
-  driver_type?: "EMPLOYEE" | "CONTRACTOR" | null;
-  status: string | null;
-
-  warehouse_id: number | null;
-  to_warehouse_id: number | null;
-
-  job_id: number | null;
-
-  is_close: string | null;
-  is_go: string | null;
-  is_completed: string | null;
-  is_arrived: string | null;
-
-  close_datetime: string | null;
-  go_datetime: string | null;
-  arrived_datetime: string | null;
-
-  close_by: number | null;
-  go_by: number | null;
-  arrived_by: number | null;
-
-  note: string | null;
-  sub_warehouse: string | null;
-
-  warehouse_name?: string | null;
-  to_warehouse_name?: string | null;
-
-  driver_name?: string | null;
-  employee_code?: string | null;
-  tel?: string | null;
-
-  vehicle_id?: number | null;
-  license_plate?: string | null;
-  license_plate_province_id?: number | null;
-  license_province?: string | null;
-  model?: string | null;
-  serial_count?: number | string | null;
-  count_box?: number | string | null;
-};
-
 type ConfirmAction = {
   row: TruckLoadRow;
-};
-
-type TruckLoadResponse = {
-  success?: boolean;
-  message?: string;
-  data: TruckLoadRow[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    total_pages: number;
-  };
-};
-
-type DriverUsersResponse = {
-  success?: boolean;
-  message?: string;
-  data: DriverUser[];
-};
-
-type VehiclesResponse = {
-  success?: boolean;
-  message?: string;
-  data: Vehicle[];
-};
-
-type ContractorVehiclesResponse = {
-  success?: boolean;
-  message?: string;
-  data: ContractorVehicle[];
-};
-
-type CreateTruckLoadResponse = {
-  success?: boolean;
-  message?: string;
-  data?: TruckLoadRow;
 };
 
 type AxiosLikeError = {

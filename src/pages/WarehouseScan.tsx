@@ -3,10 +3,10 @@ import { X } from "lucide-react";
 
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
-import CustomerDropdown, { type Customer } from "../components/dropdown/CustomerDropdown";
-import ScanInput from "../components/scan/ScanInput";
+import CustomerDropdown, { type Customer } from "../components/tms/dropdown/CustomerDropdown";
+import ScanInput from "../components/tms/scan/ScanInput";
 
 type WarehouseReceiveRow = {
   serial_no: string;

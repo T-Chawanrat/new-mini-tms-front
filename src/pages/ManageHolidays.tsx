@@ -1,41 +1,18 @@
 // client/src/pages/ManageHolidays.tsx
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import AxiosInstance from "../utils/AxiosInstance";
-import DatePicker from "../components/form/DatePicker";
-import DataGrid from "../components/DataGrid";
+import AxiosInstance from "../services/apiClient";
+import DatePicker from "../components/tms/form/DatePicker";
+import DataGrid from "../components/tms/table/DataGrid";
 import { Pencil, Trash2, RefreshCw, Plus } from "lucide-react";
-
-type Id = string | number;
-type ActiveStatus = "Y" | "N";
-type StatusValue = "ACTIVE" | "INACTIVE";
-
-type Holiday = {
-  id: Id;
-  holiday_date: string;
-  holiday_name: string;
-  remark: string | null;
-  is_deleted?: ActiveStatus;
-  is_actived: ActiveStatus;
-  created_at?: string;
-  updated_at?: string;
-};
-
-type HolidayGridRow = Holiday & {
-  no: number;
-};
-
-type HolidayForm = {
-  holiday_date: string;
-  holiday_name: string;
-  remark: string;
-  is_actived: ActiveStatus;
-};
-
-type SelectedStatus = {
-  id: Id;
-  current: StatusValue;
-};
+import type {
+  Holiday,
+  HolidayForm,
+  HolidayGridRow,
+  HolidayId as Id,
+  HolidaySelectedStatus as SelectedStatus,
+  HolidayStatusValue as StatusValue,
+} from "../types/holiday";
 
 type GridCellParams<T> = {
   value?: string | number | null;

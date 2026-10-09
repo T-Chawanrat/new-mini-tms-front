@@ -2,7 +2,7 @@ import { ArrowLeft, Maximize2, Printer, RotateCcw, ZoomIn, ZoomOut } from "lucid
 import { type CSSProperties, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 
 type TruckPrintHeader = {
   truck_load_id: number;

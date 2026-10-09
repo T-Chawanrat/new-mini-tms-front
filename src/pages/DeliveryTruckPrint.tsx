@@ -2,38 +2,8 @@ import { ArrowLeft, Maximize2, Printer, RotateCcw, ZoomIn, ZoomOut } from "lucid
 import { type CSSProperties, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import AxiosInstance from "../utils/AxiosInstance";
-
-type DeliveryTruckPrintHeader = {
-  truck_load_id: number;
-  truck_code: string;
-  create_date: string | null;
-  close_datetime: string | null;
-  driver_name: string | null;
-  warehouse_name: string | null;
-  route_code: string | null;
-  route_name: string | null;
-  license_plate: string | null;
-  license_province: string | null;
-};
-
-type DeliveryTruckPrintItem = {
-  id: number;
-  receive_code: string | null;
-  delivery_date: string | null;
-  reference_no: string | null;
-  customer_name: string | null;
-  recipient_name: string | null;
-  address: string | null;
-  subdistrict_name: string | null;
-  district_name: string | null;
-  province_name: string | null;
-  zip_code: string | null;
-  recipient_tel: string | null;
-  qty: number | string | null;
-};
-
-type DeliveryTruckPrintResponse = { data?: { truck: DeliveryTruckPrintHeader; items: DeliveryTruckPrintItem[] } };
+import AxiosInstance from "../services/apiClient";
+import type { DeliveryTruckPrintHeader, DeliveryTruckPrintItem, DeliveryTruckPrintResponse } from "../types/deliveryTruck";
 
 const getText = (value: unknown) => String(value ?? "").trim();
 

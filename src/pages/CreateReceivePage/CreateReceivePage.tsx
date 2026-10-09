@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import AxiosInstance from "../../utils/AxiosInstance";
+import AxiosInstance from "../../services/apiClient";
 
 import ReceiveHeaderForm from "./ReceiveHeaderForm";
 import PackageSection from "./PackageSection";
@@ -10,17 +10,10 @@ import PackageSection from "./PackageSection";
 import ReceiveModals from "./ReceiveModals";
 import { toNum } from "../../utils/packageRate";
 import {
-  type CustomerOption,
-  type GroupedRecipient,
-  type PackageRow,
-  type PaymentOption,
-  type ReceiveForm,
-  type RecipientOption,
-  type ShipperOption,
-  type ShipperROCodeOption,
   emptyPackageRow,
   emptyReceiveForm,
 } from "./createReceiveConfig";
+import type { CustomerOption, GroupedRecipient, PackageRow, PaymentOption, ReceiveForm, RecipientOption, ShipperOption, ShipperROCodeOption } from "../../types/receive";
 
 export default function CreateReceivePage() {
   const [form, setForm] = useState<ReceiveForm>(emptyReceiveForm);

@@ -3,8 +3,9 @@ import { Download, RefreshCcw, Search, Truck } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
 import * as XLSX from "xlsx";
 
-import AxiosInstance from "../utils/AxiosInstance";
-import { formatThaiDateTime, formatThaiNumber } from "../utils/textSanitizer";
+import AxiosInstance from "../services/apiClient";
+import { formatThaiNumber } from "../utils/textSanitizer";
+import { formatThaiDateTime } from "../utils/dateTime";
 
 type ProductTruckRow = {
   receive_code?: string | null;

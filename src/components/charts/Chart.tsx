@@ -4,7 +4,7 @@ import { ApexOptions } from "apexcharts";
 // import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
 import { useState, useEffect } from "react";
-import AxiosInstance from "../../utils/AxiosInstance";
+import AxiosInstance from "../../services/apiClient";
 
 interface ApiResponse {
   data: WarehouseData[];

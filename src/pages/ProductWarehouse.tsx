@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, Download, PackageOpen, RefreshCcw, Search } 
 import TablePagination from "@mui/material/TablePagination";
 import * as XLSX from "xlsx";
 
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { formatThaiNumber } from "../utils/textSanitizer";
 
 type ProductWarehouseSerialItem = {

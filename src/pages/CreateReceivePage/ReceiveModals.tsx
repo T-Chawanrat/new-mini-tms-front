@@ -2,21 +2,14 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import axios from "axios";
 import TablePagination from "@mui/material/TablePagination";
-import AxiosInstance from "../../utils/AxiosInstance";
+import AxiosInstance from "../../services/apiClient";
 import { calculatePackageRate, isWeightFix, moneyValue, toNum } from "../../utils/packageRate";
 import {
-  type CustomerOption,
-  type GroupedPackageOption,
-  type GroupedRecipient,
-  type PackageOption,
-  type PackageRow,
-  type RecipientOption,
-  type ShipperOption,
-  type UpdatePackageForm,
   inputClass,
   labelClass,
   selectClass,
 } from "./createReceiveConfig";
+import type { CustomerOption, GroupedPackageOption, GroupedRecipient, PackageOption, PackageRow, RecipientOption, ShipperOption, UpdatePackageForm } from "../../types/receive";
 
 type ReceiveModalsProps = {
   customerId: string;

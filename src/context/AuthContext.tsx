@@ -7,8 +7,8 @@ import React, {
   type ReactNode,
 } from "react";
 
-import { setTokenExpiredHandler } from "../utils/AxiosInstance";
-import TokenExpiredModal from "../components/modal/TokenExpiredModal";
+import { setTokenExpiredHandler } from "../services/apiClient";
+import TokenExpiredModal from "../components/tms/modal/TokenExpiredModal";
 
 export interface UserType {
   id: number;

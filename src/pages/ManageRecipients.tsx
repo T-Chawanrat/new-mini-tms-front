@@ -8,136 +8,25 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { useAuth } from "../context/AuthContext";
-import AddressSearchDropdown from "../components/dropdown/AddressSearchDropdown";
-import RequiredLabel from "../components/form/RequiredLabel";
+import AddressSearchDropdown from "../components/tms/dropdown/AddressSearchDropdown";
+import RequiredLabel from "../components/tms/form/RequiredLabel";
 import { removeSpaces } from "../utils/textSanitizer";
-
-type Id = string | number;
-type YesNo = "Y" | "N" | string;
-
-type Customer = {
-  id: Id;
-  code?: string;
-  name?: string;
-};
-
-type RecipientType = {
-  id: Id;
-  name: string;
-};
-
-type RecipientDetail = {
-  recipient_detail_id: Id;
-  recipient_detail_name?: string;
-  address?: string;
-  subdistrict_id?: Id | "";
-  district_id?: Id | "";
-  province_id?: Id | "";
-  subdistrict_name?: string;
-  district_name?: string;
-  province_name?: string;
-  zip_code?: string;
-  tel1?: string;
-  line_id?: string;
-  longitude?: string | null;
-  latitude?: string | null;
-  detail_is_deleted?: YesNo;
-};
-
-type ApiRecipientRow = {
-  recipient_id?: Id;
-  recipient_code?: string;
-  recipient_type_id?: Id | "";
-  recipient_type_name?: string;
-  recipient_name?: string;
-  customer_id?: Id;
-  recipient_customer_id?: Id;
-  customer_code?: string;
-  customer_name?: string;
-  recipient_is_deleted?: YesNo;
-  address_count?: number | string;
-  recipient_detail_id?: Id;
-  recipient_detail_name?: string;
-  address?: string;
-  subdistrict_id?: Id | "";
-  district_id?: Id | "";
-  province_id?: Id | "";
-  subdistrict_name?: string;
-  district_name?: string;
-  province_name?: string;
-  zip_code?: string;
-  tel1?: string;
-  line_id?: string;
-  longitude?: string | null;
-  latitude?: string | null;
-  detail_is_deleted?: YesNo;
-};
-
-type Recipient = {
-  recipient_id: Id;
-  recipient_code?: string;
-  recipient_type_id?: Id | "";
-  recipient_type_name?: string;
-  recipient_name?: string;
-  customer_id?: Id;
-  recipient_customer_id?: Id;
-  customer_code?: string;
-  customer_name?: string;
-  recipient_is_deleted?: YesNo;
-  address_count?: number;
-  details: RecipientDetail[];
-};
-
-type DisplayRow =
-  | (Recipient & {
-      id: string;
-      rowType: "recipient";
-    })
-  | {
-      id: string;
-      rowType: "detail";
-      recipient: Recipient;
-    };
-
-type ModalMode = "createRecipient" | "editRecipient" | "createDetail" | "editDetail";
-
-type RecipientForm = {
-  recipient_code: string;
-  recipient_type_id: string;
-  recipient_name: string;
-  recipient_detail_id: string;
-  recipient_detail_name: string;
-  address: string;
-  address_search: string;
-  subdistrict_id: string;
-  district_id: string;
-  province_id: string;
-  zip_code: string;
-  tel1: string;
-  line_id: string;
-  longitude: string;
-  latitude: string;
-};
-
-type AddressSearchRow = {
-  subdistrict_id?: Id;
-  district_id?: Id;
-  province_id?: Id;
-  subdistrict_name?: string;
-  district_name?: string;
-  province_name?: string;
-  zip_code?: string;
-};
-
-type StatusValue = "ACTIVE" | "INACTIVE";
-
-type SelectedStatus = {
-  recipient_id: Id;
-  recipient_detail_id: Id;
-  current: StatusValue;
-};
+import type {
+  AddressSearchRow,
+  ApiRecipientRow,
+  Customer,
+  DisplayRow,
+  Id,
+  ModalMode,
+  Recipient,
+  RecipientDetail,
+  RecipientForm,
+  RecipientType,
+  SelectedStatus,
+  StatusValue,
+} from "../types/recipient";
 
 type RecipientDetailsInlinePanelProps = {
   recipient: Recipient;

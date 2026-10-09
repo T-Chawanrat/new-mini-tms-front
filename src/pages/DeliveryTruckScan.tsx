@@ -4,38 +4,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import alertSound from "../../assets/sounds/alert.mp3";
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { normalizeSerialText } from "../utils/textSanitizer";
-
-type ProductRow = {
-  serial_no: string;
-  customer_name: string;
-  recipient_name: string;
-  now_warehouse_id: number | null;
-  to_warehouse_id: number | null;
-  route_id: number | null;
-};
-
-type RouteOption = {
-  route_id: number;
-  route_code: string | null;
-  route_name: string | null;
-};
-
-type DeliveryTruck = {
-  warehouse_id: number | null;
-  route_id: number | null;
-  is_close: string | null;
-  truck_code: string;
-  warehouse_name: string | null;
-  employee_code: string | null;
-  driver_name: string | null;
-  license_plate: string | null;
-  license_plate_province: string | null;
-  model: string | null;
-  route_code: string | null;
-  route_name: string | null;
-};
+import type { DeliveryProductRow as ProductRow, DeliveryRouteOption as RouteOption, DeliveryTruck } from "../types/deliveryTruck";
 
 type RequestError = {
   response?: { data?: { code?: string; message?: string; data?: Partial<ProductRow> } };

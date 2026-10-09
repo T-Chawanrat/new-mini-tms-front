@@ -1,4 +1,5 @@
-import { type PackageRow, money } from "./createReceiveConfig";
+import { money } from "./createReceiveConfig";
+import type { PackageRow } from "../../types/receive";
 
 type PackageSectionProps = {
   packageRows: PackageRow[];

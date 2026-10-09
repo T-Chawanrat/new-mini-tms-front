@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock3, ImagePlus, MessageCircle, Search, Send, UserRound, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import AxiosInstance from "../utils/AxiosInstance";
-import { getUploadUrl } from "../utils/uploadUrl";
+import AxiosInstance from "../services/apiClient";
+import { getUploadUrl } from "../services/uploadUrl";
 
 type IssueStatus = "NEW" | "IN_PROGRESS" | "RESOLVED";
 type Thread = {

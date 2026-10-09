@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
-import DatePicker from "../components/form/DatePicker";
-import RequiredLabel from "../components/form/RequiredLabel";
-import SearchableSelect, { SearchableOption } from "../components/form/SearchableSelect";
+import DatePicker from "../components/tms/form/DatePicker";
+import RequiredLabel from "../components/tms/form/RequiredLabel";
+import SearchableSelect, { SearchableOption } from "../components/tms/form/SearchableSelect";
 import { useAuth } from "../context/AuthContext";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import {
   cleanEmailInput,
   cleanNumberInput,

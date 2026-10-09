@@ -2,43 +2,20 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react
 import { FolderOpen, PackageCheck, Plus, Printer, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import DataGrid from "../components/DataGrid";
-import DatePicker from "../components/form/DatePicker";
-import AxiosInstance from "../utils/AxiosInstance";
-import { formatThaiDateTime, formatThaiNumber } from "../utils/textSanitizer";
-
-type DriverType = "EMPLOYEE" | "CONTRACTOR";
-
-type DeliveryTruckRow = {
-  id: string;
-  create_date: string;
-  truck_code: string;
-  driver_type: DriverType;
-  driver_name: string;
-  license_plate: string;
-  count_box: number;
-  status: string;
-  is_close?: string | null;
-  is_go?: string | null;
-  route_code?: string | null;
-  route_name?: string | null;
-};
-
-type Driver = { id: number; employee_code: string | null; first_name: string | null; last_name: string | null };
-type Vehicle = { id: number; license_plate: string; license_plate_province: string | null; model: string | null };
-type Contractor = {
-  vehicle_contractor_id: number;
-  user_truck_id: number;
-  employee_code: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  license_plate: string;
-  license_plate_province: string | null;
-};
-
-type RouteOption = { route_id: number; warehouse_id: number; route_code: string | null; route_name: string | null };
-
-type DeliveryTruckApiRow = Omit<DeliveryTruckRow, "id"> & { truck_load_id: number };
+import DataGrid from "../components/tms/table/DataGrid";
+import DatePicker from "../components/tms/form/DatePicker";
+import AxiosInstance from "../services/apiClient";
+import { formatThaiNumber } from "../utils/textSanitizer";
+import { formatThaiDateTime } from "../utils/dateTime";
+import type {
+  DeliveryContractor as Contractor,
+  DeliveryDriver as Driver,
+  DeliveryDriverType as DriverType,
+  DeliveryRouteOption as RouteOption,
+  DeliveryTruckApiRow,
+  DeliveryTruckRow,
+  DeliveryVehicle as Vehicle,
+} from "../types/deliveryTruck";
 
 const driverTypeLabel: Record<DriverType, string> = {
   EMPLOYEE: "รถปกติ",

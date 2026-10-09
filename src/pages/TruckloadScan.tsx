@@ -4,59 +4,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import alertSound from "../../assets/sounds/alert.mp3";
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
-
-type VehicleLoadRow = {
-  serial_id: string;
-  serial_no: string;
-  warehouse_id: number | null;
-  customer_id: number | null;
-  customer_name: string | null;
-  to_warehouse_id: number | null;
-  to_warehouse_name: string | null;
-};
-
-type VehicleLoadResponse = {
-  success?: boolean;
-  data: VehicleLoadRow[];
-  loaded?: VehicleLoadRow[];
-  total?: number;
-};
-
-type TruckLoadDetail = {
-  truck_load_id: number;
-  truck_code: string;
-  warehouse_id: number | null;
-  user_truck_id: number | null;
-  vehicle_id: number | null;
-  to_warehouse_id: number | null;
-  employee_code: string | null;
-  driver_name: string | null;
-  license_plate: string | null;
-  license_province: string | null;
-  model: string | null;
-  to_warehouse_name: string | null;
-  is_close: string | null;
-  is_go: string | null;
-};
-
-type WarehouseOption = {
-  id: number | string;
-  name: string;
-};
-
-type TruckLoadDetailResponse = {
-  success?: boolean;
-  data: TruckLoadDetail;
-};
-
-type DestinationWarning = {
-  serial_id: string;
-  serial_no: string;
-  to_warehouse_id: number | null;
-  to_warehouse_name: string | null;
-};
+import type { DestinationWarning, TruckLoadDetail, TruckLoadDetailResponse, TruckloadWarehouseOption as WarehouseOption, VehicleLoadResponse, VehicleLoadRow } from "../types/truckload";
 
 type LoadProductError = {
   response?: {

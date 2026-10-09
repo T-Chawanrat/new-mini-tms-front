@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import DatePicker from "../components/form/DatePicker";
+import DatePicker from "../components/tms/form/DatePicker";
 import { Pencil, X } from "lucide-react";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput, removeSpaces } from "../utils/textSanitizer";
-import DataGrid from "../components/DataGrid";
-import RequiredLabel from "../components/form/RequiredLabel";
+import DataGrid from "../components/tms/table/DataGrid";
+import RequiredLabel from "../components/tms/form/RequiredLabel";
 
 type MasterOption = {
   id: number;

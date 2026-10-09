@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import AxiosInstance from "../utils/AxiosInstance";
+import AxiosInstance from "../services/apiClient";
 import { useAuth } from "../context/AuthContext";
 import { Pencil, X } from "lucide-react";
-import AddressSearchDropdown, { type ZipAddressRow } from "../components/dropdown/AddressSearchDropdown";
+import AddressSearchDropdown, { type ZipAddressRow } from "../components/tms/dropdown/AddressSearchDropdown";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput, cleanEmailInput } from "../utils/textSanitizer";
-import DataGrid from "../components/DataGrid";
-import RequiredLabel from "../components/form/RequiredLabel";
+import DataGrid from "../components/tms/table/DataGrid";
+import RequiredLabel from "../components/tms/form/RequiredLabel";
 
 export default function ManageCustomers() {
   const { user } = useAuth();
