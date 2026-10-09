@@ -21,8 +21,9 @@ type Message = {
   sender_name: string;
   message_text?: string;
   created_date: string;
-  media: { file_name: string; file_path: string }[];
+  media: { file_name: string; file_path: string; thumbnail_path?: string | null }[];
 };
+type PendingImage = { file: File; preview: string };
 const time = (value?: string) =>
   value ? new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value)) : "";
 
@@ -37,8 +38,7 @@ export default function DeliveryIssueInbox() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<IssueStatus | "ALL">("ALL");
   const [draft, setDraft] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState("");
+  const [attachments, setAttachments] = useState<PendingImage[]>([]);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -91,18 +91,17 @@ export default function DeliveryIssueInbox() {
     }
   };
   const send = async () => {
-    if (!selectedCode || (!draft.trim() && !file) || sending) return;
+    if (!selectedCode || (!draft.trim() && !attachments.length) || sending) return;
     try {
       setSending(true);
       setError("");
       const form = new FormData();
       if (draft.trim()) form.append("message_text", draft.trim());
-      if (file) form.append("images", file);
+      attachments.forEach(({ file }) => form.append("images", file));
       await AxiosInstance.post(`/delivery-issues/${encodeURIComponent(selectedCode)}/messages`, form);
       setDraft("");
-      if (preview) URL.revokeObjectURL(preview);
-      setPreview("");
-      setFile(null);
+      attachments.forEach(({ preview }) => URL.revokeObjectURL(preview));
+      setAttachments([]);
       await Promise.all([loadMessages(selectedCode), loadThreads()]);
     } catch (requestError: any) {
       setError(requestError?.response?.data?.message || "ไม่สามารถส่งข้อความได้");
@@ -191,7 +190,7 @@ export default function DeliveryIssueInbox() {
         <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-slate-50">
           {selectedCode ? (
             <>
-              <div className="border-b border-slate-200 bg-white px-4 py-4 lg:px-6">
+              <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 lg:px-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
@@ -203,7 +202,7 @@ export default function DeliveryIssueInbox() {
                       )}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                      <span className="font-bold text-blue-700">Receive Code: {selectedCode}</span>
+                      <span className="font-bold text-blue-700">{selectedCode}</span>
                       <span className="inline-flex items-center gap-1">
                         <UserRound size={14} /> ผู้รับ: {recipient}
                       </span>
@@ -215,7 +214,13 @@ export default function DeliveryIssueInbox() {
                         key={status}
                         type="button"
                         onClick={() => void updateStatus(status)}
-                        className={status === "IN_PROGRESS" ? "inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700" : status === "RESOLVED" ? "inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white" : `inline-flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-semibold ${selected?.issue_status === status ? "bg-rose-100 text-rose-700" : "border border-slate-200 bg-white text-slate-500"}`}
+                        className={
+                          status === "IN_PROGRESS"
+                            ? "inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700"
+                            : status === "RESOLVED"
+                              ? "inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white"
+                              : `inline-flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-semibold ${selected?.issue_status === status ? "bg-rose-100 text-rose-700" : "border border-slate-200 bg-white text-slate-500"}`
+                        }
                       >
                         {status === "IN_PROGRESS" ? <Clock3 size={16} /> : status === "RESOLVED" ? <CheckCircle2 size={16} /> : null}
                         {status === "NEW" ? "ใหม่" : status === "IN_PROGRESS" ? "รับเรื่องแล้ว" : "เสร็จสิ้นแล้ว"}
@@ -224,52 +229,63 @@ export default function DeliveryIssueInbox() {
                   </div>
                 </div>
               </div>
-              <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4 lg:p-6">
+              <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 lg:p-6">
                 {loading ? <p className="text-center text-sm text-slate-400">กำลังโหลด...</p> : null}
                 {!loading && !messages.length ? <p className="text-center text-sm text-slate-400">ยังไม่มีข้อความ</p> : null}
                 {messages.map((message) => {
                   const mine = message.sender_user_id === currentUserId;
+                  const mediaPadding = message.media.length ? (message.message_text ? "w-[320px] px-4 pb-2.5 pt-3" : "w-[320px] p-2.5") : "px-4 py-3";
                   return (
-                    <div key={message.delivery_status_message_id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                      <div className={`w-fit max-w-[85%] lg:max-w-[68%] ${mine ? "ml-auto text-right" : ""}`}>
-                        <div className={`mb-1 text-xs font-semibold text-slate-500 ${mine ? "text-right" : ""}`}>
+                    <div key={message.delivery_status_message_id} className={`flex [contain-intrinsic-size:auto_180px] [content-visibility:auto] ${mine ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[85%] lg:max-w-[68%] ${mine ? "ml-auto text-right" : ""}`}>
+                        <div className={`mb-1 w-fit text-xs font-semibold text-slate-500 ${mine ? "ml-auto" : ""}`}>
                           {message.sender_name} · {time(message.created_date)}
                         </div>
                         <div
-                          className={`inline-block text-left rounded-2xl px-4 py-3 text-sm ${mine ? "rounded-tr-sm bg-blue-600 text-white" : "rounded-tl-sm border border-slate-200 bg-white text-slate-700"}`}
+                          className={`inline-block max-w-full text-left rounded-2xl text-sm ${mediaPadding} ${mine ? "rounded-tr-sm bg-blue-600 text-white" : "rounded-tl-sm border border-slate-200 bg-white text-slate-700"}`}
                         >
                           {message.message_text ? <p className="whitespace-pre-wrap break-words">{message.message_text}</p> : null}
-                          {message.media.map((media) => (
-                            <img
-                              key={media.file_path}
-                              src={getUploadUrl(media.file_path)}
-                              alt={media.file_name}
-                              className="mt-2 max-h-72 w-full rounded-lg object-cover"
-                            />
-                          ))}
+                          {message.media.length ? <div className={`grid gap-1.5 ${message.message_text ? "mt-2" : ""} ${message.media.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                            {message.media.map((media) => (
+                              <img
+                                key={media.file_path}
+                                src={getUploadUrl(media.thumbnail_path || media.file_path)}
+                                alt={media.file_name}
+                                loading="lazy"
+                                decoding="async"
+                                onError={(event) => {
+                                  if (event.currentTarget.src !== getUploadUrl(media.file_path)) event.currentTarget.src = getUploadUrl(media.file_path);
+                                }}
+                                className={message.media.length === 1 ? "max-h-72 w-full rounded-lg object-cover" : "aspect-square w-full rounded-lg object-cover"}
+                              />
+                            ))}
+                          </div> : null}
                         </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="border-t border-slate-200 bg-white p-3 lg:p-4">
-                {preview ? (
-                  <div className="mb-2 flex items-center gap-2">
-                    <img src={preview} alt={file?.name || "รูปแนบ"} className="h-12 w-12 rounded-lg object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (preview) URL.revokeObjectURL(preview);
-                        setPreview("");
-                        setFile(null);
-                      }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-                      aria-label="ลบรูปที่แนบ"
-                      title="ลบรูป"
-                    >
-                      <X size={16} />
-                    </button>
+              <div className="shrink-0 border-t border-slate-200 bg-white p-3 lg:p-4">
+                {attachments.length ? (
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {attachments.map((attachment, index) => (
+                      <div key={attachment.preview} className="group relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                        <img src={attachment.preview} alt={attachment.file.name} className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setAttachments((current) => {
+                            const removed = current[index];
+                            if (removed) URL.revokeObjectURL(removed.preview);
+                            return current.filter((_, itemIndex) => itemIndex !== index);
+                          })}
+                          className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/75 text-white opacity-100 hover:bg-rose-600 sm:opacity-0 sm:group-hover:opacity-100"
+                          aria-label={`ลบรูปที่แนบ ${index + 1}`}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 ) : null}
                 <div className="flex items-end gap-2">
@@ -277,19 +293,19 @@ export default function DeliveryIssueInbox() {
                     ref={fileRef}
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
+                    multiple
                     hidden
                     onChange={(event) => {
-                      const selectedFile = event.target.files?.[0];
-                      if (!selectedFile) return;
-                      if (preview) URL.revokeObjectURL(preview);
-                      setFile(selectedFile);
-                      setPreview(URL.createObjectURL(selectedFile));
+                      const selectedFiles = Array.from(event.target.files || []);
+                      setAttachments((current) => [...current, ...selectedFiles.slice(0, Math.max(0, 4 - current.length)).map((file) => ({ file, preview: URL.createObjectURL(file) }))]);
+                      event.target.value = "";
                     }}
                   />
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                    disabled={attachments.length >= 4}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
                     aria-label="แนบรูป"
                   >
                     <ImagePlus size={20} />
@@ -310,7 +326,7 @@ export default function DeliveryIssueInbox() {
                   <button
                     type="button"
                     onClick={() => void send()}
-                    disabled={sending || (!draft.trim() && !file)}
+                    disabled={sending || (!draft.trim() && !attachments.length)}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="ส่งข้อความ"
                   >
@@ -328,7 +344,7 @@ export default function DeliveryIssueInbox() {
                   <p className="text-sm">เลือกบิลจากรายการแจ้งปัญหา</p>
                 </div>
               </div>
-              <div className="border-t border-slate-200 bg-white p-3 lg:p-4">
+              <div className="shrink-0 border-t border-slate-200 bg-white p-3 lg:p-4">
                 <div className="flex items-end gap-2">
                   <button
                     type="button"

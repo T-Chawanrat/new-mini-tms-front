@@ -18,6 +18,8 @@ type LookupType = "receive_code" | "serial_no" | "reference_no";
 
 type DeliveryTruckRow = {
   id: string;
+  receive_business_id: string | null;
+  receive_walkin_id: string | null;
   truck_code: string;
   bill_no: string;
   reference_no: string;
@@ -459,7 +461,11 @@ export default function DeliveryClose() {
     if (!closeTarget) return;
     try {
       setCloseError("");
-      await AxiosInstance.post(`/delivery-issues/${encodeURIComponent(closeTarget.bill_no)}`, { issue_type: "ทดสอบแจ้งปัญหา" });
+      await AxiosInstance.post(`/delivery-issues/${encodeURIComponent(closeTarget.bill_no)}`, {
+        receive_business_id: closeTarget.receive_business_id,
+        receive_walkin_id: closeTarget.receive_walkin_id,
+        issue_type: "ทดสอบแจ้งปัญหา",
+      });
       const params = new URLSearchParams({ bill_no: closeTarget.bill_no, truck_code: closeTarget.truck_code });
       navigate(`/delivery-issue-chat?${params.toString()}`);
     } catch (error: any) {

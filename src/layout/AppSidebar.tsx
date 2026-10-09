@@ -124,18 +124,6 @@ const navItems: NavItem[] = [
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
-      {
-        name: "ตัวอย่างแจ้งปัญหา",
-        path: "/delivery-issue-mockup",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-      {
-        name: "ตัวอย่างระบบคนขับ",
-        path: "/driver-mockup",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
     ],
   },
   {

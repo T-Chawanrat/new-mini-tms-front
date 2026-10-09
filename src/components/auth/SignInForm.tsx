@@ -22,8 +22,9 @@ type LoginResult = {
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(() => localStorage.getItem("admin_remember_login") === "true");
+  const [username, setUsername] = useState(() => localStorage.getItem("admin_remember_login") === "true" ? localStorage.getItem("admin_remember_username") || "" : "");
+  const [password, setPassword] = useState(() => localStorage.getItem("admin_remember_login") === "true" ? localStorage.getItem("admin_remember_password") || "" : "");
   const [loginError, setLoginError] = useState("");
   const [warehouseError, setWarehouseError] = useState("");
   const [selectingWarehouse, setSelectingWarehouse] = useState(false);
@@ -38,6 +39,15 @@ export default function SignInForm() {
     }
 
     localStorage.setItem("token", data.token);
+    if (remember) {
+      localStorage.setItem("admin_remember_login", "true");
+      localStorage.setItem("admin_remember_username", username);
+      localStorage.setItem("admin_remember_password", password);
+    } else {
+      localStorage.removeItem("admin_remember_login");
+      localStorage.removeItem("admin_remember_username");
+      localStorage.removeItem("admin_remember_password");
+    }
     AxiosInstance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
     setUser(data.user);
     setIsLoggedIn(true);
@@ -149,6 +159,16 @@ export default function SignInForm() {
                   </button>
                 </div>
               </div>
+
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(event) => setRemember(event.target.checked)}
+                  className="size-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                />
+                จดจำชื่อผู้ใช้และรหัสผ่าน
+              </label>
 
               {loginError && <div className="text-sm text-red-500">{loginError}</div>}
 
