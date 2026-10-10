@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import SignIn from "../pages/AuthPages/SignIn";
+import Announcements from "../pages/Announcements";
 import ChangePassword from "../pages/ChangePassword";
 import ContractorCreate from "../pages/ContractorCreate";
 import CreateReceivePage from "../pages/CreateReceivePage/CreateReceivePage";
@@ -14,10 +15,10 @@ import DeliveryPendingReportSn from "../pages/DeliveryPendingReportSn";
 import DeliveryTruckCreate from "../pages/DeliveryTruckCreate";
 import DeliveryTruckPrint from "../pages/DeliveryTruckPrint";
 import DeliveryTruckScan from "../pages/DeliveryTruckScan";
-import ImportManual from "../pages/ImportManual";
-import ImportSTD from "../pages/ImportSTD";
+import ReceiveImport from "../pages/ReceiveImport";
 import LabelPrintPage from "../pages/LabelPrintPage";
 import ManageCustomers from "../pages/ManageCustomer";
+import ManageAnnouncements from "../pages/ManageAnnouncements";
 import ManageHolidays from "../pages/ManageHolidays";
 import ManagePackages from "../pages/ManagePackages";
 import ManageRecipients from "../pages/ManageRecipients";
@@ -44,13 +45,14 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<ProtectedRoute><ImportSTD /></ProtectedRoute>} />
+        <Route index element={<ProtectedRoute><ReceiveImport /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<Announcements />} />
         <Route path="/manage/vehicles" element={<ManageVehicles />} />
         <Route path="/contractor-create" element={<ContractorCreate />} />
         <Route path="/manage/users" element={<ManageUsers />} />
         <Route path="/manage/customers" element={<ManageCustomers />} />
-        <Route path="/std" element={<ImportSTD />} />
-        <Route path="/manual" element={<ImportManual />} />
+        <Route path="/manage/announcements" element={<ManageAnnouncements />} />
+        <Route path="/std" element={<ReceiveImport />} />
         <Route path="/manage/shippers" element={<ManageShippers />} />
         <Route path="/manage/recipients" element={<ManageRecipients />} />
         <Route path="/manage/packages" element={<ManagePackages />} />

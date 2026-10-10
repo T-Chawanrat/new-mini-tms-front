@@ -1,4 +1,4 @@
-// src/pages/BillImport.tsx
+// src/pages/ReceiveImport.tsx
 
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import * as XLSX from "xlsx";
@@ -48,7 +48,6 @@ type ImportResponse = {
   total_rows?: number;
   inserted_rows?: number;
 
-  // เผื่อ backend เก่า/อนาคต
   receive_count?: number;
   detail_count?: number;
   error?: string;
@@ -163,7 +162,7 @@ const buildDuplicateSerialRowMap = (rows: ImportRow[], duplicates: Record<string
   return map;
 };
 
-export default function BillImport() {
+export default function ReceiveImport() {
   const { user } = useAuth();
 
   const authUser = user as

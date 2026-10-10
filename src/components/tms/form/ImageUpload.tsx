@@ -2,7 +2,7 @@ import { Camera, X } from "lucide-react";
 
 import { getUploadUrl } from "../../../services/uploadUrl";
 
-export type UploadedImage = { id?: number; name: string; preview: string };
+export type UploadedImage = { id?: number; name: string; preview: string; file?: File };
 export type UploadedImages = UploadedImage[];
 
 type ImageUploadProps = {
@@ -44,7 +44,7 @@ export default function ImageUpload({
     if (remaining <= 0) return;
     const selected = Array.from(files)
       .slice(0, remaining)
-      .map((file) => ({ name: file.name, preview: URL.createObjectURL(file) }));
+      .map((file) => ({ name: file.name, preview: URL.createObjectURL(file), file }));
     onChange([...values, ...selected]);
   };
 

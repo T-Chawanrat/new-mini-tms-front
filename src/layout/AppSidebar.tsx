@@ -20,32 +20,26 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "จัดการข้อมูลหลัก",
+    name: "ข้อมูลวันนี้",
     subItems: [
       {
-        name: "จัดการผู้ใช้งาน",
-        path: "/manage/users",
+        name: "ประกาศและราคาน้ำมัน",
+        path: "/dashboard",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "จัดการลูกค้า",
-        path: "/manage/customers",
+        name: "จัดการประกาศ",
+        path: "/manage/announcements",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        roles: [1, 5, 11],
       },
-      {
-        name: "จัดการรถ",
-        path: "/manage/vehicles",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-      {
-        name: "จัดการผู้ส่ง",
-        path: "/manage/shippers",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
+    ],
+  },
+  {
+    icon: <GridIcon />,
+    name: "จัดการข้อมูลหลัก",
+    subItems: [
       {
         name: "จัดการผู้รับ",
         path: "/manage/recipients",
@@ -53,20 +47,8 @@ const navItems: NavItem[] = [
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
-        name: "จัดการแพ็กเกจ",
-        path: "/manage/packages",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-      {
         name: "จัดการสายรถ",
         path: "/manage/routes",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-      {
-        name: "จัดการวันหยุด",
-        path: "/manage-holidays",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
@@ -109,12 +91,6 @@ const navItems: NavItem[] = [
       {
         name: "ปิดงานจัดส่ง",
         path: "/delivery-close",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-      {
-        name: "แก้ไขรูปปิดงาน",
-        path: "/delivery-close-media",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
@@ -194,8 +170,69 @@ const navItems: NavItem[] = [
   },
   {
     icon: <GridIcon />,
-    name: "ย้ายสินค้า",
-    path: "/move",
+    name: "เมนูพิเศษ",
+    subItems: [
+      {
+        name: "ย้ายสินค้า",
+        path: "/move",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "แก้ไขรูปปิดงาน",
+        path: "/delivery-close-media",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+    ],
+  },
+  {
+    icon: <GridIcon />,
+    name: "Super Admin",
+    subItems: [
+      {
+        name: "จัดการผู้ใช้งาน",
+        path: "/manage/users",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "จัดการลูกค้า",
+        path: "/manage/customers",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "จัดการรถ",
+        path: "/manage/vehicles",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "จัดการผู้ส่ง",
+        path: "/manage/shippers",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "จัดการผู้รับ",
+        path: "/manage/recipients",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "จัดการแพ็กเกจ",
+        path: "/manage/packages",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "จัดการวันหยุด",
+        path: "/manage-holidays",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+    ],
   },
   {
     icon: <GridIcon />,
