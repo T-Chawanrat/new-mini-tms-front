@@ -16,6 +16,7 @@ type AppDataGridProps = {
   framed?: boolean;
   rowHoverColor?: string;
   striped?: boolean;
+  headerTextTransform?: "none" | "uppercase";
 };
 
 export default function AppDataGrid({
@@ -30,6 +31,7 @@ export default function AppDataGrid({
   framed = true,
   rowHoverColor = "#f8fafc",
   striped = false,
+  headerTextTransform = "uppercase",
 }: AppDataGridProps) {
   const resolveRowClassName = (params: any) => {
     const customClassName = getRowClassName?.(params) || "";
@@ -98,7 +100,7 @@ export default function AppDataGrid({
               backgroundColor: "#f8fafc",
               color: "#64748b",
               fontSize: "12px",
-              textTransform: "uppercase",
+              textTransform: headerTextTransform,
               letterSpacing: "0.04em",
               borderBottom: "1px solid #e2e8f0",
               minHeight: "48px !important",

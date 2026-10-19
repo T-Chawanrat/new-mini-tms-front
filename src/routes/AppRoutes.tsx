@@ -17,6 +17,11 @@ import DeliveryTruckPrint from "../pages/DeliveryTruckPrint";
 import DeliveryTruckScan from "../pages/DeliveryTruckScan";
 import ReceiveImport from "../pages/ReceiveImport";
 import LabelPrintPage from "../pages/LabelPrintPage";
+import LogLabelPrint from "../pages/LogLabelPrint";
+import LogProductTruck from "../pages/LogProductTruck";
+import LogProductWarehouse from "../pages/LogProductWarehouse";
+import LogReceiveCreate from "../pages/LogReceiveCreate";
+import LogReceiveImport from "../pages/LogReceiveImport";
 import ManageCustomers from "../pages/ManageCustomer";
 import ManageAnnouncements from "../pages/ManageAnnouncements";
 import ManageHolidays from "../pages/ManageHolidays";
@@ -55,6 +60,7 @@ export default function AppRoutes() {
         <Route path="/std" element={<ReceiveImport />} />
         <Route path="/manage/shippers" element={<ManageShippers />} />
         <Route path="/manage/recipients" element={<ManageRecipients />} />
+        <Route path="/manage/recipients2" element={<ManageRecipients />} />
         <Route path="/manage/packages" element={<ManagePackages />} />
         <Route path="/manage/routes" element={<ManageRoutes />} />
         <Route path="/change-password" element={<ChangePassword />} />
@@ -66,6 +72,11 @@ export default function AppRoutes() {
         <Route path="/warehouse-scan" element={<WarehouseScan />} />
         <Route path="/product-warehouse" element={<ProductWarehouse />} />
         <Route path="/product-truck" element={<ProductTruck />} />
+        <Route path="/logs/label-print" element={<LogLabelPrint />} />
+        <Route path="/logs/product-trucks" element={<LogProductTruck />} />
+        <Route path="/logs/product-warehouses" element={<LogProductWarehouse />} />
+        <Route path="/logs/receive-create" element={<LogReceiveCreate />} />
+        <Route path="/logs/receive-imports" element={<LogReceiveImport />} />
         <Route path="/truck-scan" element={<TruckloadScan />} />
         <Route path="/truck-scan/:truckLoadId" element={<TruckloadScan />} />
         <Route path="/truck-create" element={<TruckLoadCreate />} />

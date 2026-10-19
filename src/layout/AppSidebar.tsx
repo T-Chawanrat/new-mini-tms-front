@@ -168,25 +168,7 @@ const navItems: NavItem[] = [
       },
     ],
   },
-  {
-    icon: <GridIcon />,
-    name: "เมนูพิเศษ",
-    subItems: [
-      {
-        name: "ย้ายสินค้า",
-        path: "/move",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-      {
-        name: "แก้ไขรูปปิดงาน",
-        path: "/delivery-close-media",
-        icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      },
-    ],
-  },
-  {
+   {
     icon: <GridIcon />,
     name: "Super Admin",
     subItems: [
@@ -216,7 +198,7 @@ const navItems: NavItem[] = [
       },
       {
         name: "จัดการผู้รับ",
-        path: "/manage/recipients",
+        path: "/manage/recipients2",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
@@ -229,6 +211,54 @@ const navItems: NavItem[] = [
       {
         name: "จัดการวันหยุด",
         path: "/manage-holidays",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ย้ายสินค้า",
+        path: "/move",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "แก้ไขรูปปิดงาน",
+        path: "/delivery-close-media",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+    ],
+  },
+   {
+    icon: <GridIcon />,
+    name: "Logs",
+    subItems: [
+      {
+        name: "ประวัติการพิมพ์ Label",
+        path: "/logs/label-print",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ประวัติสินค้าบนรถ",
+        path: "/logs/product-trucks",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ประวัติสินค้าในคลัง",
+        path: "/logs/product-warehouses",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ประวัติการสร้างใบรับ",
+        path: "/logs/receive-create",
+        icon: <File size={20} />,
+        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      },
+      {
+        name: "ประวัติการนำเข้าข้อมูล",
+        path: "/logs/receive-imports",
         icon: <File size={20} />,
         roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
