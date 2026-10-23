@@ -3,7 +3,6 @@ import type { Filters } from "../types/receiveReport";
 export const defaultReceiveReportFilters: Filters = {
   receive_date_from: "",
   receive_code: "",
-  serial_no: "",
   customer_id: "",
   to_warehouse_id: "",
 };

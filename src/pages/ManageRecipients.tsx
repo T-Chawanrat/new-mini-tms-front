@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { ChevronDown, ChevronRight, Pencil, Plus, X } from "lucide-react";
 import L from "leaflet";
@@ -953,30 +954,25 @@ export default function ManageRecipients() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 shrink-0">
         <div className="flex flex-col lg:flex-row gap-3">
           {canSelectCustomer && (
-            <select
+            <SearchableSelect
               value={customerId}
-              onChange={(e) => {
+              onChange={(value) => {
                 const firstPage = {
                   ...paginationModel,
                   page: 0,
                 };
 
-                setCustomerId(e.target.value);
+                setCustomerId(value);
                 setRows([]);
                 setRowCount(0);
                 setExpandedRecipientId(null);
                 setDetailsByRecipientId({});
                 setPaginationModel(firstPage);
               }}
-              className="input-modern"
-            >
-              <option value="">เลือกผู้รับ</option>
-              {customers.map((customer: Customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.id} {customer.code} - {customer.name}
-                </option>
-              ))}
-            </select>
+              placeholder="เลือกผู้รับ"
+              className="lg:!w-[32rem] lg:shrink-0"
+              options={[{ value: "", label: "เลือกผู้รับ" }, ...customers.map((customer: Customer) => ({ value: String(customer.id), label: `${customer.id} ${customer.code} - ${customer.name}` }))]}
+            />
           )}
 
           <input
@@ -1163,18 +1159,12 @@ export default function ManageRecipients() {
 
                     <div>
                       <RequiredLabel required>ประเภทผู้รับ</RequiredLabel>
-                      <select
-                        className="input-modern w-full"
+                      <SearchableSelect
                         value={form.recipient_type_id}
-                        onChange={(e) => handleChange("recipient_type_id", e.target.value)}
-                      >
-                        <option value="">เลือกประเภทผู้รับ</option>
-                        {recipientTypes.map((type: RecipientType) => (
-                          <option key={type.id} value={type.id}>
-                            {type.name}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(value) => handleChange("recipient_type_id", value)}
+                        placeholder="เลือกประเภทผู้รับ"
+                        options={recipientTypes.map((type: RecipientType) => ({ value: String(type.id), label: type.name }))}
+                      />
                     </div>
                   </div>
 

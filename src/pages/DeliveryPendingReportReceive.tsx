@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 
 import DataGrid from "../components/tms/table/DataGrid";
 import AxiosInstance from "../services/apiClient";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import { formatReportDate } from "../utils/dateTime";
 import { formatThaiNumber } from "../utils/textSanitizer";
 
@@ -205,25 +206,20 @@ export default function DeliveryPendingReportReceive() {
               />
             </span>
           </label>
-          <label className="block text-xs font-medium text-slate-600">
+          <div className="block text-xs font-medium text-slate-600">
             คลังปลายทาง
-            <select
+            <SearchableSelect
               value={toWarehouseId}
-              onChange={(event) => setToWarehouseId(event.target.value)}
-              className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            >
-              <option value="">ทุกคลัง</option>
-              {warehouses.map((warehouse) => {
+              onChange={setToWarehouseId}
+              placeholder="ทุกคลัง"
+              className="mt-1 [&>div]:h-9"
+              options={[{ value: "", label: "ทุกคลัง" }, ...warehouses.flatMap((warehouse) => {
                 const id = warehouse.warehouse_id ?? warehouse.id;
                 const name = warehouse.warehouse_name ?? warehouse.name;
-                return id ? (
-                  <option key={id} value={id}>
-                    {name || `คลัง ${id}`}
-                  </option>
-                ) : null;
-              })}
-            </select>
-          </label>
+                return id ? [{ value: String(id), label: name || `คลัง ${id}` }] : [];
+              })]}
+            />
+          </div>
           <DatePicker
             label="วันที่จัดส่ง ตั้งแต่"
             value={dateFrom}

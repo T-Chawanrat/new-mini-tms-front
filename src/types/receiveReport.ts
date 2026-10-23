@@ -168,7 +168,6 @@ export type Pagination = {
 export type Filters = {
   receive_date_from: string;
   receive_code: string;
-  serial_no: string;
   customer_id: string;
   to_warehouse_id: string;
 };

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import AxiosInstance from "../services/apiClient";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -611,14 +612,7 @@ export default function ManageUsers() {
             }}
           />
 
-          <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="input-modern w-[180px]">
-            <option value="">ทุก role</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
+          <SearchableSelect value={filterRole} onChange={setFilterRole} placeholder="ทุก role" className="!w-[180px]" options={[{ value: "", label: "ทุก role" }, ...roles.map((r) => ({ value: String(r.id), label: r.name }))]} />
 
           <button type="button" onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
             ค้นหา
@@ -744,27 +738,13 @@ export default function ManageUsers() {
 
                 <div>
                   <RequiredLabel required>Role</RequiredLabel>
-                  <select className="input-modern w-full" value={form.role_id} onChange={(e) => handleChange("role_id", e.target.value)}>
-                    <option value="">เลือก role</option>
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
+                  <SearchableSelect value={form.role_id} onChange={(value) => handleChange("role_id", value)} placeholder="เลือก role" options={roles.map((r) => ({ value: String(r.id), label: r.name }))} />
                 </div>
 
                 {![3, 4, 6, 9, 10].includes(Number(form.role_id)) && (
                   <div>
                     <RequiredLabel required>Warehouse</RequiredLabel>
-                    <select className="input-modern w-full" value={form.warehouse_id} onChange={(e) => handleChange("warehouse_id", e.target.value)}>
-                      <option value="">เลือก warehouse</option>
-                      {warehouses.map((w) => (
-                        <option key={w.id} value={w.id}>
-                          {w.name}
-                        </option>
-                      ))}
-                    </select>
+                    <SearchableSelect value={form.warehouse_id} onChange={(value) => handleChange("warehouse_id", value)} placeholder="เลือก warehouse" options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))} />
                   </div>
                 )}
               </div>

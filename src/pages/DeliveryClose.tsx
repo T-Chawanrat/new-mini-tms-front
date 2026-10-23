@@ -992,7 +992,7 @@ export default function DeliveryClose() {
                         layout="eight"
                       />
                     ) : !isClosedBill ? (
-                      <SignaturePad onChange={setSignaturePadData} />
+                      <SignaturePad onChange={setSignaturePadData} heightClass="h-48" />
                     ) : null}
                   </div>
                 </div>

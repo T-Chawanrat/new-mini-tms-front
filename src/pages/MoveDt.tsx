@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import { ArrowLeftRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -137,20 +138,14 @@ export default function MoveDt() {
                 <p className="text-xs text-slate-500">เฉพาะใบรถขนย้ายที่ปิดบรรทุกแล้ว</p>
               </div>
               <div className="flex items-center gap-2">
-                <select
+                <SearchableSelect
                   value={sourceWarehouseId}
-                  onChange={(event) => setSourceWarehouseId(event.target.value)}
-                  className="h-7 max-w-44 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none focus:border-blue-500"
-                  title="กรองคลังปลายทาง"
-                >
-                  <option value="">ทุกคลังปลายทาง</option>
-                  {warehouses.map((warehouse) => (
-                    <option key={warehouse.id} value={warehouse.id}>
-                      {warehouse.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                  onChange={setSourceWarehouseId}
+                  placeholder="ทุกคลังปลายทาง"
+                  className="!w-44 shrink-0 [&>div]:h-7 [&_input]:text-xs"
+                  options={[{ value: "", label: "ทุกคลังปลายทาง" }, ...warehouses.map((warehouse) => ({ value: String(warehouse.id), label: warehouse.name }))]}
+                />
+                <span className="shrink-0 whitespace-nowrap rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
                   {formatThaiNumber(visibleSources.length)} ใบ
                 </span>
               </div>

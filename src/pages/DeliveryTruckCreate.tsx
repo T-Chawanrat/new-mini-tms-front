@@ -1,9 +1,10 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FolderOpen, PackageCheck, Plus, Printer, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import DataGrid from "../components/tms/table/DataGrid";
 import DatePicker from "../components/tms/form/DatePicker";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import AxiosInstance from "../services/apiClient";
 import { formatThaiNumber } from "../utils/textSanitizer";
 import { formatThaiDateTime } from "../utils/dateTime";
@@ -73,11 +74,13 @@ export default function DeliveryTruckCreate() {
 
   const filteredRows = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) return rows;
-
     return rows.filter((row) => {
       const matchesSearch = [row.truck_code, row.driver_name, row.license_plate].some((value) => value.toLowerCase().includes(keyword));
-      const date = String(row.create_date || "").slice(0, 10);
+      const parsedDate = row.create_date ? new Date(row.create_date) : null;
+      const date = parsedDate && !Number.isNaN(parsedDate.getTime())
+        ? `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, "0")}-${String(parsedDate.getDate()).padStart(2, "0")}`
+        : "";
+      if (!date && (dateFrom || dateTo)) return false;
       return matchesSearch && (!dateFrom || date >= dateFrom) && (!dateTo || date <= dateTo);
     });
   }, [dateFrom, dateTo, rows, search]);
@@ -389,44 +392,15 @@ export default function DeliveryTruckCreate() {
 
               {driverType === "EMPLOYEE" ? (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <ModalSelect label="พนักงานขับรถ" value={driverId} onChange={setDriverId} disabled={creating}>
-                    <option value="">เลือกพนักงานขับรถ</option>
-                    {drivers.map((driver) => (
-                      <option key={driver.id} value={String(driver.id)}>
-                        {[driver.employee_code, driver.first_name, driver.last_name].filter(Boolean).join(" - ")}
-                      </option>
-                    ))}
-                  </ModalSelect>
-                  <ModalSelect label="ทะเบียนรถ" value={vehicleId} onChange={setVehicleId} disabled={creating}>
-                    <option value="">เลือกทะเบียนรถ</option>
-                    {vehicles.map((vehicle) => (
-                      <option key={vehicle.id} value={String(vehicle.id)}>
-                        {[vehicle.license_plate, vehicle.license_plate_province, vehicle.model].filter(Boolean).join(" - ")}
-                      </option>
-                    ))}
-                  </ModalSelect>
+                  <ModalSelect label="พนักงานขับรถ" value={driverId} onChange={setDriverId} disabled={creating} options={drivers.map((driver) => ({ value: String(driver.id), label: [driver.employee_code, driver.first_name, driver.last_name].filter(Boolean).join(" - ") }))} />
+                  <ModalSelect label="ทะเบียนรถ" value={vehicleId} onChange={setVehicleId} disabled={creating} options={vehicles.map((vehicle) => ({ value: String(vehicle.id), label: [vehicle.license_plate, vehicle.license_plate_province, vehicle.model].filter(Boolean).join(" - ") }))} />
                 </div>
               ) : (
-                <ModalSelect label="คนขับ / รถเสริม" value={vehicleId} onChange={setVehicleId} disabled={creating}>
-                  <option value="">เลือกคนขับและรถเสริม</option>
-                  {contractors.map((contractor) => (
-                    <option key={contractor.vehicle_contractor_id} value={String(contractor.vehicle_contractor_id)}>
-                      {[contractor.employee_code, contractor.first_name, contractor.last_name].filter(Boolean).join(" ")} -{" "}
-                      {[contractor.license_plate, contractor.license_plate_province].filter(Boolean).join(" ")}
-                    </option>
-                  ))}
-                </ModalSelect>
+                <ModalSelect label="คนขับ / รถเสริม" value={vehicleId} onChange={setVehicleId} disabled={creating} options={contractors.map((contractor) => ({ value: String(contractor.vehicle_contractor_id), label: `${[contractor.employee_code, contractor.first_name, contractor.last_name].filter(Boolean).join(" ")} - ${[contractor.license_plate, contractor.license_plate_province].filter(Boolean).join(" ")}` }))} />
               )}
 
               <section className="rounded-lg border border-blue-100 bg-blue-50/70 p-4">
-                <ModalSelect label="สายรถ" value={routeId} onChange={setRouteId} disabled={creating}>
-                  <option value="">เลือกสายรถ</option>
-                  {routes.map((route) => (
-                    <option key={route.route_id} value={String(route.route_id)}>
-                      {[route.route_code, route.route_name].filter(Boolean).join(" - ")}
-                    </option>
-                  ))}
-                </ModalSelect>
+                <ModalSelect label="สายรถ" value={routeId} onChange={setRouteId} disabled={creating} options={routes.map((route) => ({ value: String(route.route_id), label: [route.route_code, route.route_name].filter(Boolean).join(" - ") }))} />
               </section>
 
               {!creating && driverType === "EMPLOYEE" && drivers.length === 0 && <p className="text-xs text-red-600">ไม่พบข้อมูลพนักงานขับรถ</p>}
@@ -504,21 +478,14 @@ type ModalSelectProps = {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
-  children: ReactNode;
+  options: { value: string; label: string }[];
 };
 
-function ModalSelect({ label, value, onChange, disabled = false, children }: ModalSelectProps) {
+function ModalSelect({ label, value, onChange, disabled = false, options }: ModalSelectProps) {
   return (
     <div>
       <label className="mb-1.5 block text-sm font-semibold text-slate-700">{label}</label>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-      >
-        {children}
-      </select>
+      <SearchableSelect value={value} onChange={onChange} disabled={disabled} options={options} placeholder={`เลือก${label}`} className="[&>div]:h-10" portal />
     </div>
   );
 }

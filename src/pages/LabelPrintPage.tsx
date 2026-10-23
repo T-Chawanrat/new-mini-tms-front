@@ -7,6 +7,7 @@ import { useSearchParams } from "react-router-dom";
 import AxiosInstance from "../services/apiClient";
 
 import DatePicker from "../components/tms/form/DatePicker";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import LabelCard from "../components/tms/labels/LabelCard";
 import LabelPrintStyle from "../components/tms/labels/LabelPrintStyle";
 import ResizableColumns from "../components/tms/table/ResizableColumns";
@@ -27,6 +28,11 @@ import { defaultLabelFilters, defaultLabelPagination } from "../types/label";
 import { buildLabelReceiveQueryParams, buildLabelSerialQueryParams, formatDate, formatDateTime, formatNumber, getText } from "../utils/labelHelpers";
 
 const LABEL_API_PATH = "/labels";
+
+const serialSearchForReceive = (receiveCode: string, keyword: string) => {
+  const normalize = (value: string) => value.toLowerCase().replace(/[\s\-_%]/g, "");
+  return normalize(receiveCode).includes(normalize(keyword)) ? "" : keyword.trim();
+};
 
 const RECEIVE_HEADERS = [
   <span key="expand-column" />,
@@ -99,8 +105,6 @@ export default function LabelPrintPage() {
   const [appliedFilters, setAppliedFilters] = useState<LabelFilters>(() => ({ ...defaultLabelFilters, receive_code: receiveCodeFromReport }));
 
   const [activeReceiveCode, setActiveReceiveCode] = useState("");
-  const [serialSearch, setSerialSearch] = useState("");
-  const [appliedSerialSearch, setAppliedSerialSearch] = useState("");
 
   const [selectedReceiveCodes, setSelectedReceiveCodes] = useState<string[]>([]);
   const [selectedSerialNos, setSelectedSerialNos] = useState<string[]>([]);
@@ -178,10 +182,8 @@ export default function LabelPrintPage() {
       setReceiveError(null);
 
       const params = buildLabelReceiveQueryParams(appliedFilters, page, limit);
-
-      if (appliedSerialSearch.trim()) {
-        params.set("serial_no", appliedSerialSearch.trim());
-      }
+      params.delete("receive_code");
+      if (appliedFilters.receive_code.trim()) params.set("search", appliedFilters.receive_code.trim());
 
       const res = await AxiosInstance.get<LabelReceivesResponse>(`${LABEL_API_PATH}/receives?${params.toString()}`);
 
@@ -254,7 +256,6 @@ export default function LabelPrintPage() {
       setActiveReceiveCode("");
       setSerialRows([]);
       setSelectedSerialNos([]);
-      setSerialSearch("");
 
       return;
     }
@@ -263,7 +264,7 @@ export default function LabelPrintPage() {
 
     setSelectedSerialNos([]);
 
-    await fetchSerials(receiveCode, appliedSerialSearch);
+    await fetchSerials(receiveCode, serialSearchForReceive(receiveCode, appliedFilters.receive_code));
   };
 
   const handleSearch = () => {
@@ -276,7 +277,6 @@ export default function LabelPrintPage() {
 
     setAppliedFilters(filters);
 
-    setAppliedSerialSearch(serialSearch.trim());
   };
 
   const handleReset = () => {
@@ -288,8 +288,6 @@ export default function LabelPrintPage() {
     setSerialRows([]);
     setSelectedReceiveCodes([]);
     setSelectedSerialNos([]);
-    setSerialSearch("");
-    setAppliedSerialSearch("");
 
     setPage(1);
   };
@@ -298,7 +296,7 @@ export default function LabelPrintPage() {
     await fetchReceives();
 
     if (activeReceiveCode) {
-      await fetchSerials(activeReceiveCode, appliedSerialSearch);
+      await fetchSerials(activeReceiveCode, serialSearchForReceive(activeReceiveCode, appliedFilters.receive_code));
     }
   };
 
@@ -311,7 +309,6 @@ export default function LabelPrintPage() {
     setSerialRows([]);
     setSelectedReceiveCodes([]);
     setSelectedSerialNos([]);
-    setSerialSearch("");
   };
 
   const toggleAllReceives = () => {
@@ -404,7 +401,7 @@ export default function LabelPrintPage() {
     try {
       await markPrinted(items);
 
-      await Promise.all([fetchReceives(), activeReceiveCode ? fetchSerials(activeReceiveCode, appliedSerialSearch) : Promise.resolve()]);
+      await Promise.all([fetchReceives(), activeReceiveCode ? fetchSerials(activeReceiveCode, serialSearchForReceive(activeReceiveCode, appliedFilters.receive_code)) : Promise.resolve()]);
     } catch (err) {
       console.error("print label error:", err);
     } finally {
@@ -466,7 +463,7 @@ export default function LabelPrintPage() {
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeReceiveCode, serialSearch]);
+  }, [activeReceiveCode, appliedFilters]);
 
   useEffect(() => {
     fetchFilterOptions();
@@ -484,7 +481,7 @@ export default function LabelPrintPage() {
     fetchReceives();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, appliedSerialSearch, page, limit]);
+  }, [appliedFilters, page, limit]);
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
@@ -526,7 +523,7 @@ export default function LabelPrintPage() {
       </div>
 
       <div className="mb-2 shrink-0 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[150px_1fr_1fr_1.25fr_1.25fr_auto] lg:items-center">
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[150px_2fr_1.25fr_1.25fr_auto] lg:items-center">
           <div className="h-9">
             <DatePicker
               variant="compact"
@@ -539,11 +536,9 @@ export default function LabelPrintPage() {
           <FilterInput
             value={filters.receive_code}
             onChange={(value) => updateFilter("receive_code", value)}
-            placeholder="Receive Code"
+            placeholder="Receive Code / Serial No"
             onEnter={handleSearch}
           />
-
-          <FilterInput value={serialSearch} onChange={setSerialSearch} placeholder="Serial No" onEnter={handleSearch} />
 
           <FilterDropdown
             value={filters.customer_id}
@@ -558,7 +553,6 @@ export default function LabelPrintPage() {
             options={warehousesTo}
             onChange={(value) => updateFilter("to_warehouse_id", value)}
             placeholder={filterLoading ? "กำลังโหลด To Warehouse..." : "To Warehouse ทั้งหมด"}
-            optionKeyPrefix="warehouse-to"
             showCode
           />
 
@@ -1078,7 +1072,6 @@ type FilterDropdownProps = {
 
   showCode?: boolean;
 
-  optionKeyPrefix?: string;
 };
 
 function FilterDropdown({
@@ -1092,21 +1085,17 @@ function FilterDropdown({
 
   showCode = false,
 
-  optionKeyPrefix = "option",
 }: FilterDropdownProps) {
   return (
-    <select
+    <SearchableSelect
       value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-    >
-      <option value="">{placeholder}</option>
-
-      {options.map((option) => (
-        <option key={`${optionKeyPrefix}-${option.id}`} value={option.id}>
-          {showCode && option.code ? `${option.code} - ${option.name}` : option.name}
-        </option>
-      ))}
-    </select>
+      onChange={onChange}
+      placeholder={placeholder}
+      options={[{ value: "", label: placeholder }, ...options.map((option) => ({
+        value: String(option.id),
+        label: showCode && option.code ? `${option.code} - ${option.name}` : option.name,
+      }))]}
+      className="[&>div]:h-9 [&_input]:text-xs"
+    />
   );
 }

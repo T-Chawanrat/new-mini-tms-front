@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import AxiosInstance from "../services/apiClient";
 import { useAuth } from "../context/AuthContext";
 import { Pencil, X } from "lucide-react";
@@ -700,15 +701,7 @@ export default function ManagePackages() {
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
         {canSelectCustomer && (
-          <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-modern w-auto">
-            <option value="">เลือกลูกค้า</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.id} {c.code ? `${c.code} - ` : ""}
-                {c.name} ({c.type})
-              </option>
-            ))}
-          </select>
+          <SearchableSelect value={customerId} onChange={setCustomerId} placeholder="เลือกลูกค้า" className="!w-full sm:!w-[32rem]" options={[{ value: "", label: "เลือกลูกค้า" }, ...customers.map((c) => ({ value: String(c.id), label: `${c.id} ${c.code ? `${c.code} - ` : ""}${c.name} (${c.type})` }))]} />
         )}
 
         <input

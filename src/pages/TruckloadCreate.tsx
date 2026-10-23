@@ -4,6 +4,7 @@ import { FolderOpen, PackageCheck, Plus, Printer, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import DataGrid from "../components/tms/table/DataGrid";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import DatePicker from "../components/tms/form/DatePicker";
 import AxiosInstance from "../services/apiClient";
 import { formatCodeNameOption, formatThaiNumber } from "../utils/textSanitizer";
@@ -119,11 +120,6 @@ export default function TruckLoadCreate() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const [isClose, setIsClose] = useState("");
-  const [isGo, setIsGo] = useState("");
-  const [isCompleted, setIsCompleted] = useState("");
-
-
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -196,12 +192,6 @@ export default function TruckLoadCreate() {
 
           create_date_to: dateTo || undefined,
 
-          is_close: isClose || undefined,
-
-          is_go: isGo || undefined,
-
-          is_completed: isCompleted || undefined,
-
           page: 1,
           limit: 100,
         },
@@ -218,7 +208,7 @@ export default function TruckLoadCreate() {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, isClose, isCompleted, isGo, search]);
+  }, [dateFrom, dateTo, search]);
 
   useEffect(() => {
     void fetchTruckLoads();
@@ -263,9 +253,6 @@ export default function TruckLoadCreate() {
     setSearch("");
     setDateFrom("");
     setDateTo("");
-    setIsClose("");
-    setIsGo("");
-    setIsCompleted("");
     setInfo(null);
     setError(null);
   };
@@ -580,7 +567,7 @@ export default function TruckLoadCreate() {
       </section>
 
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[1.3fr_1fr_1fr_.8fr_.8fr_.8fr_auto]">
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">ค้นหา Truck Code</label>
 
@@ -609,12 +596,6 @@ export default function TruckLoadCreate() {
 
             <DatePicker value={dateTo} onChange={setDateTo} placeholder="เลือกวันที่สิ้นสุด" variant="compact" />
           </div>
-
-          <StatusSelect label="ปิดบรรทุก" value={isClose} onChange={setIsClose} />
-
-          <StatusSelect label="ปล่อยรถ" value={isGo} onChange={setIsGo} />
-
-          <StatusSelect label="ส่งสำเร็จ" value={isCompleted} onChange={setIsCompleted} />
 
           <div className="flex gap-2">
             <button
@@ -700,25 +681,8 @@ export default function TruckLoadCreate() {
 
               {truckType === "MAIN" ? (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <ModalSelect label="พนักงานขับรถ" value={selectedDriver} onChange={setSelectedDriver} disabled={loadingOptions || creating}>
-                    <option value="">เลือกพนักงานขับรถ</option>
-
-                    {drivers.map((driver) => (
-                      <option key={driver.id ?? driver.user_id ?? driver.employee_code} value={String(driver.id ?? driver.user_id ?? "")}>
-                        {getDriverLabel(driver)}
-                      </option>
-                    ))}
-                  </ModalSelect>
-
-                  <ModalSelect label="ทะเบียนรถ" value={selectedVehicle} onChange={setSelectedVehicle} disabled={loadingOptions || creating}>
-                    <option value="">เลือกทะเบียนรถ</option>
-
-                    {vehicles.map((vehicle) => (
-                      <option key={vehicle.id ?? vehicle.vehicle_id ?? vehicle.license_plate} value={vehicle.license_plate}>
-                        {getVehicleLabel(vehicle)}
-                      </option>
-                    ))}
-                  </ModalSelect>
+                  <ModalSelect label="พนักงานขับรถ" value={selectedDriver} onChange={setSelectedDriver} disabled={loadingOptions || creating} options={drivers.map((driver) => ({ value: String(driver.id ?? driver.user_id ?? ""), label: getDriverLabel(driver) }))} />
+                  <ModalSelect label="ทะเบียนรถ" value={selectedVehicle} onChange={setSelectedVehicle} disabled={loadingOptions || creating} options={vehicles.map((vehicle) => ({ value: vehicle.license_plate, label: getVehicleLabel(vehicle) }))} />
                 </div>
               ) : (
                 <ModalSelect
@@ -726,30 +690,12 @@ export default function TruckLoadCreate() {
                   value={selectedContractor}
                   onChange={setSelectedContractor}
                   disabled={loadingOptions || creating}
-                >
-                  <option value="">เลือกคนขับและรถเสริม</option>
-
-                  {contractors.map((contractor) => (
-                    <option
-                      key={contractor.vehicle_contractor_id}
-                      value={String(contractor.vehicle_contractor_id)}
-                    >
-                      {getContractorLabel(contractor)}
-                    </option>
-                  ))}
-                </ModalSelect>
+                  options={contractors.map((contractor) => ({ value: String(contractor.vehicle_contractor_id), label: getContractorLabel(contractor) }))}
+                />
               )}
 
               <section className="rounded-lg border border-blue-100 bg-blue-50/70 p-4">
-                <ModalSelect label="To Warehouse" value={selectedToWarehouse} onChange={setSelectedToWarehouse} disabled={loadingOptions || creating}>
-                  <option value="">เลือก To Warehouse</option>
-
-                  {warehouses.map((warehouse) => (
-                    <option key={warehouse.id} value={String(warehouse.id)}>
-                      {formatCodeNameOption(warehouse)}
-                    </option>
-                  ))}
-                </ModalSelect>
+                <ModalSelect label="To Warehouse" value={selectedToWarehouse} onChange={setSelectedToWarehouse} disabled={loadingOptions || creating} options={warehouses.map((warehouse) => ({ value: String(warehouse.id), label: formatCodeNameOption(warehouse) }))} />
               </section>
 
               {loadingOptions && (
@@ -829,51 +775,20 @@ export default function TruckLoadCreate() {
   );
 }
 
-type StatusSelectProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-};
-
-function StatusSelect({ label, value, onChange }: StatusSelectProps) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-slate-600">{label}</label>
-
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="">ทั้งหมด</option>
-        <option value="Y">ใช่</option>
-        <option value="N">ไม่ใช่</option>
-      </select>
-    </div>
-  );
-}
-
 type ModalSelectProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
-  children: ReactNode;
+  options: { value: string; label: string }[];
 };
 
-function ModalSelect({ label, value, onChange, disabled = false, children }: ModalSelectProps) {
+function ModalSelect({ label, value, onChange, disabled = false, options }: ModalSelectProps) {
   return (
     <div>
       <label className="mb-1.5 block text-sm font-semibold text-slate-700">{label}</label>
 
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-      >
-        {children}
-      </select>
+      <SearchableSelect value={value} onChange={onChange} disabled={disabled} options={options} placeholder={`เลือก${label}`} className="[&>div]:h-10" portal />
     </div>
   );
 }

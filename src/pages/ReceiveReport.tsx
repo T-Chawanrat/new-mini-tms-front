@@ -4,6 +4,7 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import AxiosInstance from "../services/apiClient";
 import DatePicker from "../components/tms/form/DatePicker";
+import SearchableSelect from "../components/tms/form/SearchableSelect";
 import DataGrid from "../components/tms/table/DataGrid";
 import ResizableColumns from "../components/tms/table/ResizableColumns";
 import type { Filters, Option, Pagination, ReceiveReportRow, ReceiveReportSummary, ReceiveSerialRow } from "../types/receiveReport";
@@ -379,8 +380,7 @@ export default function ReceiveReport() {
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
       <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-base font-semibold text-slate-900">Receive Report</h1>
-          <p className="mt-0.5 text-[11px] text-slate-500">ค้นหา receive, serial และดูรายละเอียดแบบขยายแถว</p>
+          <h1 className="text-base font-semibold text-slate-900">รายการบิล</h1>
         </div>
 
         <button
@@ -395,7 +395,7 @@ export default function ReceiveReport() {
       </div>
 
       <div className="mb-3 shrink-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[160px_1fr_1fr_1.25fr_1.25fr_auto] lg:items-center">
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[160px_2fr_1.25fr_1.25fr_auto] lg:items-center">
           <div className="h-9">
             <DatePicker
               variant="compact"
@@ -405,9 +405,7 @@ export default function ReceiveReport() {
             />
           </div>
 
-          <FilterInput value={filters.receive_code} onChange={(value) => updateFilter("receive_code", value)} placeholder="Receive Code" />
-
-          <FilterInput value={filters.serial_no} onChange={(value) => updateFilter("serial_no", value)} placeholder="Serial No" />
+          <FilterInput value={filters.receive_code} onChange={(value) => updateFilter("receive_code", value)} placeholder="Receive Code / Serial No / Reference" />
 
           <FilterDropdown
             value={filters.customer_id}
@@ -422,7 +420,6 @@ export default function ReceiveReport() {
             options={warehousesTo}
             onChange={(value) => updateFilter("to_warehouse_id", value)}
             placeholder={filterLoading ? "กำลังโหลด To Warehouse..." : "To Warehouse ทั้งหมด"}
-            optionKeyPrefix="warehouse-to"
             showCode
           />
 
@@ -848,23 +845,19 @@ type FilterDropdownProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   showCode?: boolean;
-  optionKeyPrefix?: string;
 };
 
-function FilterDropdown({ value, options, onChange, placeholder = "ทั้งหมด", showCode = false, optionKeyPrefix = "option" }: FilterDropdownProps) {
+function FilterDropdown({ value, options, onChange, placeholder = "ทั้งหมด", showCode = false }: FilterDropdownProps) {
   return (
-    <select
+    <SearchableSelect
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-    >
-      <option value="">{placeholder}</option>
-
-      {options.map((option) => (
-        <option key={`${optionKeyPrefix}-${option.id}`} value={option.id}>
-          {showCode && option.code ? `${option.code} - ${option.name}` : option.name}
-        </option>
-      ))}
-    </select>
+      onChange={onChange}
+      placeholder={placeholder}
+      options={[{ value: "", label: placeholder }, ...options.map((option) => ({
+        value: String(option.id),
+        label: showCode && option.code ? `${option.code} - ${option.name}` : option.name,
+      }))]}
+      className="[&>div]:h-9 [&_input]:text-xs"
+    />
   );
 }
