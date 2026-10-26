@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, ImagePlus, MessageCircle, Search, Send, UserRound, X } from "lucide-react";
+import { CheckCircle2, Clock3, ImagePlus, MessageCircle, Search, Send, UserRound, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AxiosInstance from "../services/apiClient";
 import { getUploadUrl } from "../services/uploadUrl";
+import { connectSocket } from "../services/socket";
 
 type IssueStatus = "NEW" | "IN_PROGRESS" | "RESOLVED";
 type Thread = {
+  delivery_issue_id: number;
   receive_code: string;
   issue_type: string;
   issue_status: IssueStatus;
@@ -19,6 +21,7 @@ type Message = {
   delivery_status_message_id: number;
   sender_user_id: number;
   sender_name: string;
+  role_name?: string | null;
   message_text?: string;
   created_date: string;
   media: { file_name: string; file_path: string; thumbnail_path?: string | null }[];
@@ -32,7 +35,7 @@ export default function DeliveryIssueInbox() {
   const [searchParams] = useSearchParams();
   const requestedCode = searchParams.get("bill_no")?.trim() || "";
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [selectedCode, setSelectedCode] = useState("");
+  const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [recipient, setRecipient] = useState("-");
   const [query, setQuery] = useState("");
@@ -44,25 +47,25 @@ export default function DeliveryIssueInbox() {
   const [error, setError] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const selected = threads.find((thread) => thread.delivery_issue_id === selectedIssueId);
 
   const loadThreads = async () => {
     const response = await AxiosInstance.get<{ data?: Thread[] }>("/delivery-issues");
     const data = response.data.data || [];
     setThreads(data);
-    setSelectedCode((current) => current || data[0]?.receive_code || "");
   };
-  const loadMessages = async (receiveCode: string) => {
-    if (!receiveCode) return;
+  const loadMessages = async (deliveryIssueId: number) => {
+    if (!Number.isInteger(deliveryIssueId) || deliveryIssueId <= 0) return;
     try {
       setLoading(true);
       setError("");
       const response = await AxiosInstance.get<{ data?: { thread: { recipient_name: string }; messages: Message[] } }>(
-        `/delivery-issues/${encodeURIComponent(receiveCode)}/messages`,
+        `/delivery-issues/${deliveryIssueId}/messages`,
       );
       const data = response.data.data;
       setMessages(data?.messages || []);
       setRecipient(data?.thread.recipient_name || "-");
-      setThreads((current) => current.map((thread) => (thread.receive_code === receiveCode ? { ...thread, unread_count: 0 } : thread)));
+      setThreads((current) => current.map((thread) => (thread.delivery_issue_id === deliveryIssueId ? { ...thread, unread_count: 0 } : thread)));
       requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }));
     } catch (requestError: any) {
       setMessages([]);
@@ -75,63 +78,100 @@ export default function DeliveryIssueInbox() {
     void loadThreads().catch(() => setError("ไม่สามารถโหลดรายการแจ้งปัญหาได้"));
   }, []);
   useEffect(() => {
-    if (selectedCode) void loadMessages(selectedCode);
-  }, [selectedCode]);
+    if (selectedIssueId) void loadMessages(selectedIssueId);
+  }, [selectedIssueId]);
   useEffect(() => {
-    if (requestedCode && threads.some((thread) => thread.receive_code === requestedCode)) setSelectedCode(requestedCode);
+    if (requestedCode) {
+      const requested = threads.find((thread) => thread.receive_code === requestedCode);
+      if (requested) setSelectedIssueId(requested.delivery_issue_id);
+    }
   }, [requestedCode, threads]);
+  useEffect(() => {
+    const socket = connectSocket();
+    const refreshInbox = () => void loadThreads().catch(() => undefined);
+    const joinInbox = () => {
+      socket.emit("delivery-issues:inbox:join");
+    };
+    const refreshThread = (event: { issueId?: number }) => {
+      refreshInbox();
+      if (Number(event.issueId) === selectedIssueId && selectedIssueId) void loadMessages(selectedIssueId);
+    };
+    socket.on("connect", joinInbox);
+    if (socket.connected) joinInbox();
+    socket.on("delivery-issue:inbox", refreshInbox);
+    socket.on("delivery-issue:message", refreshThread);
+    socket.on("delivery-issue:status", refreshThread);
+    return () => {
+      socket.off("connect", joinInbox);
+      socket.off("delivery-issue:inbox", refreshInbox);
+      socket.off("delivery-issue:message", refreshThread);
+      socket.off("delivery-issue:status", refreshThread);
+    };
+  }, [selectedIssueId]);
+  useEffect(() => {
+    if (!selected?.delivery_issue_id) return;
+    const socket = connectSocket();
+    const joinThread = () => socket.emit("delivery-issue:join", selected.delivery_issue_id);
+    socket.on("connect", joinThread);
+    if (socket.connected) joinThread();
+    return () => {
+      socket.off("connect", joinThread);
+      socket.emit("delivery-issue:leave", selected.delivery_issue_id);
+    };
+  }, [selected?.delivery_issue_id]);
 
   const updateStatus = async (issueStatus: IssueStatus) => {
-    if (!selectedCode) return;
+    if (!selectedIssueId) return;
     try {
-      await AxiosInstance.patch(`/delivery-issues/${encodeURIComponent(selectedCode)}/status`, { issue_status: issueStatus });
-      setThreads((current) => current.map((thread) => (thread.receive_code === selectedCode ? { ...thread, issue_status: issueStatus } : thread)));
+      await AxiosInstance.patch(`/delivery-issues/${selectedIssueId}/status`, { issue_status: issueStatus });
+      setThreads((current) => current.map((thread) => (thread.delivery_issue_id === selectedIssueId ? { ...thread, issue_status: issueStatus } : thread)));
     } catch (requestError: any) {
       setError(requestError?.response?.data?.message || "ไม่สามารถเปลี่ยนสถานะได้");
     }
   };
   const send = async () => {
-    if (!selectedCode || (!draft.trim() && !attachments.length) || sending) return;
+    if (!selectedIssueId || (!draft.trim() && !attachments.length) || sending) return;
     try {
       setSending(true);
       setError("");
       const form = new FormData();
       if (draft.trim()) form.append("message_text", draft.trim());
       attachments.forEach(({ file }) => form.append("images", file));
-      await AxiosInstance.post(`/delivery-issues/${encodeURIComponent(selectedCode)}/messages`, form);
+      await AxiosInstance.post(`/delivery-issues/${selectedIssueId}/messages`, form);
       setDraft("");
       attachments.forEach(({ preview }) => URL.revokeObjectURL(preview));
       setAttachments([]);
-      await Promise.all([loadMessages(selectedCode), loadThreads()]);
+      await Promise.all([loadMessages(selectedIssueId), loadThreads()]);
     } catch (requestError: any) {
       setError(requestError?.response?.data?.message || "ไม่สามารถส่งข้อความได้");
     } finally {
       setSending(false);
     }
   };
-  const selected = threads.find((thread) => thread.receive_code === selectedCode);
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
-    const statusMatched = threads.filter((thread) => statusFilter === "ALL" || thread.issue_status === statusFilter);
+    const statusMatched = threads.filter((thread) => {
+      if (statusFilter === "ALL") return true;
+      if (statusFilter === "NEW") return Number(thread.unread_count) > 0;
+      return thread.issue_status === statusFilter;
+    });
     return term
       ? statusMatched.filter((thread) =>
           [thread.receive_code, thread.last_message, thread.issue_type].some((value) => value.toLowerCase().includes(term)),
         )
       : statusMatched;
   }, [query, statusFilter, threads]);
-  const unreadCount = threads.filter((thread) => thread.unread_count > 0).length;
   const currentUserId = Number(user?.id ?? user?.user_id);
 
   return (
     <main className="h-[calc(100vh-61px)] overflow-hidden bg-slate-50 font-thai">
       <div className="grid h-full min-h-0 overflow-hidden border border-slate-200 bg-white shadow-sm lg:grid-cols-[340px_minmax(0,1fr)]">
-        <aside className="border-b border-slate-200 lg:border-b-0 lg:border-r">
-          <div className="border-b border-slate-100 p-4">
-            <div className="mb-3 flex items-center justify-between gap-2 font-bold text-slate-700">
+        <aside className="flex min-h-0 flex-col border-b border-slate-200 lg:border-b-0 lg:border-r">
+          <div className="shrink-0 border-b border-slate-100 p-4">
+            <div className="mb-3 flex items-center gap-2 font-bold text-slate-700">
               <span className="inline-flex items-center gap-2">
                 <MessageCircle size={19} className="text-blue-600" /> รายการแจ้งปัญหา
               </span>
-              {unreadCount ? <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs text-rose-700">{unreadCount} ใหม่</span> : null}
             </div>
             <div className="relative">
               <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -147,7 +187,10 @@ export default function DeliveryIssueInbox() {
                 <button
                   key={status}
                   type="button"
-                  onClick={() => setStatusFilter(status)}
+                  onClick={() => {
+                    setStatusFilter(status);
+                    if (status === "ALL") setSelectedIssueId(null);
+                  }}
                   className={`rounded-md px-2.5 py-1 text-xs font-semibold ${statusFilter === status ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}
                 >
                   {status === "ALL" ? "ทั้งหมด" : status === "NEW" ? "ใหม่" : status === "IN_PROGRESS" ? "รับเรื่องแล้ว" : "เสร็จสิ้นแล้ว"}
@@ -155,32 +198,29 @@ export default function DeliveryIssueInbox() {
               ))}
             </div>
           </div>
-          <div className="max-h-[420px] overflow-y-auto p-2 lg:max-h-[610px]">
+          <div className="min-h-0 max-h-[420px] flex-1 overflow-y-auto p-2 lg:max-h-none">
             {!filtered.length ? (
               <p className="p-3 text-sm text-slate-400">ยังไม่มีรายการแจ้งปัญหา</p>
             ) : (
               filtered.map((thread) => (
                 <button
-                  key={thread.receive_code}
+                  key={thread.delivery_issue_id}
                   type="button"
-                  onClick={() => setSelectedCode(thread.receive_code)}
-                  className={`mb-1 w-full rounded-xl p-3 text-left transition-colors ${thread.receive_code === selectedCode ? "bg-blue-50" : "hover:bg-slate-50"}`}
+                  onClick={() => setSelectedIssueId(thread.delivery_issue_id)}
+                  className={`mb-2 w-full rounded-xl border p-3 text-left transition-colors ${thread.delivery_issue_id === selectedIssueId ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100"}`}
                 >
                   <div className="flex items-start gap-2.5">
-                    <div
-                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${thread.unread_count ? "bg-rose-100 text-rose-600" : "bg-slate-100 text-slate-500"}`}
-                    >
-                      <AlertTriangle size={18} />
-                    </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="truncate text-xs font-bold text-blue-700">{thread.receive_code}</span>
                         <span className="shrink-0 text-xs text-slate-400">{time(thread.updated_at)}</span>
                       </div>
                       <div className="mt-0.5 truncate text-sm font-bold text-slate-700">{thread.issue_type || "แจ้งปัญหาการจัดส่ง"}</div>
-                      <div className="mt-0.5 truncate text-xs text-slate-500">{thread.last_message || "ยังไม่มีข้อความ"}</div>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-xs text-slate-500">{thread.last_message || "ยังไม่มีข้อความ"}</span>
+                        {Number(thread.unread_count) > 0 ? <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">{Number(thread.unread_count) > 99 ? "99+" : Number(thread.unread_count)}</span> : null}
+                      </div>
                     </div>
-                    {thread.unread_count ? <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-rose-500" /> : null}
                   </div>
                 </button>
               ))
@@ -188,28 +228,21 @@ export default function DeliveryIssueInbox() {
           </div>
         </aside>
         <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-slate-50">
-          {selectedCode ? (
+          {selected ? (
             <>
               <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 lg:px-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-bold text-slate-800">{selected?.issue_type || "แจ้งปัญหาการจัดส่ง"}</h2>
-                      {selected?.unread_count ? (
-                        <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700">ใหม่</span>
-                      ) : (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">อ่านแล้ว</span>
-                      )}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                      <span className="font-bold text-blue-700">{selectedCode}</span>
+                    <h2 className="text-lg font-bold text-blue-700">{selected.receive_code}</h2>
+                    <div className="mt-1 text-sm font-bold text-slate-700">{selected.issue_type || "แจ้งปัญหาการจัดส่ง"}</div>
+                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                       <span className="inline-flex items-center gap-1">
                         <UserRound size={14} /> ผู้รับ: {recipient}
                       </span>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {(["NEW", "IN_PROGRESS", "RESOLVED"] as const).map((status) => (
+                    {(["IN_PROGRESS", "RESOLVED"] as const).map((status) => (
                       <button
                         key={status}
                         type="button"
@@ -217,13 +250,11 @@ export default function DeliveryIssueInbox() {
                         className={
                           status === "IN_PROGRESS"
                             ? "inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700"
-                            : status === "RESOLVED"
-                              ? "inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white"
-                              : `inline-flex h-9 items-center gap-1 rounded-lg px-3 text-xs font-semibold ${selected?.issue_status === status ? "bg-rose-100 text-rose-700" : "border border-slate-200 bg-white text-slate-500"}`
+                            : "inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white"
                         }
                       >
-                        {status === "IN_PROGRESS" ? <Clock3 size={16} /> : status === "RESOLVED" ? <CheckCircle2 size={16} /> : null}
-                        {status === "NEW" ? "ใหม่" : status === "IN_PROGRESS" ? "รับเรื่องแล้ว" : "เสร็จสิ้นแล้ว"}
+                        {status === "IN_PROGRESS" ? <Clock3 size={16} /> : <CheckCircle2 size={16} />}
+                        {status === "IN_PROGRESS" ? "รับเรื่องแล้ว" : "เสร็จสิ้นแล้ว"}
                       </button>
                     ))}
                   </div>
@@ -239,7 +270,7 @@ export default function DeliveryIssueInbox() {
                     <div key={message.delivery_status_message_id} className={`flex [contain-intrinsic-size:auto_180px] [content-visibility:auto] ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[85%] lg:max-w-[68%] ${mine ? "ml-auto text-right" : ""}`}>
                         <div className={`mb-1 w-fit text-xs font-semibold text-slate-500 ${mine ? "ml-auto" : ""}`}>
-                          {message.sender_name} · {time(message.created_date)}
+                          {message.sender_name}{message.role_name ? <span className="mx-1 inline-flex rounded-full border border-blue-100 bg-blue-50 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-blue-700">{message.role_name}</span> : null} · {time(message.created_date)}
                         </div>
                         <div
                           className={`inline-block max-w-full text-left rounded-2xl text-sm ${mediaPadding} ${mine ? "rounded-tr-sm bg-blue-600 text-white" : "rounded-tl-sm border border-slate-200 bg-white text-slate-700"}`}
