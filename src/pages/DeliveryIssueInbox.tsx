@@ -124,7 +124,9 @@ export default function DeliveryIssueInbox() {
     if (!selectedIssueId) return;
     try {
       await AxiosInstance.patch(`/delivery-issues/${selectedIssueId}/status`, { issue_status: issueStatus });
-      setThreads((current) => current.map((thread) => (thread.delivery_issue_id === selectedIssueId ? { ...thread, issue_status: issueStatus } : thread)));
+      setThreads((current) =>
+        current.map((thread) => (thread.delivery_issue_id === selectedIssueId ? { ...thread, issue_status: issueStatus } : thread)),
+      );
     } catch (requestError: any) {
       setError(requestError?.response?.data?.message || "ไม่สามารถเปลี่ยนสถานะได้");
     }
@@ -218,7 +220,11 @@ export default function DeliveryIssueInbox() {
                       <div className="mt-0.5 truncate text-sm font-bold text-slate-700">{thread.issue_type || "แจ้งปัญหาการจัดส่ง"}</div>
                       <div className="mt-0.5 flex items-center gap-2">
                         <span className="min-w-0 flex-1 truncate text-xs text-slate-500">{thread.last_message || "ยังไม่มีข้อความ"}</span>
-                        {Number(thread.unread_count) > 0 ? <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">{Number(thread.unread_count) > 99 ? "99+" : Number(thread.unread_count)}</span> : null}
+                        {Number(thread.unread_count) > 0 ? (
+                          <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-rose-500 px-3 text-[11px] font-bold text-white">
+                            {Number(thread.unread_count) > 99 ? "99+" : Number(thread.unread_count)}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -267,30 +273,48 @@ export default function DeliveryIssueInbox() {
                   const mine = message.sender_user_id === currentUserId;
                   const mediaPadding = message.media.length ? (message.message_text ? "w-[320px] px-4 pb-2.5 pt-3" : "w-[320px] p-2.5") : "px-4 py-3";
                   return (
-                    <div key={message.delivery_status_message_id} className={`flex [contain-intrinsic-size:auto_180px] [content-visibility:auto] ${mine ? "justify-end" : "justify-start"}`}>
+                    <div
+                      key={message.delivery_status_message_id}
+                      className={`flex [contain-intrinsic-size:auto_180px] [content-visibility:auto] ${mine ? "justify-end" : "justify-start"}`}
+                    >
                       <div className={`max-w-[85%] lg:max-w-[68%] ${mine ? "ml-auto text-right" : ""}`}>
                         <div className={`mb-1 w-fit text-xs font-semibold text-slate-500 ${mine ? "ml-auto" : ""}`}>
-                          {message.sender_name}{message.role_name ? <span className="mx-1 inline-flex rounded-full border border-blue-100 bg-blue-50 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-blue-700">{message.role_name}</span> : null} · {time(message.created_date)}
+                          {message.sender_name}
+                          {message.role_name ? (
+                            <span className="mx-1 inline-flex rounded-full border border-blue-100 bg-blue-50 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-blue-700">
+                              {message.role_name}
+                            </span>
+                          ) : null}{" "}
+                          · {time(message.created_date)}
                         </div>
                         <div
                           className={`inline-block max-w-full text-left rounded-2xl text-sm ${mediaPadding} ${mine ? "rounded-tr-sm bg-blue-600 text-white" : "rounded-tl-sm border border-slate-200 bg-white text-slate-700"}`}
                         >
                           {message.message_text ? <p className="whitespace-pre-wrap break-words">{message.message_text}</p> : null}
-                          {message.media.length ? <div className={`grid gap-1.5 ${message.message_text ? "mt-2" : ""} ${message.media.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-                            {message.media.map((media) => (
-                              <img
-                                key={media.file_path}
-                                src={getUploadUrl(media.thumbnail_path || media.file_path)}
-                                alt={media.file_name}
-                                loading="lazy"
-                                decoding="async"
-                                onError={(event) => {
-                                  if (event.currentTarget.src !== getUploadUrl(media.file_path)) event.currentTarget.src = getUploadUrl(media.file_path);
-                                }}
-                                className={message.media.length === 1 ? "max-h-72 w-full rounded-lg object-cover" : "aspect-square w-full rounded-lg object-cover"}
-                              />
-                            ))}
-                          </div> : null}
+                          {message.media.length ? (
+                            <div
+                              className={`grid gap-1.5 ${message.message_text ? "mt-2" : ""} ${message.media.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
+                            >
+                              {message.media.map((media) => (
+                                <img
+                                  key={media.file_path}
+                                  src={getUploadUrl(media.thumbnail_path || media.file_path)}
+                                  alt={media.file_name}
+                                  loading="lazy"
+                                  decoding="async"
+                                  onError={(event) => {
+                                    if (event.currentTarget.src !== getUploadUrl(media.file_path))
+                                      event.currentTarget.src = getUploadUrl(media.file_path);
+                                  }}
+                                  className={
+                                    message.media.length === 1
+                                      ? "max-h-72 w-full rounded-lg object-cover"
+                                      : "aspect-square w-full rounded-lg object-cover"
+                                  }
+                                />
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -301,15 +325,20 @@ export default function DeliveryIssueInbox() {
                 {attachments.length ? (
                   <div className="mb-2 flex flex-wrap gap-2">
                     {attachments.map((attachment, index) => (
-                      <div key={attachment.preview} className="group relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                      <div
+                        key={attachment.preview}
+                        className="group relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
+                      >
                         <img src={attachment.preview} alt={attachment.file.name} className="h-full w-full object-cover" />
                         <button
                           type="button"
-                          onClick={() => setAttachments((current) => {
-                            const removed = current[index];
-                            if (removed) URL.revokeObjectURL(removed.preview);
-                            return current.filter((_, itemIndex) => itemIndex !== index);
-                          })}
+                          onClick={() =>
+                            setAttachments((current) => {
+                              const removed = current[index];
+                              if (removed) URL.revokeObjectURL(removed.preview);
+                              return current.filter((_, itemIndex) => itemIndex !== index);
+                            })
+                          }
                           className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/75 text-white opacity-100 hover:bg-rose-600 sm:opacity-0 sm:group-hover:opacity-100"
                           aria-label={`ลบรูปที่แนบ ${index + 1}`}
                         >
@@ -328,7 +357,10 @@ export default function DeliveryIssueInbox() {
                     hidden
                     onChange={(event) => {
                       const selectedFiles = Array.from(event.target.files || []);
-                      setAttachments((current) => [...current, ...selectedFiles.slice(0, Math.max(0, 4 - current.length)).map((file) => ({ file, preview: URL.createObjectURL(file) }))]);
+                      setAttachments((current) => [
+                        ...current,
+                        ...selectedFiles.slice(0, Math.max(0, 4 - current.length)).map((file) => ({ file, preview: URL.createObjectURL(file) })),
+                      ]);
                       event.target.value = "";
                     }}
                   />

@@ -50,7 +50,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<ProtectedRoute><ReceiveImport /></ProtectedRoute>} />
+        <Route index element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
         <Route path="/dashboard" element={<Announcements />} />
         <Route path="/manage/vehicles" element={<ManageVehicles />} />
         <Route path="/contractor-create" element={<ContractorCreate />} />
