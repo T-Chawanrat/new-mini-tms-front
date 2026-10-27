@@ -81,12 +81,16 @@ const getDriverTypeLabel = (driverType: ProductTruckRow["driver_type"]) => {
 export default function ProductTruck() {
   const [rows, setRows] = useState<ProductTruckRow[]>([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [truckType, setTruckType] = useState<TruckTypeFilter>("DC_TRUCK_DC");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const searchTerm = search.trim();
+  const requestedSearch = searchTerm.length >= 3 ? searchTerm : "";
+  const searchPending = requestedSearch !== debouncedSearch;
   const showRoute = truckType !== "DC_TRUCK_DC";
   const showDestinationWarehouse = truckType !== "DC_TRUCK";
 
@@ -99,7 +103,7 @@ export default function ProductTruck() {
         params: {
           page: page + 1,
           limit: rowsPerPage,
-          search: search.trim() || undefined,
+          search: debouncedSearch || undefined,
           truck_type: truckType,
         },
       });
@@ -112,15 +116,17 @@ export default function ProductTruck() {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, search, truckType]);
+  }, [debouncedSearch, page, rowsPerPage, truckType]);
 
   useEffect(() => {
+    if (searchPending) return;
     void loadProducts();
-  }, [loadProducts]);
+  }, [loadProducts, searchPending]);
 
   useEffect(() => {
-    setPage(0);
-  }, [search, truckType]);
+    const timer = window.setTimeout(() => setDebouncedSearch(requestedSearch), 300);
+    return () => window.clearTimeout(timer);
+  }, [requestedSearch]);
 
   useEffect(() => {
     const lastPage = Math.max(Math.ceil(totalItems / rowsPerPage) - 1, 0);
@@ -204,7 +210,10 @@ export default function ProductTruck() {
               <button
                 key={tab.value}
                 type="button"
-                onClick={() => setTruckType(tab.value)}
+                onClick={() => {
+                  setTruckType(tab.value);
+                  setPage(0);
+                }}
                 className={`h-8 whitespace-nowrap rounded-md px-3 text-xs font-semibold transition ${truckType === tab.value ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
               >
                 {tab.label}
@@ -216,7 +225,10 @@ export default function ProductTruck() {
             <input
               type="text"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(0);
+            }}
               placeholder="ค้นหา Serial No, เลขใบรถ, ลูกค้า, สายรถ, คนขับ หรือทะเบียนรถ"
               className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />

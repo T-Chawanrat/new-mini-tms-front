@@ -1,54 +1,57 @@
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
-import SignIn from "../pages/AuthPages/SignIn";
-import Announcements from "../pages/Announcements";
 import ChangePassword from "../pages/ChangePassword";
-import ContractorCreate from "../pages/ContractorCreate";
-import CreateReceivePage from "../pages/CreateReceivePage/CreateReceivePage";
-import DcReceive from "../pages/DcReceive";
-import DeliveryClose from "../pages/DeliveryClose";
-import DeliveryCloseMediaEdit from "../pages/DeliveryCloseMediaEdit";
-import DeliveryIssueInbox from "../pages/DeliveryIssueInbox";
-import DeliveryPendingReportDt from "../pages/DeliveryPendingReportDt";
-import DeliveryPendingReportReceive from "../pages/DeliveryPendingReportReceive";
-import DeliveryPendingReportSn from "../pages/DeliveryPendingReportSn";
-import DeliveryTruckCreate from "../pages/DeliveryTruckCreate";
-import DeliveryTruckPrint from "../pages/DeliveryTruckPrint";
-import DeliveryTruckScan from "../pages/DeliveryTruckScan";
-import ReceiveImport from "../pages/ReceiveImport";
-import LabelPrintPage from "../pages/LabelPrintPage";
-import LogLabelPrint from "../pages/LogLabelPrint";
-import LogProductTruck from "../pages/LogProductTruck";
-import LogProductWarehouse from "../pages/LogProductWarehouse";
-import LogReceiveCreate from "../pages/LogReceiveCreate";
-import LogReceiveImport from "../pages/LogReceiveImport";
-import ManageCustomers from "../pages/ManageCustomer";
-import ManageAnnouncements from "../pages/ManageAnnouncements";
-import ManageHolidays from "../pages/ManageHolidays";
-import ManagePackages from "../pages/ManagePackages";
-import ManageRecipients from "../pages/ManageRecipients";
-import ManageRoutes from "../pages/ManageRoutes";
-import ManageShippers from "../pages/ManageShippers";
-import ManageUsers from "../pages/ManageUsers";
-import ManageVehicles from "../pages/ManageVehicles";
-import MoveDtScan from "../pages/MoveDtScan";
-import MoveHub from "../pages/MoveHub";
-import MoveTkScan from "../pages/MoveTkScan";
-import NotFound from "../pages/OtherPage/NotFound";
-import ProductTruck from "../pages/ProductTruck";
-import ProductWarehouse from "../pages/ProductWarehouse";
-import ReceiveReport from "../pages/ReceiveReport";
-import ReceiveReportPrint from "../pages/ReceiveReportPrint";
-import RouteMap from "../pages/RouteMap";
-import TruckLoadCreate from "../pages/TruckloadCreate";
-import TruckLoadPrint from "../pages/TruckLoadPrint";
-import TruckloadScan from "../pages/TruckloadScan";
-import WarehouseScan from "../pages/WarehouseScan";
 import ProtectedRoute from "./ProtectedRoute";
+
+const SignIn = lazy(() => import("../pages/AuthPages/SignIn"));
+const Announcements = lazy(() => import("../pages/Announcements"));
+const ContractorCreate = lazy(() => import("../pages/ContractorCreate"));
+const CreateReceivePage = lazy(() => import("../pages/CreateReceivePage/CreateReceivePage"));
+const DcReceive = lazy(() => import("../pages/DcReceive"));
+const DeliveryClose = lazy(() => import("../pages/DeliveryClose"));
+const DeliveryCloseMediaEdit = lazy(() => import("../pages/DeliveryCloseMediaEdit"));
+const DeliveryIssueInbox = lazy(() => import("../pages/DeliveryIssueInbox"));
+const DeliveryPendingReportDt = lazy(() => import("../pages/DeliveryPendingReportDt"));
+const DeliveryPendingReportReceive = lazy(() => import("../pages/DeliveryPendingReportReceive"));
+const DeliveryPendingReportSn = lazy(() => import("../pages/DeliveryPendingReportSn"));
+const DeliveryTruckCreate = lazy(() => import("../pages/DeliveryTruckCreate"));
+const DeliveryTruckPrint = lazy(() => import("../pages/DeliveryTruckPrint"));
+const DeliveryTruckScan = lazy(() => import("../pages/DeliveryTruckScan"));
+const ReceiveImport = lazy(() => import("../pages/ReceiveImport"));
+const LabelPrintPage = lazy(() => import("../pages/LabelPrintPage"));
+const LogLabelPrint = lazy(() => import("../pages/LogLabelPrint"));
+const LogProductTruck = lazy(() => import("../pages/LogProductTruck"));
+const LogProductWarehouse = lazy(() => import("../pages/LogProductWarehouse"));
+const LogReceiveCreate = lazy(() => import("../pages/LogReceiveCreate"));
+const LogReceiveImport = lazy(() => import("../pages/LogReceiveImport"));
+const ManageCustomers = lazy(() => import("../pages/ManageCustomer"));
+const ManageAnnouncements = lazy(() => import("../pages/ManageAnnouncements"));
+const ManageHolidays = lazy(() => import("../pages/ManageHolidays"));
+const ManagePackages = lazy(() => import("../pages/ManagePackages"));
+const ManageRecipients = lazy(() => import("../pages/ManageRecipients"));
+const ManageRoutes = lazy(() => import("../pages/ManageRoutes"));
+const ManageShippers = lazy(() => import("../pages/ManageShippers"));
+const ManageUsers = lazy(() => import("../pages/ManageUsers"));
+const ManageVehicles = lazy(() => import("../pages/ManageVehicles"));
+const MoveDtScan = lazy(() => import("../pages/MoveDtScan"));
+const MoveHub = lazy(() => import("../pages/MoveHub"));
+const MoveTkScan = lazy(() => import("../pages/MoveTkScan"));
+const NotFound = lazy(() => import("../pages/OtherPage/NotFound"));
+const ProductTruck = lazy(() => import("../pages/ProductTruck"));
+const ProductWarehouse = lazy(() => import("../pages/ProductWarehouse"));
+const ReceiveReport = lazy(() => import("../pages/ReceiveReport"));
+const ReceiveReportPrint = lazy(() => import("../pages/ReceiveReportPrint"));
+const RouteMap = lazy(() => import("../pages/RouteMap"));
+const TruckLoadCreate = lazy(() => import("../pages/TruckloadCreate"));
+const TruckLoadPrint = lazy(() => import("../pages/TruckLoadPrint"));
+const TruckloadScan = lazy(() => import("../pages/TruckloadScan"));
+const WarehouseScan = lazy(() => import("../pages/WarehouseScan"));
 
 export default function AppRoutes() {
   return (
-    <Routes>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">กำลังโหลด...</div>}>
+      <Routes>
       <Route element={<AppLayout />}>
         <Route index element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
         <Route path="/dashboard" element={<Announcements />} />
@@ -98,6 +101,7 @@ export default function AppRoutes() {
       </Route>
       <Route path="/signin" element={<SignIn />} />
       <Route path="*" element={<NotFound />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }

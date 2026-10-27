@@ -83,6 +83,7 @@ const getSerialItems = (row: ProductWarehouseRow): ProductWarehouseSerialItem[] 
 export default function ProductWarehouse() {
   const [rows, setRows] = useState<ProductWarehouseRow[]>([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeReceiveCode, setActiveReceiveCode] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -90,6 +91,9 @@ export default function ProductWarehouse() {
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const searchTerm = search.trim();
+  const requestedSearch = searchTerm.length >= 3 ? searchTerm : "";
+  const searchPending = requestedSearch !== debouncedSearch;
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -100,7 +104,7 @@ export default function ProductWarehouse() {
         params: {
           page: page + 1,
           limit: rowsPerPage,
-          search: search.trim() || undefined,
+          search: debouncedSearch || undefined,
         },
       });
 
@@ -115,16 +119,17 @@ export default function ProductWarehouse() {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, search]);
+  }, [debouncedSearch, page, rowsPerPage]);
 
   useEffect(() => {
+    if (searchPending) return;
     void loadProducts();
-  }, [loadProducts]);
+  }, [loadProducts, searchPending]);
 
   useEffect(() => {
-    setPage(0);
-    setActiveReceiveCode("");
-  }, [search]);
+    const timer = window.setTimeout(() => setDebouncedSearch(requestedSearch), 300);
+    return () => window.clearTimeout(timer);
+  }, [requestedSearch]);
 
   useEffect(() => {
     const lastPage = Math.max(Math.ceil(totalBills / rowsPerPage) - 1, 0);
@@ -212,7 +217,11 @@ export default function ProductWarehouse() {
           <input
             type="text"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(0);
+              setActiveReceiveCode("");
+            }}
             placeholder="ค้นหาเลขที่บิล, Serial No, สินค้า, เจ้าของงาน หรือผู้รับ"
             className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />

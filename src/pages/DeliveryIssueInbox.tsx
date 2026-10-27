@@ -214,10 +214,10 @@ export default function DeliveryIssueInbox() {
                   <div className="flex items-start gap-2.5">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-xs font-bold text-blue-700">{thread.receive_code}</span>
+                        <span className="truncate text-sm font-bold text-blue-700">{thread.receive_code}</span>
                         <span className="shrink-0 text-xs text-slate-400">{time(thread.updated_at)}</span>
                       </div>
-                      <div className="mt-0.5 truncate text-sm font-bold text-slate-700">{thread.issue_type || "แจ้งปัญหาการจัดส่ง"}</div>
+                      <div className="mt-0.5 truncate text-xs font-bold text-slate-700">{thread.issue_type || "แจ้งปัญหาการจัดส่ง"}</div>
                       <div className="mt-0.5 flex items-center gap-2">
                         <span className="min-w-0 flex-1 truncate text-xs text-slate-500">{thread.last_message || "ยังไม่มีข้อความ"}</span>
                         {Number(thread.unread_count) > 0 ? (
