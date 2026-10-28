@@ -40,6 +40,7 @@ const MoveTkScan = lazy(() => import("../pages/MoveTkScan"));
 const NotFound = lazy(() => import("../pages/OtherPage/NotFound"));
 const ProductTruck = lazy(() => import("../pages/ProductTruck"));
 const ProductWarehouse = lazy(() => import("../pages/ProductWarehouse"));
+const ProductWarehouseSerial = lazy(() => import("../pages/ProductWarehouseSerial"));
 const ReceiveReport = lazy(() => import("../pages/ReceiveReport"));
 const ReceiveReportPrint = lazy(() => import("../pages/ReceiveReportPrint"));
 const RouteMap = lazy(() => import("../pages/RouteMap"));
@@ -74,6 +75,7 @@ export default function AppRoutes() {
         <Route path="/label-print" element={<LabelPrintPage />} />
         <Route path="/warehouse-scan" element={<WarehouseScan />} />
         <Route path="/product-warehouse" element={<ProductWarehouse />} />
+        <Route path="/product-warehouse/serials" element={<ProductWarehouseSerial />} />
         <Route path="/product-truck" element={<ProductTruck />} />
         <Route path="/logs/label-print" element={<LogLabelPrint />} />
         <Route path="/logs/product-trucks" element={<LogProductTruck />} />

@@ -148,10 +148,7 @@ export default function DeliveryTruckScan() {
   }, []);
 
   const isRouteMatched = (row: ProductRow) => String(row.route_id ?? "") === String(truck?.route_id ?? "");
-  const isUnassignedRouteAtDestinationWarehouse = (row: ProductRow) =>
-    row.route_id === null && String(row.to_warehouse_id ?? "") === String(truck?.warehouse_id ?? "");
   const visiblePendingRows = pendingRows.filter((row) => {
-    if (row.route_id === null && !isUnassignedRouteAtDestinationWarehouse(row)) return false;
     if (pendingFilter === "matched") return isRouteMatched(row);
     if (pendingFilter === "other") return !isRouteMatched(row);
     if (pendingFilter === "all") return true;
@@ -286,7 +283,7 @@ export default function DeliveryTruckScan() {
                       {[route.route_code, route.route_name].filter(Boolean).join(" - ") || `สายรถ #${route.route_id}`}
                     </option>
                   ))}
-                {pendingRows.some((row) => row.route_id === null) && <option value="unassigned">ยังไม่กำหนดสายรถ</option>}
+                <option value="unassigned">ไม่มีสายรถ</option>
               </select>
             )}
             <span

@@ -7,7 +7,13 @@ import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../services/apiClient";
 import { connectSocket } from "../services/socket";
 import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
-import type { DestinationWarning, TruckLoadDetail, TruckLoadDetailResponse, TruckloadWarehouseOption as WarehouseOption, VehicleLoadResponse, VehicleLoadRow } from "../types/truckload";
+import type {
+  DestinationWarning,
+  TruckLoadDetail,
+  TruckLoadDetailResponse,
+  VehicleLoadResponse,
+  VehicleLoadRow,
+} from "../types/truckload";
 
 type LoadProductError = {
   response?: {
@@ -37,15 +43,6 @@ export default function TruckloadScan() {
 
   const [truckLoad, setTruckLoad] = useState<TruckLoadDetail | null>(null);
 
-  const [warehouseFilter, setWarehouseFilter] = useState("");
-
-  const [fromWarehouseFilter, setFromWarehouseFilter] = useState("");
-  const [warehouseOptions, setWarehouseOptions] = useState<WarehouseOption[]>([]);
-
-  const [selectedDriverEmployeeCode, setSelectedDriverEmployeeCode] = useState("");
-
-  const [selectedVehicleLicensePlate, setSelectedVehicleLicensePlate] = useState("");
-
   const [loadSerialInput, setLoadSerialInput] = useState("");
 
   const [removeSerialInput, setRemoveSerialInput] = useState("");
@@ -58,7 +55,7 @@ export default function TruckloadScan() {
 
   const [loading, setLoading] = useState(false);
 
-  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [loadingTruckLoad, setLoadingTruckLoad] = useState(false);
 
   const [saving, setSaving] = useState(false);
 
@@ -125,7 +122,7 @@ export default function TruckloadScan() {
     }, 0);
   }, []);
 
-  const fetchTruckLoad = useCallback(async () => {
+  const loadTruckLoad = useCallback(async () => {
     if (!truckLoadId) {
       setTruckLoad(null);
       setError("กรุณาเข้าสู่หน้านี้จากรายการใบปิดบรรทุก");
@@ -133,29 +130,25 @@ export default function TruckloadScan() {
     }
 
     try {
-      setLoadingOptions(true);
+      setLoadingTruckLoad(true);
 
       const response = await AxiosInstance.get<TruckLoadDetailResponse>(`/truck-loads/get-truck/${truckLoadId}`);
 
       const row = response.data?.data;
 
       setTruckLoad(row);
-      setSelectedDriverEmployeeCode(row?.employee_code || row?.driver_name || "");
-      setSelectedVehicleLicensePlate(row?.license_plate || "");
-      setWarehouseFilter(row?.to_warehouse_id ? String(row.to_warehouse_id) : "");
-      setFromWarehouseFilter(row?.warehouse_id ? String(row.warehouse_id) : "");
     } catch (err) {
-      console.error("fetch vehicle load options error:", err);
+      console.error("load truck load error:", err);
 
       setTruckLoad(null);
 
-      setError("ไม่สามารถโหลดข้อมูลตัวเลือกได้");
+      setError("ไม่สามารถโหลดข้อมูลใบปิดบรรทุกได้");
     } finally {
-      setLoadingOptions(false);
+      setLoadingTruckLoad(false);
     }
   }, [truckLoadId]);
 
-  const fetchSerials = useCallback(async () => {
+  const loadSerials = useCallback(async () => {
     if (!truckLoadId) {
       setPendingRows([]);
       setScannedRows([]);
@@ -191,32 +184,18 @@ export default function TruckloadScan() {
   }, [truckLoadId, focusLoadInput]);
 
   useEffect(() => {
-    void fetchTruckLoad();
-  }, [fetchTruckLoad]);
+    void loadTruckLoad();
+  }, [loadTruckLoad]);
 
   useEffect(() => {
-    const fetchWarehouses = async () => {
-      try {
-        const response = await AxiosInstance.get<WarehouseOption[]>("/warehouses");
-        setWarehouseOptions(Array.isArray(response.data) ? response.data : []);
-      } catch (err) {
-        console.error("fetch warehouse filter options error:", err);
-        setWarehouseOptions([]);
-      }
-    };
-
-    void fetchWarehouses();
-  }, []);
-
-  useEffect(() => {
-    void fetchSerials();
-  }, [fetchSerials]);
+    void loadSerials();
+  }, [loadSerials]);
 
   useEffect(() => {
     if (!truckLoadId) return;
     const socket = connectSocket();
     const join = () => socket.emit("truckload-scan:join", truckLoadId);
-    const refresh = () => void fetchSerials();
+    const refresh = () => void loadSerials();
     socket.on("connect", join);
     if (socket.connected) join();
     socket.on("truckload-scan:updated", refresh);
@@ -224,21 +203,34 @@ export default function TruckloadScan() {
       socket.off("connect", join);
       socket.off("truckload-scan:updated", refresh);
     };
-  }, [fetchSerials, truckLoadId]);
+  }, [loadSerials, truckLoadId]);
 
   useEffect(() => {
-    if (destinationWarning || loading || loadingOptions || saving || truckLoad?.is_close === "Y") return;
+    if (destinationWarning || loading || loadingTruckLoad || saving || truckLoad?.is_close === "Y") return;
 
     if (activeScanSide === "remove" && scannedRows.length > 0) {
       focusRemoveInput();
     } else {
       focusLoadInput();
     }
-  }, [activeScanSide, destinationWarning, focusLoadInput, focusRemoveInput, loading, loadingOptions, saving, scannedRows.length, truckLoad?.is_close]);
+  }, [
+    activeScanSide,
+    destinationWarning,
+    focusLoadInput,
+    focusRemoveInput,
+    loading,
+    loadingTruckLoad,
+    saving,
+    scannedRows.length,
+    truckLoad?.is_close,
+  ]);
 
   const visiblePendingRows = useMemo(
-    () => (fromWarehouseFilter ? pendingRows.filter((row) => String(row.warehouse_id || "") === fromWarehouseFilter) : pendingRows),
-    [fromWarehouseFilter, pendingRows],
+    () => {
+      const warehouseId = truckLoad?.warehouse_id;
+      return warehouseId ? pendingRows.filter((row) => Number(row.warehouse_id) === Number(warehouseId)) : pendingRows;
+    },
+    [pendingRows, truckLoad?.warehouse_id],
   );
 
   const handleLoadScan = async (value?: string) => {
@@ -268,7 +260,9 @@ export default function TruckloadScan() {
     }
 
     const targetRow = pendingRows.find(
-      (row) => normalizeSerialText(row.serial_no) === serial && (!fromWarehouseFilter || String(row.warehouse_id || "") === fromWarehouseFilter),
+      (row) =>
+        normalizeSerialText(row.serial_no) === serial &&
+        (!truckLoad?.warehouse_id || Number(row.warehouse_id) === Number(truckLoad.warehouse_id)),
     );
 
     try {
@@ -300,7 +294,7 @@ export default function TruckloadScan() {
 
     playSound("success");
 
-    await fetchSerials();
+    await loadSerials();
     setInfo(`ย้าย SN ${targetRow?.serial_no || rawSerial} ไปยังรายการขึ้นรถแล้ว`);
 
     setLoadSerialInput("");
@@ -324,7 +318,7 @@ export default function TruckloadScan() {
       const confirmedSerialNo = destinationWarning.serial_no;
       setDestinationWarning(null);
       playSound("success");
-      await fetchSerials();
+      await loadSerials();
       setInfo(`ยืนยันยิง SN ${confirmedSerialNo} ขึ้นรถแล้ว`);
     } catch (err) {
       console.error("confirm destination mismatch error:", err);
@@ -415,7 +409,7 @@ export default function TruckloadScan() {
     }
   };
 
-  const disabled = loading || loadingOptions || saving || deleting;
+  const disabled = loading || loadingTruckLoad || saving || deleting;
 
   return (
     <div
@@ -442,89 +436,30 @@ export default function TruckloadScan() {
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 xl:items-end">
           <div className="min-w-0">
-            <label className="mb-1 block text-xs font-medium text-slate-600">Now Warehouse</label>
-            <select
-              value={fromWarehouseFilter}
-              onChange={(event) => setFromWarehouseFilter(event.target.value)}
-              disabled
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-            >
-              <option value="">ทั้งหมด</option>
-              {warehouseOptions.map((warehouse) => (
-                <option key={warehouse.id} value={String(warehouse.id)}>
-                  {warehouse.name}
-                </option>
-              ))}
-            </select>
+            <label className="mb-1 block text-xs font-medium text-slate-600">คลังปัจจุบัน </label>
+            <div className="h-9 truncate rounded-md border border-slate-300 bg-slate-100 px-2.5 leading-9 text-sm text-slate-700" title={truckLoad?.warehouse_name || "ทั้งหมด"}>
+              {truckLoad?.warehouse_name || "ทั้งหมด"}
+            </div>
           </div>
           <div className="min-w-0">
-            <label className="mb-1 block text-xs font-medium text-slate-600">Driver</label>
-
-            <select
-              value={selectedDriverEmployeeCode}
-              onChange={(event) => {
-                setSelectedDriverEmployeeCode(event.target.value);
-
-                setError(null);
-                setInfo(null);
-              }}
-              disabled
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-            >
-              <option value="">เลือกพนักงานขับรถ</option>
-
-              {(truckLoad?.employee_code || truckLoad?.driver_name) && (
-                <option value={truckLoad.employee_code || truckLoad.driver_name || ""}>
-                  {[truckLoad.employee_code, truckLoad.driver_name].filter(Boolean).join(" - ")}
-                </option>
-              )}
-            </select>
+            <label className="mb-1 block text-xs font-medium text-slate-600">คนขับ</label>
+            <div className="h-9 truncate rounded-md border border-slate-300 bg-slate-100 px-2.5 leading-9 text-sm text-slate-700" title={[truckLoad?.employee_code, truckLoad?.driver_name].filter(Boolean).join(" - ")}>
+              {[truckLoad?.employee_code, truckLoad?.driver_name].filter(Boolean).join(" - ") || "-"}
+            </div>
           </div>
 
           <div className="min-w-0">
-            <label className="mb-1 block text-xs font-medium text-slate-600">Vehicle</label>
-
-            <select
-              value={selectedVehicleLicensePlate}
-              onChange={(event) => {
-                setSelectedVehicleLicensePlate(event.target.value);
-
-                setError(null);
-                setInfo(null);
-              }}
-              disabled
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-            >
-              <option value="">เลือกรถ</option>
-
-              {truckLoad?.license_plate && (
-                <option value={truckLoad.license_plate}>
-                  {[truckLoad.license_plate, truckLoad.license_province, truckLoad.model].filter(Boolean).join(" - ")}
-                </option>
-              )}
-            </select>
+            <label className="mb-1 block text-xs font-medium text-slate-600">รถ</label>
+            <div className="h-9 truncate rounded-md border border-slate-300 bg-slate-100 px-2.5 leading-9 text-sm text-slate-700" title={[truckLoad?.license_plate, truckLoad?.license_province, truckLoad?.model].filter(Boolean).join(" - ")}>
+              {[truckLoad?.license_plate, truckLoad?.license_province, truckLoad?.model].filter(Boolean).join(" - ") || "-"}
+            </div>
           </div>
 
           <div className="min-w-0">
-            <label className="mb-1 block text-xs font-medium text-slate-600">To Warehouse</label>
-
-            <select
-              value={warehouseFilter}
-              onChange={(event) => {
-                setWarehouseFilter(event.target.value);
-
-                setError(null);
-                setInfo(null);
-              }}
-              disabled
-              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
-            >
-              <option value="">เลือก To Warehouse</option>
-
-              {truckLoad?.to_warehouse_id && (
-                <option value={truckLoad.to_warehouse_id}>{truckLoad.to_warehouse_name || `Warehouse ${truckLoad.to_warehouse_id}`}</option>
-              )}
-            </select>
+            <label className="mb-1 block text-xs font-medium text-slate-600">คลังปลายทาง</label>
+            <div className="h-9 truncate rounded-md border border-slate-300 bg-slate-100 px-2.5 leading-9 text-sm text-slate-700" title={truckLoad?.to_warehouse_name || "-"}>
+              {truckLoad?.to_warehouse_name || "-"}
+            </div>
           </div>
         </div>
 
@@ -641,9 +576,7 @@ export default function TruckloadScan() {
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4">
           <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
             <h3 className="text-base font-bold text-red-700">ยืนยันลบใบปิดบรรทุก</h3>
-            <p className="mt-2 text-sm text-slate-700">
-              ต้องการลบใบปิดบรรทุก {truckLoad?.truck_code || "นี้"} ใช่หรือไม่
-            </p>
+            <p className="mt-2 text-sm text-slate-700">ต้องการลบใบปิดบรรทุก {truckLoad?.truck_code || "นี้"} ใช่หรือไม่</p>
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
@@ -709,11 +642,11 @@ function SerialTable({ rows, loading, mode }: SerialTableProps) {
       <table className="w-full table-fixed border-collapse text-xs">
         <thead className="sticky top-0 z-10 bg-slate-100 text-slate-600">
           <tr>
-            <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
+            <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SN</th>
 
-            <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">CUSTOMER</th>
+            <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">เจ้าของงาน</th>
 
-            <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">TO WAREHOUSE</th>
+            <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">คลังปลายทาง</th>
           </tr>
         </thead>
 

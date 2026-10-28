@@ -99,6 +99,7 @@ export type TruckLoadDetail = {
   truck_load_id: number;
   truck_code: string;
   warehouse_id: number | null;
+  warehouse_name: string | null;
   user_truck_id: number | null;
   vehicle_id: number | null;
   to_warehouse_id: number | null;

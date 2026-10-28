@@ -260,7 +260,7 @@ export default function WarehouseScan() {
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-full sm:w-[420px] lg:w-[520px]">
-            <label className="mb-1 block text-xs font-medium text-slate-600">Customer</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">เจ้าของงาน</label>
 
             <div className={loading || saving ? "pointer-events-none opacity-70" : ""}>
               <CustomerDropdown
@@ -328,9 +328,9 @@ export default function WarehouseScan() {
             <table className="w-full table-fixed border-collapse text-xs">
               <thead className="sticky top-0 z-10 bg-slate-100 text-slate-600">
                 <tr>
-                  <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
-                  <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">CUSTOMER</th>
-                  <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">TO WAREHOUSE</th>
+                  <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SN</th>
+                  <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">เจ้าของงาน</th>
+                  <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">คลังปลายทาง</th>
                 </tr>
               </thead>
 
@@ -384,9 +384,9 @@ export default function WarehouseScan() {
             <table className="w-full table-fixed border-collapse text-xs">
               <thead className="sticky top-0 z-10 bg-slate-100 text-slate-600">
                 <tr>
-                  <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SERIAL NO</th>
-                  <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">CUSTOMER</th>
-                  <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">TO WAREHOUSE</th>
+                  <th className="w-[45%] border-b border-slate-200 px-3 py-2 text-left">SN</th>
+                  <th className="w-[35%] border-b border-slate-200 px-3 py-2 text-left">เจ้าของงาน</th>
+                  <th className="w-[20%] border-b border-slate-200 px-3 py-2 text-right">คลังปลายทาง</th>
                 </tr>
               </thead>
 

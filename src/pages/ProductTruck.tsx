@@ -59,7 +59,7 @@ type AxiosLikeError = {
 type TruckTypeFilter = "DC_TRUCK_DC" | "DC_TRUCK";
 
 const truckTypeTabs: { value: TruckTypeFilter; label: string }[] = [
-  { value: "DC_TRUCK_DC", label: "ระหว่าง DC" },
+  { value: "DC_TRUCK_DC", label: "รถขนย้าย" },
   { value: "DC_TRUCK", label: "รถกระจาย" },
 ];
 
@@ -96,6 +96,7 @@ export default function ProductTruck() {
   const showDestinationWarehouse = truckType !== "DC_TRUCK";
   const tableHeaders = useMemo(
     () => [
+      "#",
       "เลขที่บิล",
       "Serial No",
       "เจ้าของงาน",
@@ -104,8 +105,8 @@ export default function ProductTruck() {
       "ทะเบียนรถ",
       "ประเภทรถ",
       ...(showRoute ? ["สายรถ"] : []),
-      "DC ต้นทาง",
-      ...(showDestinationWarehouse ? ["DC ปลายทาง"] : []),
+      "คลังต้นทาง",
+      ...(showDestinationWarehouse ? ["คลังปลายทาง"] : []),
       "วันที่ขึ้นรถ",
     ],
     [showDestinationWarehouse, showRoute],
@@ -113,7 +114,7 @@ export default function ProductTruck() {
   const tableDefaultWidths = useMemo(
     () =>
       Object.fromEntries(
-        [210, 250, 250, 190, 130, 250, 120, ...(showRoute ? [190] : []), 190, ...(showDestinationWarehouse ? [190] : []), 165].map(
+        [56, 210, 250, 250, 190, 130, 250, 120, ...(showRoute ? [190] : []), 190, ...(showDestinationWarehouse ? [190] : []), 165].map(
           (width, index) => [index, width],
         ),
       ),
@@ -122,7 +123,7 @@ export default function ProductTruck() {
   const tableMinWidths = useMemo(
     () =>
       Object.fromEntries(
-        [150, 180, 160, 140, 100, 170, 100, ...(showRoute ? [150] : []), 150, ...(showDestinationWarehouse ? [150] : []), 140].map(
+        [56, 150, 180, 160, 140, 100, 170, 100, ...(showRoute ? [150] : []), 150, ...(showDestinationWarehouse ? [150] : []), 140].map(
           (width, index) => [index, width],
         ),
       ),
@@ -287,19 +288,20 @@ export default function ProductTruck() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={(showRoute ? 1 : 0) + (showDestinationWarehouse ? 10 : 9)} className="px-3 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={(showRoute ? 1 : 0) + (showDestinationWarehouse ? 11 : 10)} className="px-3 py-12 text-center text-sm text-slate-500">
                     กำลังโหลดข้อมูล...
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={(showRoute ? 1 : 0) + (showDestinationWarehouse ? 10 : 9)} className="px-3 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={(showRoute ? 1 : 0) + (showDestinationWarehouse ? 11 : 10)} className="px-3 py-12 text-center text-sm text-slate-500">
                     ไม่พบสินค้าบนรถ
                   </td>
                 </tr>
               ) : (
                 rows.map((row, index) => (
                   <tr key={row.product_truck_id} className={index % 2 === 0 ? "bg-white hover:bg-blue-100" : "bg-slate-50 hover:bg-blue-100"}>
+                    <td className="border-b border-slate-100 px-3 py-2 text-center font-semibold text-slate-500">{formatThaiNumber(page * rowsPerPage + index + 1)}</td>
                     <td className="border-b border-slate-100 px-3 py-2 text-slate-700">{row.receive_code || ""}</td>
                     <td className="border-b border-slate-100 px-3 py-2 font-mono font-semibold text-blue-700">{row.serial_no || "-"}</td>
                     <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={row.customer_name || ""}>

@@ -105,6 +105,16 @@ export default function DeliveryTruckCreate() {
   const columns = useMemo(
     () => [
       {
+        field: "row_number",
+        headerName: "#",
+        width: 56,
+        sortable: false,
+        filterable: false,
+        align: "center" as const,
+        headerAlign: "center" as const,
+        renderCell: (params: any) => formatThaiNumber(params.api.getRowIndexRelativeToVisibleRows(params.id) + 1),
+      },
+      {
         field: "create_date",
         headerName: "วันที่",
         width: 155,

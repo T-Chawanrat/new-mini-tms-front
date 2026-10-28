@@ -38,14 +38,14 @@ const RECEIVE_HEADERS = [
   <span key="expand-column" />,
   "#",
   <span key="select-receive-column" />,
-  "Receive Code",
-  "Receive Date",
-  "Customer",
-  "To Warehouse",
+  "เลขที่บิล",
+  "วันที่สร้างบิล",
+  "เจ้าของงาน",
+  "คลังปลายทาง",
   "SN",
-  "Print",
-  "Reprint",
-  "Last Printed",
+  "พิมพ์",
+  "พิมพ์ซ้ำ",
+  "พิมพ์ล่าสุด",
 ];
 
 const RECEIVE_MIN_WIDTHS: Record<number, number> = {

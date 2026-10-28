@@ -447,9 +447,9 @@ export default function ReceiveReport() {
       </div>
 
       <div className="mb-3 grid shrink-0 grid-cols-2 gap-2 md:grid-cols-4">
-        <SummaryCard label="Receive" value={summaryLoading ? "..." : formatOptionalNumber(summaryTotal?.total_receive)} accent />
-        <SummaryCard label="Serial" value={summaryLoading ? "..." : formatOptionalNumber(summaryTotal?.total_serial)} />
-        <SummaryCard label="Cost" value={summaryLoading ? "..." : formatOptionalMoney(summaryTotal?.total_cost)} />
+        <SummaryCard label="บิล" value={summaryLoading ? "..." : formatOptionalNumber(summaryTotal?.total_receive)} accent />
+        <SummaryCard label="SN" value={summaryLoading ? "..." : formatOptionalNumber(summaryTotal?.total_serial)} />
+        <SummaryCard label="ค่าส่ง" value={summaryLoading ? "..." : formatOptionalMoney(summaryTotal?.total_cost)} />
         <SummaryCard label="COD" value={summaryLoading ? "..." : formatOptionalMoney(summaryTotal?.total_cod)} />
       </div>
 
@@ -459,13 +459,20 @@ export default function ReceiveReport() {
         </div>
 
         <div className="max-h-[150px] overflow-auto">
-          <table className="w-full min-w-[640px] border-collapse text-left text-xs">
+          <table className="w-full min-w-[640px] table-fixed border-collapse text-left text-xs">
+            <colgroup>
+              <col className="w-1/5" />
+              <col className="w-1/5" />
+              <col className="w-1/5" />
+              <col className="w-1/5" />
+              <col className="w-1/5" />
+            </colgroup>
             <thead className="sticky top-0 z-10 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               <tr className="border-b border-slate-200">
-                <th className="px-3 py-2">Receive Date</th>
-                <th className="px-3 py-2 text-right">Receive</th>
-                <th className="px-3 py-2 text-right">Serial</th>
-                <th className="px-3 py-2 text-right">Cost</th>
+                <th className="px-3 py-2">วันที่</th>
+                <th className="px-3 py-2 text-right">บิล</th>
+                <th className="px-3 py-2 text-right">SN</th>
+                <th className="px-3 py-2 text-right">ค่าส่ง</th>
                 <th className="px-3 py-2 text-right">COD</th>
               </tr>
             </thead>

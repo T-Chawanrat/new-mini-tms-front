@@ -24,8 +24,6 @@ import type {
 } from "../types/truckload";
 
 const truckTypeLabels: Record<string, string> = {
-  SHIPPER_TRUCK: "รับสินค้าปลายทาง",
-  DC_TRUCK: "คลัง ไปหา ลูกค้า",
   DC_TRUCK_DC: "ขนสินค้าระหว่าง DC",
 };
 
@@ -259,7 +257,7 @@ export default function TruckLoadCreate() {
 
   const handleCreate = async () => {
     if (!selectedToWarehouse) {
-      setError("กรุณาเลือก To Warehouse");
+      setError("กรุณาเลือกคลังปลายทาง");
       return;
     }
 
@@ -382,6 +380,16 @@ export default function TruckLoadCreate() {
   const columns = useMemo<ColumnDef<TruckLoadRow>[]>(
     () => [
       {
+        field: "row_number",
+        headerName: "#",
+        width: 56,
+        sortable: false,
+        filterable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params: any) => formatThaiNumber(params.api.getRowIndexRelativeToVisibleRows(params.id) + 1),
+      },
+      {
         field: "create_date",
         headerName: "วันที่",
         width: 155,
@@ -390,7 +398,7 @@ export default function TruckLoadCreate() {
       },
       {
         field: "truck_code",
-        headerName: "เลขที่ใบปิดบรรทุก",
+        headerName: "เลขใบปิดบรรทุก",
         width: 190,
         minWidth: 175,
         renderCell: (params) => <div className="flex h-full w-full items-center font-semibold text-blue-700">{params.row.truck_code || "-"}</div>,
@@ -419,7 +427,7 @@ export default function TruckLoadCreate() {
       },
       {
         field: "status",
-        headerName: "Status",
+        headerName: "สถานะ",
         width: 145,
         minWidth: 130,
         align: "center",
@@ -535,7 +543,7 @@ export default function TruckLoadCreate() {
         ),
       },
     ],
-    [actionLoadingId, handleCloseAndGoTruckLoad, navigate],
+    [actionLoadingId, navigate],
   );
 
   const isCreateDisabled =
@@ -569,7 +577,7 @@ export default function TruckLoadCreate() {
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
         <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">ค้นหา Truck Code</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">ค้นหาเลขใบปิดบรรทุก</label>
 
             <input
               type="text"
@@ -580,7 +588,7 @@ export default function TruckLoadCreate() {
                   handleSearch();
                 }
               }}
-              placeholder="กรอกเลขที่ใบปิดบรรทุก"
+              placeholder="กรอกเลขใบปิดบรรทุก"
               className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
@@ -695,7 +703,7 @@ export default function TruckLoadCreate() {
               )}
 
               <section className="rounded-lg border border-blue-100 bg-blue-50/70 p-4">
-                <ModalSelect label="To Warehouse" value={selectedToWarehouse} onChange={setSelectedToWarehouse} disabled={loadingOptions || creating} options={warehouses.map((warehouse) => ({ value: String(warehouse.id), label: formatCodeNameOption(warehouse) }))} />
+                <ModalSelect label="คลังปลายทาง" value={selectedToWarehouse} onChange={setSelectedToWarehouse} disabled={loadingOptions || creating} options={warehouses.map((warehouse) => ({ value: String(warehouse.id), label: formatCodeNameOption(warehouse) }))} />
               </section>
 
               {loadingOptions && (

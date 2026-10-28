@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Download, PackageOpen, RefreshCcw, Search } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
 import * as XLSX from "xlsx";
+import { Link } from "react-router-dom";
 
 import AxiosInstance from "../services/apiClient";
 import ResizableColumns from "../components/tms/table/ResizableColumns";
@@ -31,7 +32,6 @@ type ProductWarehouseRow = {
   created_by: number | null;
   created_name: string | null;
   route_name: string | null;
-  serial_items?: ProductWarehouseSerialItem[];
 };
 
 type ProductWarehouseResponse = {
@@ -42,6 +42,12 @@ type ProductWarehouseResponse = {
     total_bills?: number;
     total_items?: number;
   };
+};
+
+type ProductWarehouseSerialResponse = {
+  success?: boolean;
+  message?: string;
+  data?: ProductWarehouseSerialItem[];
 };
 
 type AxiosLikeError = {
@@ -71,21 +77,13 @@ const formatDeliveryDate = (value: string | null) => {
   });
 };
 
-const getSerialItems = (row: ProductWarehouseRow): ProductWarehouseSerialItem[] => {
-  if (Array.isArray(row.serial_items)) return row.serial_items;
-
-  return String(row.serial_nos || "")
-    .split(",")
-    .map((serialNo) => serialNo.trim())
-    .filter(Boolean)
-    .map((serialNo) => ({ serial_no: serialNo, package_name: null, package_detail_name: null }));
-};
-
 export default function ProductWarehouse() {
   const [rows, setRows] = useState<ProductWarehouseRow[]>([]);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeReceiveCode, setActiveReceiveCode] = useState("");
+  const [serialItemsByReceiveCode, setSerialItemsByReceiveCode] = useState<Record<string, ProductWarehouseSerialItem[]>>({});
+  const [loadingReceiveCode, setLoadingReceiveCode] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [totalBills, setTotalBills] = useState(0);
@@ -96,7 +94,7 @@ export default function ProductWarehouse() {
   const requestedSearch = searchTerm.length >= 3 ? searchTerm : "";
   const searchPending = requestedSearch !== debouncedSearch;
   const tableHeaders = useMemo(
-    () => ["", "#", "วันที่ส่ง", "คลังปัจจุบัน", "DC ปลายทาง", "เลขที่บิล", "SN", "เจ้าของงาน", "ผู้รับ", "ผู้ยิงรับ", "สายรถ"],
+    () => ["", "#", "วันที่ส่ง", "คลังปัจจุบัน", "คลังปลายทาง", "เลขที่บิล", "SN", "เจ้าของงาน", "ผู้รับ", "ผู้ยิงรับ", "สายรถ"],
     [],
   );
   const tableDefaultWidths = useMemo(
@@ -149,8 +147,29 @@ export default function ProductWarehouse() {
     if (page > lastPage) setPage(lastPage);
   }, [totalBills, page, rowsPerPage]);
 
-  const toggleReceive = (receiveCode: string) => {
-    setActiveReceiveCode((current) => (current === receiveCode ? "" : receiveCode));
+  const toggleReceive = async (receiveCode: string) => {
+    if (activeReceiveCode === receiveCode) {
+      setActiveReceiveCode("");
+      return;
+    }
+
+    setActiveReceiveCode(receiveCode);
+    if (loadingReceiveCode === receiveCode || Object.prototype.hasOwnProperty.call(serialItemsByReceiveCode, receiveCode)) return;
+
+    setLoadingReceiveCode(receiveCode);
+    try {
+      const response = await AxiosInstance.get<ProductWarehouseSerialResponse>(
+        `/product-warehouses/${encodeURIComponent(receiveCode)}/serials`,
+      );
+      setSerialItemsByReceiveCode((current) => ({
+        ...current,
+        [receiveCode]: Array.isArray(response.data?.data) ? response.data.data : [],
+      }));
+    } catch (loadError) {
+      setError(getErrorMessage(loadError));
+    } finally {
+      setLoadingReceiveCode((current) => (current === receiveCode ? "" : current));
+    }
   };
 
   const exportExcel = async () => {
@@ -163,7 +182,7 @@ export default function ProductWarehouse() {
       const exportRows = (response.data?.data || []).map((row) => ({
         "วันที่ส่ง": formatDeliveryDate(row.delivery_date),
         "คลังปัจจุบัน": row.now_warehouse_name || "",
-        "DC ปลายทาง": row.to_warehouse_name || "",
+        "คลังปลายทาง": row.to_warehouse_name || "",
         "เลขที่บิล": row.receive_code || "",
         "Serial No": row.serial_nos || "",
         "จำนวนชิ้น": Number(row.total_items || 0),
@@ -225,19 +244,35 @@ export default function ProductWarehouse() {
       </section>
 
       <section className="mb-2 shrink-0 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
-        <div className="relative max-w-2xl">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(0);
-              setActiveReceiveCode("");
-            }}
-            placeholder="ค้นหาเลขที่บิล, Serial No, สินค้า, เจ้าของงาน หรือผู้รับ"
-            className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full gap-1 overflow-x-auto sm:w-auto">
+            <Link
+              to="/product-warehouse"
+              className="inline-flex h-8 items-center rounded-md bg-blue-600 px-3 text-xs font-semibold text-white"
+            >
+              บิล
+            </Link>
+            <Link
+              to="/product-warehouse/serials"
+              className="inline-flex h-8 items-center rounded-md bg-slate-100 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-200"
+            >
+              ราย SN
+            </Link>
+          </div>
+          <div className="relative w-full max-w-2xl">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(0);
+                setActiveReceiveCode("");
+              }}
+              placeholder="ค้นหาเลขที่บิล, Serial No, สินค้า, เจ้าของงาน หรือผู้รับ"
+              className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
         </div>
       </section>
 
@@ -277,7 +312,9 @@ export default function ProductWarehouse() {
                       rowNumber={absoluteIndex}
                       striped={index % 2 === 1}
                       expanded={expanded}
-                      onToggle={() => toggleReceive(receiveCode)}
+                      serialItems={serialItemsByReceiveCode[receiveCode] || []}
+                      loadingSerialItems={loadingReceiveCode === receiveCode}
+                      onToggle={() => void toggleReceive(receiveCode)}
                     />
                   );
                 })
@@ -321,11 +358,12 @@ type WarehouseBillRowsProps = {
   rowNumber: number;
   striped: boolean;
   expanded: boolean;
+  serialItems: ProductWarehouseSerialItem[];
+  loadingSerialItems: boolean;
   onToggle: () => void;
 };
 
-function WarehouseBillRows({ row, rowNumber, striped, expanded, onToggle }: WarehouseBillRowsProps) {
-  const serialItems = getSerialItems(row);
+function WarehouseBillRows({ row, rowNumber, striped, expanded, serialItems, loadingSerialItems, onToggle }: WarehouseBillRowsProps) {
 
   return (
     <>
@@ -357,7 +395,7 @@ function WarehouseBillRows({ row, rowNumber, striped, expanded, onToggle }: Ware
       {expanded && (
         <tr>
           <td colSpan={TABLE_COLUMN_COUNT} className="bg-slate-50 px-3 py-3">
-            <SerialInlineTable items={serialItems} />
+            <SerialInlineTable items={serialItems} loading={loadingSerialItems} />
           </td>
         </tr>
       )}
@@ -365,7 +403,7 @@ function WarehouseBillRows({ row, rowNumber, striped, expanded, onToggle }: Ware
   );
 }
 
-function SerialInlineTable({ items }: { items: ProductWarehouseSerialItem[] }) {
+function SerialInlineTable({ items, loading }: { items: ProductWarehouseSerialItem[]; loading: boolean }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="max-h-[330px] overflow-auto">
@@ -378,7 +416,11 @@ function SerialInlineTable({ items }: { items: ProductWarehouseSerialItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {items.length ? (
+            {loading ? (
+              <tr>
+                <td colSpan={3} className="px-3 py-8 text-center text-sm text-slate-500">กำลังโหลด Serial No...</td>
+              </tr>
+            ) : items.length ? (
               items.map((item, index) => (
                 <tr key={`${item.serial_no}-${index}`} className={index % 2 === 0 ? "bg-white hover:bg-blue-100" : "bg-slate-50 hover:bg-blue-100"}>
                   <td className="border-b border-slate-100 px-3 py-2 text-center font-semibold text-slate-500">{formatThaiNumber(index + 1)}</td>
