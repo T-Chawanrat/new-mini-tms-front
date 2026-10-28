@@ -166,9 +166,7 @@ export default function WarehouseScan() {
         resend_date: null,
       });
       setPendingRows((current) => current.filter((item) => normalizeSerialText(item.serial_no) !== serial));
-      setScannedRows((current) =>
-        current.some((item) => normalizeSerialText(item.serial_no) === serial) ? current : [...current, row],
-      );
+      setScannedRows((current) => (current.some((item) => normalizeSerialText(item.serial_no) === serial) ? current : [...current, row]));
       setInfo(response.data?.message || `เพิ่ม SN ${row.serial_no} ในรายการรอยืนยันแล้ว`);
       playSound("success");
     } catch (err: any) {
@@ -229,9 +227,7 @@ export default function WarehouseScan() {
       });
       if (row) {
         setScannedRows((current) => current.filter((item) => normalizeSerialText(item.serial_no) !== serial));
-        setPendingRows((current) =>
-          current.some((item) => normalizeSerialText(item.serial_no) === serial) ? current : [...current, row],
-        );
+        setPendingRows((current) => (current.some((item) => normalizeSerialText(item.serial_no) === serial) ? current : [...current, row]));
       }
       setInfo(response.data?.message || `นำ SN ${rawSerial} กลับไปรายการรอยิงแล้ว`);
       playSound("success");
@@ -253,7 +249,6 @@ export default function WarehouseScan() {
       <header className="mb-3 shrink-0">
         <div className="min-w-0">
           <h1 className="text-lg font-bold text-slate-900">รับสินค้าเข้าคลัง</h1>
-          <p className="mt-0.5 text-xs text-slate-500">เลือก Customer แล้วยิง Barcode เพื่อรับสินค้า</p>
         </div>
 
         <div className="hidden">
@@ -290,7 +285,6 @@ export default function WarehouseScan() {
           >
             {saving ? "กำลังบันทึก..." : `บันทึก (${formatThaiNumber(scannedRows.length)})`}
           </button>
-
         </div>
 
         <div className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-slate-100 pt-2.5 lg:grid-cols-2">
@@ -314,7 +308,6 @@ export default function WarehouseScan() {
             placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย"
             tone="amber"
           />
-
         </div>
       </section>
 

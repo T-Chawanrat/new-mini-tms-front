@@ -209,7 +209,7 @@ export default function DeliveryIssueInbox() {
                   key={thread.delivery_issue_id}
                   type="button"
                   onClick={() => setSelectedIssueId(thread.delivery_issue_id)}
-                  className={`mb-2 w-full rounded-xl border p-3 text-left transition-colors ${thread.delivery_issue_id === selectedIssueId ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100"}`}
+                  className={`mb-2 w-full rounded-xl border p-3 text-left transition-colors ${thread.delivery_issue_id === selectedIssueId ? "border-blue-200 bg-blue-100" : "border-slate-300 bg-gray-50 hover:bg-slate-100"}`}
                 >
                   <div className="flex items-start gap-2.5">
                     <div className="min-w-0 flex-1">

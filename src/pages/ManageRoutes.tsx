@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import AxiosInstance from "../services/apiClient";
-import { Pencil, Plus, Route, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import AddressSearchDropdown from "../components/tms/dropdown/AddressSearchDropdown";
 import DataGrid from "../components/tms/table/DataGrid";
 import { type GridColDef } from "@mui/x-data-grid";
@@ -334,7 +334,7 @@ export default function ManageRoutes() {
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-auto bg-slate-50 px-1 py-1 xl:overflow-hidden">
-      <div className="mb-2 shrink-0 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      {/* <div className="mb-2 shrink-0 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-semibold text-slate-800">
             <Route size={22} className="text-blue-600" />
@@ -342,7 +342,7 @@ export default function ManageRoutes() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">เลือกสายรถเพื่อดูตำบลและวันที่รถเข้าส่ง</p>
         </div>
-      </div>
+      </div> */}
 
       <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-stretch">
         <div className="flex min-h-0 flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -427,7 +427,11 @@ export default function ManageRoutes() {
                         <td className="px-4 py-3">
                           <div className="font-medium text-slate-700">{detail.subdistrict_name || "-"}</div>
                           <div className="mt-0.5 text-xs text-slate-500">
-                            {[detail.district_name && `อ.${detail.district_name}`, detail.province_name && `จ.${detail.province_name}`, detail.zip_code]
+                            {[
+                              detail.district_name && `อ.${detail.district_name}`,
+                              detail.province_name && `จ.${detail.province_name}`,
+                              detail.zip_code,
+                            ]
                               .filter(Boolean)
                               .join(" · ") || "-"}
                           </div>

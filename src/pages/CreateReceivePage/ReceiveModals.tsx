@@ -2,17 +2,18 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import axios from "axios";
 import TablePagination from "@mui/material/TablePagination";
+import { X } from "lucide-react";
 import AxiosInstance from "../../services/apiClient";
 import { calculatePackageRate, isWeightFix, moneyValue, toNum } from "../../utils/packageRate";
 import {
   inputClass,
-  labelClass,
   selectClass,
 } from "./createReceiveConfig";
 import type { CustomerOption, GroupedPackageOption, GroupedRecipient, PackageOption, PackageRow, RecipientOption, ShipperOption, UpdatePackageForm } from "../../types/receive";
 
 type ReceiveModalsProps = {
   customerId: string;
+  shipperId: string;
 
   showCustomerModal: boolean;
   showShipperModal: boolean;
@@ -76,6 +77,7 @@ const paginationSx = {
 
 export default function ReceiveModals({
   customerId,
+  shipperId,
 
   showCustomerModal,
   showShipperModal,
@@ -118,6 +120,9 @@ export default function ReceiveModals({
   handleSavePackage,
   handleSaveScan,
 }: ReceiveModalsProps) {
+  const [customerPage, setCustomerPage] = useState(0);
+  const [customerRowsPerPage, setCustomerRowsPerPage] = useState(100);
+
   const [shipperPage, setShipperPage] = useState(0);
   const [shipperRowsPerPage, setShipperRowsPerPage] = useState(100);
 
@@ -133,6 +138,11 @@ export default function ReceiveModals({
   const scanBarcodeRef = useRef<HTMLInputElement | null>(null);
 
   const [modalMode, setModalMode] = useState<"package" | "scan">("package");
+
+  const pagedCustomers = useMemo(() => {
+    const start = customerPage * customerRowsPerPage;
+    return customers.slice(start, start + customerRowsPerPage);
+  }, [customers, customerPage, customerRowsPerPage]);
 
   const pagedShippers = useMemo(() => {
     const start = shipperPage * shipperRowsPerPage;
@@ -463,6 +473,14 @@ export default function ReceiveModals({
   };
 
   useEffect(() => {
+    const maxPage = Math.max(Math.ceil(customers.length / customerRowsPerPage) - 1, 0);
+
+    if (customerPage > maxPage) {
+      setCustomerPage(maxPage);
+    }
+  }, [customers.length, customerPage, customerRowsPerPage]);
+
+  useEffect(() => {
     const maxPage = Math.max(Math.ceil(shippers.length / shipperRowsPerPage) - 1, 0);
 
     if (shipperPage > maxPage) {
@@ -505,75 +523,107 @@ export default function ReceiveModals({
     <>
       {showCustomerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closeCustomerModal}>
-          <div className="w-full max-w-[560px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-4 text-lg font-semibold text-slate-900">ข้อมูลเจ้าของงาน</h3>
-
-            <div className="mb-2 grid grid-cols-[70px_1fr] items-center gap-2">
-              <label className={labelClass}>ค้นหา</label>
-              <input className={inputClass} value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} autoFocus />
-            </div>
-
-            <div className="max-h-[560px] overflow-y-auto border border-slate-300">
-              <table className="w-full border-collapse text-xs">
-                <thead className="sticky top-0 bg-slate-50">
-                  <tr>
-                    <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">เจ้าของงาน</th>
-                    <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {customers.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-100">
-                      <td className="border-b border-slate-200 px-2 py-1.5">
-                        <div className="font-medium text-slate-700">
-                          {item.code} - {item.name}
-                        </div>
-                      </td>
-
-                      <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => selectCustomer(item)}
-                          className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
-                        >
-                          ✓เลือก
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {!customers.length && (
-                    <tr>
-                      <td colSpan={2} className="py-6 text-center text-xs text-slate-400">
-                        ไม่พบข้อมูลเจ้าของงาน
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="mt-3 flex justify-end">
+          <div className="w-full max-w-[640px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">เลือกเจ้าของงาน</h3>
               <button
                 type="button"
                 onClick={closeCustomerModal}
-                className="rounded bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                aria-label="ปิด"
               >
-                ปิด
+                <X size={18} />
               </button>
             </div>
+
+            <div className="mb-2 grid grid-cols-[54px_1fr] items-center gap-1">
+              <label className="text-sm font-semibold text-slate-700 ml-2">ค้นหา</label>
+              <input
+                className={inputClass}
+                value={customerSearch}
+                onChange={(e) => {
+                  setCustomerSearch(e.target.value);
+                  setCustomerPage(0);
+                }}
+                autoFocus
+              />
+            </div>
+
+            <div className="border border-slate-300">
+              <div className="max-h-[500px] overflow-y-auto">
+                <table className="w-full border-collapse text-[13px]">
+                  <thead className="sticky top-0 bg-slate-50">
+                    <tr>
+                      <th className="border-b border-slate-300 px-2 py-2 text-left text-[12px]">เจ้าของงาน</th>
+                      <th className="w-[44px] border-b border-slate-300 px-2 py-2" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedCustomers.map((item) => {
+                      const selected = String(customerId) === String(item.id);
+
+                      return (
+                        <tr
+                          key={item.id}
+                          onClick={() => selectCustomer(item)}
+                          className={`cursor-pointer ${selected ? "bg-blue-50" : "hover:bg-slate-100"}`}
+                        >
+                          <td className="border-b border-slate-200 px-2 py-2">
+                            <div className="font-medium text-slate-700">{item.code} - {item.name}</div>
+                          </td>
+                          <td className="border-b border-slate-200 px-2 py-2 text-center text-sm font-semibold text-blue-600">
+                            {selected ? "✓" : ""}
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {!pagedCustomers.length && (
+                      <tr>
+                        <td colSpan={2} className="py-6 text-center text-xs text-slate-400">ไม่พบข้อมูลเจ้าของงาน</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <TablePagination
+                component="div"
+                count={customers.length}
+                page={customerPage}
+                onPageChange={(_, newPage) => setCustomerPage(newPage)}
+                rowsPerPage={customerRowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setCustomerRowsPerPage(Number(e.target.value));
+                  setCustomerPage(0);
+                }}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+                labelRowsPerPage="Rows per page:"
+                sx={paginationSx}
+              />
+            </div>
+
           </div>
         </div>
       )}
 
       {showShipperModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closeShipperModal}>
-          <div className="w-full max-w-[460px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-4 text-lg font-semibold text-slate-900">ข้อมูลผู้ส่ง</h3>
+          <div className="w-full max-w-[640px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">เลือกผู้ส่ง</h3>
+              <button
+                type="button"
+                onClick={closeShipperModal}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                aria-label="ปิด"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-            <div className="mb-2 grid grid-cols-[70px_1fr] items-center gap-2">
-              <label className={labelClass}>ค้นหา</label>
+            <div className="mb-2 grid grid-cols-[54px_1fr] items-center gap-1">
+              <label className="text-sm font-semibold text-slate-700 ml-2">ค้นหา</label>
               <input
                 className={inputClass}
                 value={shipperSearch}
@@ -587,37 +637,39 @@ export default function ReceiveModals({
 
             <div className="border border-slate-300">
               <div className="max-h-[500px] overflow-y-auto">
-                <table className="w-full border-collapse text-xs">
+                <table className="w-full border-collapse text-[13px]">
                   <thead className="sticky top-0 bg-slate-50">
                     <tr>
-                      <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อผู้ส่ง</th>
-                      <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
+                      <th className="border-b border-slate-300 px-2 py-2 text-left text-[12px]">ผู้ส่ง</th>
+                      <th className="w-[44px] border-b border-slate-300 px-2 py-2" />
                     </tr>
                   </thead>
 
                   <tbody>
-                    {pagedShippers.map((item) => (
-                      <tr key={item.shipper_id} className="hover:bg-slate-100">
-                        <td className="border-b border-slate-200 px-2 py-1.5">
+                    {pagedShippers.map((item) => {
+                      const selected = String(shipperId) === String(item.shipper_id);
+
+                      return (
+                      <tr
+                        key={item.shipper_id}
+                        onClick={() => selectShipper(item)}
+                        className={`cursor-pointer ${selected ? "bg-blue-50" : "hover:bg-slate-100"}`}
+                      >
+                        <td className="border-b border-slate-200 px-2 py-2">
                           <div className="font-medium text-slate-700">
                             {item.shipper_code} - {item.shipper_name}
                           </div>
-                          <div className="text-[10px] text-slate-500">
+                          <div className="mt-0.5 truncate text-[12px] text-slate-500" title={`${item.address || "-"} Tel.${item.tel || "-"}`}>
                             {item.address || "-"} &nbsp;&nbsp;Tel.{item.tel || "-"}
                           </div>
                         </td>
 
-                        <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                          <button
-                            type="button"
-                            onClick={() => selectShipper(item)}
-                            className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
-                          >
-                            ✓เลือก
-                          </button>
+                        <td className="border-b border-slate-200 px-2 py-2 text-center text-sm font-semibold text-blue-600">
+                          {selected ? "✓" : ""}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
 
                     {!pagedShippers.length && (
                       <tr>
@@ -646,15 +698,6 @@ export default function ReceiveModals({
               />
             </div>
 
-            <div className="mt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={closeShipperModal}
-                className="rounded bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
-              >
-                ปิด
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -662,10 +705,20 @@ export default function ReceiveModals({
       {showRecipientModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closeRecipientModal}>
           <div className="w-full max-w-[920px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-4 text-lg font-semibold text-slate-900">ข้อมูลผู้รับ</h3>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">เลือกผู้รับ</h3>
+              <button
+                type="button"
+                onClick={closeRecipientModal}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                aria-label="ปิด"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-            <div className="mb-2 grid grid-cols-[70px_1fr] items-center gap-2">
-              <label className={labelClass}>ค้นหา</label>
+            <div className="mb-2 grid grid-cols-[54px_1fr] items-center gap-1">
+              <label className="text-sm font-semibold text-slate-700 ml-2">ค้นหา</label>
               <input
                 className={inputClass}
                 value={recipientSearch}
@@ -679,13 +732,13 @@ export default function ReceiveModals({
 
             <div className="border border-slate-300">
               <div className="max-h-[500px] overflow-y-auto">
-                <table className="w-full border-collapse text-xs">
+                <table className="w-full border-collapse text-[13px]">
                   <thead className="sticky top-0 bg-slate-50">
                     <tr>
-                      <th className="w-9 border-b border-slate-300 px-1.5 py-1.5" />
-                      <th className="w-[180px] min-w-[180px] border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">รหัสผู้รับ</th>
-                      <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อผู้รับ</th>
-                      <th className="w-[150px] border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">รายละเอียด</th>
+                      <th className="w-9 border-b border-slate-300 px-1.5 py-2" />
+                      <th className="w-[180px] min-w-[180px] border-b border-slate-300 px-2 py-2 text-left text-[12px]">รหัสผู้รับ</th>
+                      <th className="border-b border-slate-300 px-2 py-2 text-left text-[12px]">ชื่อผู้รับ</th>
+                      <th className="w-[150px] border-b border-slate-300 px-2 py-2 text-left text-[12px]">รายละเอียด</th>
                     </tr>
                   </thead>
 
@@ -696,7 +749,7 @@ export default function ReceiveModals({
                       return (
                         <Fragment key={recipient_id}>
                           <tr className="hover:bg-slate-100">
-                            <td className="border-b border-slate-200 px-1.5 py-1.5 text-center">
+                            <td className="border-b border-slate-200 px-1.5 py-2 text-center">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -705,21 +758,21 @@ export default function ReceiveModals({
                                     [String(recipient_id)]: !prev[String(recipient_id)],
                                   }))
                                 }
-                                className="flex h-6 w-6 items-center justify-center rounded border border-slate-300 bg-white"
+                                className="flex h-6 w-6 items-center justify-center rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
                               >
                                 {isOpen ? "⌄" : "›"}
                               </button>
                             </td>
 
-                            <td className="w-[180px] min-w-[180px] border-b border-slate-200 px-2 py-1.5">
+                            <td className="w-[180px] min-w-[180px] border-b border-slate-200 px-2 py-2">
                               <div className="whitespace-nowrap font-medium text-slate-700">{recipient.recipient_code || "-"}</div>
                             </td>
 
-                            <td className="border-b border-slate-200 px-2 py-1.5">
+                            <td className="border-b border-slate-200 px-2 py-2">
                               <div className="font-medium text-slate-700">{recipient.recipient_name || "-"}</div>
                             </td>
 
-                            <td className="border-b border-slate-200 px-2 py-1.5">
+                            <td className="border-b border-slate-200 px-2 py-2">
                               {details.length ? (
                                 <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
                                   {details.length} รายการ
@@ -737,23 +790,26 @@ export default function ReceiveModals({
                               <td />
                               <td colSpan={3} className="border-b border-slate-300 bg-slate-50 p-0">
                                 <div className="max-h-[360px] overflow-y-auto">
-                                  <table className="w-full border-collapse text-[11px]">
+                                  <table className="w-full border-collapse text-[12px]">
                                     <thead className="sticky top-0 z-10 bg-white">
                                       <tr>
-                                        <th className="border-b border-slate-200 px-2 py-1.5 text-left">ชื่อผู้รับ</th>
-                                        <th className="border-b border-slate-200 px-2 py-1.5 text-left">ที่อยู่</th>
-                                        <th className="w-[80px] border-b border-slate-200 px-2 py-1.5" />
+                                        <th className="border-b border-slate-200 px-2 py-2 text-left">ชื่อผู้รับ</th>
+                                        <th className="border-b border-slate-200 px-2 py-2 text-left">ที่อยู่</th>
                                       </tr>
                                     </thead>
 
                                     <tbody>
                                       {details.map((detail, index) => (
-                                        <tr key={`${detail.recipient_id}-${detail.recipient_detail_id || index}`}>
-                                          <td className="border-b border-slate-200 px-2 py-1.5">
+                                        <tr
+                                          key={`${detail.recipient_id}-${detail.recipient_detail_id || index}`}
+                                          onClick={() => selectRecipient(detail)}
+                                          className="cursor-pointer hover:bg-blue-50"
+                                        >
+                                          <td className="border-b border-slate-200 px-2 py-2">
                                             {detail.recipient_detail_name || detail.recipient_name || "-"}
                                           </td>
 
-                                          <td className="border-b border-slate-200 px-2 py-1.5">
+                                          <td className="border-b border-slate-200 px-2 py-2">
                                             {[
                                               detail.address,
                                               detail.subdistrict_name,
@@ -766,15 +822,6 @@ export default function ReceiveModals({
                                               .join(" ") || "-"}
                                           </td>
 
-                                          <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                                            <button
-                                              type="button"
-                                              onClick={() => selectRecipient(detail)}
-                                              className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
-                                            >
-                                              ✓เลือก
-                                            </button>
-                                          </td>
                                         </tr>
                                       ))}
                                     </tbody>
@@ -814,15 +861,6 @@ export default function ReceiveModals({
               />
             </div>
 
-            <div className="mt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={closeRecipientModal}
-                className="rounded bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
-              >
-                ปิด
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -1082,17 +1120,26 @@ export default function ReceiveModals({
 
       {showPackageSelectModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-lg rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-[640px] rounded-md bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">ข้อมูลสินค้า</h3>
-
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-                ทั้งหมด {packageGroups.length} รายการ
-              </span>
+              <h3 className="text-lg font-semibold text-slate-900">เลือกสินค้า</h3>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
+                  ทั้งหมด {packageGroups.length} รายการ
+                </span>
+                <button
+                  type="button"
+                  onClick={closePackageSelectModal}
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="ปิด"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
-            <div className="mb-2 grid grid-cols-[70px_1fr] items-center gap-2">
-              <label className={labelClass}>ค้นหา</label>
+            <div className="mb-2 grid grid-cols-[54px_1fr] items-center gap-1">
+              <label className="text-sm font-semibold text-slate-700">ค้นหา</label>
               <input
                 className={inputClass}
                 value={packageSearch}
@@ -1109,21 +1156,26 @@ export default function ReceiveModals({
             {packageError && <div className="mb-2 rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{packageError}</div>}
 
             <div className="max-h-[560px] overflow-y-auto border border-slate-300">
-              <table className="w-full border-collapse text-xs">
+              <table className="w-full border-collapse text-[13px]">
                 <thead className="sticky top-0 bg-slate-50">
                   <tr>
-                    <th className="border-b border-slate-300 px-2 py-1.5 text-left text-[11px]">ชื่อสินค้า</th>
-                    <th className="w-[80px] border-b border-slate-300 px-2 py-1.5" />
+                    <th className="border-b border-slate-300 px-2 py-2 text-left text-[12px]">สินค้า</th>
+                    <th className="w-[44px] border-b border-slate-300 px-2 py-2" />
                   </tr>
                 </thead>
 
                 <tbody>
                   {packageGroups.map((item) => {
                     const itemIsWeightFix = item.details.length > 0 && item.details.every((detail) => isWeightFix(detail));
+                    const selected = String(packageForm.package_id) === String(item.package_id);
 
                     return (
-                      <tr key={item.package_id} className="hover:bg-slate-100">
-                        <td className="border-b border-slate-200 px-2 py-1.5">
+                      <tr
+                        key={item.package_id}
+                        onClick={() => selectPackage(item)}
+                        className={`cursor-pointer ${selected ? "bg-blue-50" : "hover:bg-slate-100"}`}
+                      >
+                        <td className="border-b border-slate-200 px-2 py-2">
                           <div className="font-medium text-slate-700">
                             {item.package_code ? `${item.package_code} - ${item.package_name}` : item.package_name}
                           </div>
@@ -1139,14 +1191,8 @@ export default function ReceiveModals({
                           </div>
                         </td>
 
-                        <td className="border-b border-slate-200 px-2 py-1.5 text-right">
-                          <button
-                            type="button"
-                            onClick={() => selectPackage(item)}
-                            className="rounded bg-green-700 px-3 py-0.5 text-[11px] font-semibold text-white hover:bg-green-800"
-                          >
-                            ✓เลือก
-                          </button>
+                        <td className="border-b border-slate-200 px-2 py-2 text-center text-sm font-semibold text-blue-600">
+                          {selected ? "✓" : ""}
                         </td>
                       </tr>
                     );
@@ -1163,15 +1209,6 @@ export default function ReceiveModals({
               </table>
             </div>
 
-            <div className="mt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={closePackageSelectModal}
-                className="rounded bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
-              >
-                ปิด
-              </button>
-            </div>
           </div>
         </div>
       )}

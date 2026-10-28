@@ -13,5 +13,5 @@ const fields = [
 ];
 
 export default function LogReceiveCreate() {
-  return <LogGridPage title="ประวัติการสร้างใบรับ" endpoint="/logs/receive-create" fields={fields} />;
+  return <LogGridPage title="ประวัติการสร้างบิล" endpoint="/logs/receive-create" fields={fields} />;
 }
