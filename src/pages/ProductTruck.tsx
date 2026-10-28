@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, RefreshCcw, Search, Truck } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
 import * as XLSX from "xlsx";
 
 import AxiosInstance from "../services/apiClient";
+import ResizableColumns from "../components/tms/table/ResizableColumns";
 import { formatThaiNumber } from "../utils/textSanitizer";
 import { formatThaiDateTime } from "../utils/dateTime";
 
@@ -93,6 +94,40 @@ export default function ProductTruck() {
   const searchPending = requestedSearch !== debouncedSearch;
   const showRoute = truckType !== "DC_TRUCK_DC";
   const showDestinationWarehouse = truckType !== "DC_TRUCK";
+  const tableHeaders = useMemo(
+    () => [
+      "เลขที่บิล",
+      "Serial No",
+      "เจ้าของงาน",
+      "ชื่อคนขับรถ",
+      "Username",
+      "ทะเบียนรถ",
+      "ประเภทรถ",
+      ...(showRoute ? ["สายรถ"] : []),
+      "DC ต้นทาง",
+      ...(showDestinationWarehouse ? ["DC ปลายทาง"] : []),
+      "วันที่ขึ้นรถ",
+    ],
+    [showDestinationWarehouse, showRoute],
+  );
+  const tableDefaultWidths = useMemo(
+    () =>
+      Object.fromEntries(
+        [210, 250, 250, 190, 130, 250, 120, ...(showRoute ? [190] : []), 190, ...(showDestinationWarehouse ? [190] : []), 165].map(
+          (width, index) => [index, width],
+        ),
+      ),
+    [showDestinationWarehouse, showRoute],
+  );
+  const tableMinWidths = useMemo(
+    () =>
+      Object.fromEntries(
+        [150, 180, 160, 140, 100, 170, 100, ...(showRoute ? [150] : []), 150, ...(showDestinationWarehouse ? [150] : []), 140].map(
+          (width, index) => [index, width],
+        ),
+      ),
+    [showDestinationWarehouse, showRoute],
+  );
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -241,21 +276,14 @@ export default function ProductTruck() {
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[1740px] table-fixed border-collapse text-left text-xs">
-            <thead className="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-              <tr className="border-b border-slate-200">
-                <th className="w-[210px] px-3 py-2">เลขที่บิล</th>
-                <th className="w-[250px] px-3 py-2">Serial No</th>
-                <th className="w-[250px] px-3 py-2">เจ้าของงาน</th>
-                <th className="w-[190px] px-3 py-2">ชื่อคนขับรถ</th>
-                <th className="w-[130px] px-3 py-2">Username</th>
-                <th className="w-[250px] px-3 py-2">ทะเบียนรถ</th>
-                <th className="w-[120px] px-3 py-2">ประเภทรถ</th>
-                {showRoute && <th className="w-[190px] px-3 py-2">สายรถ</th>}
-                <th className="w-[190px] px-3 py-2">DC ต้นทาง</th>
-                {showDestinationWarehouse && <th className="w-[190px] px-3 py-2">DC ปลายทาง</th>}
-                <th className="w-[165px] px-3 py-2">วันที่ขึ้นรถ</th>
-              </tr>
-            </thead>
+            <ResizableColumns
+              headers={tableHeaders}
+              pageKey={`product-truck-${truckType}`}
+              defaultWidths={tableDefaultWidths}
+              minWidths={tableMinWidths}
+              headerClassName="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600"
+              headerCellClassName="relative sticky top-0 z-0 border-b border-slate-200 bg-slate-100 px-3 py-2 select-none"
+            />
             <tbody>
               {loading ? (
                 <tr>

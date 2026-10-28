@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Download, PackageOpen, RefreshCcw, Search } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
 import * as XLSX from "xlsx";
 
 import AxiosInstance from "../services/apiClient";
+import ResizableColumns from "../components/tms/table/ResizableColumns";
 import { formatThaiNumber } from "../utils/textSanitizer";
 
 type ProductWarehouseSerialItem = {
@@ -94,6 +95,18 @@ export default function ProductWarehouse() {
   const searchTerm = search.trim();
   const requestedSearch = searchTerm.length >= 3 ? searchTerm : "";
   const searchPending = requestedSearch !== debouncedSearch;
+  const tableHeaders = useMemo(
+    () => ["", "#", "วันที่ส่ง", "คลังปัจจุบัน", "DC ปลายทาง", "เลขที่บิล", "SN", "เจ้าของงาน", "ผู้รับ", "ผู้ยิงรับ", "สายรถ"],
+    [],
+  );
+  const tableDefaultWidths = useMemo(
+    () => Object.fromEntries([42, 56, 120, 180, 180, 210, 80, 230, 240, 170, 400].map((width, index) => [index, width])),
+    [],
+  );
+  const tableMinWidths = useMemo(
+    () => Object.fromEntries([42, 56, 105, 140, 140, 160, 65, 170, 180, 140, 180].map((width, index) => [index, width])),
+    [],
+  );
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -233,21 +246,14 @@ export default function ProductWarehouse() {
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[1620px] table-fixed border-collapse text-left text-xs">
-            <thead className="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-              <tr className="border-b border-slate-200">
-                <th className="w-[42px] px-2 py-2" />
-                <th className="w-[56px] px-2 py-2 text-center">#</th>
-                <th className="w-[120px] px-3 py-2">วันที่ส่ง</th>
-                <th className="w-[180px] px-3 py-2">คลังปัจจุบัน</th>
-                <th className="w-[180px] px-3 py-2">DC ปลายทาง</th>
-                <th className="w-[210px] px-3 py-2">เลขที่บิล</th>
-                <th className="w-[80px] px-3 py-2 text-right">SN</th>
-                <th className="w-[230px] px-3 py-2">เจ้าของงาน</th>
-                <th className="w-[240px] px-3 py-2">ผู้รับ</th>
-                <th className="w-[170px] px-3 py-2">ผู้ยิงรับ</th>
-                <th className="w-[400px] px-3 py-2">สายรถ</th>
-              </tr>
-            </thead>
+            <ResizableColumns
+              headers={tableHeaders}
+              pageKey="product-warehouse"
+              defaultWidths={tableDefaultWidths}
+              minWidths={tableMinWidths}
+              headerClassName="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600"
+              headerCellClassName="relative sticky top-0 z-0 border-b border-slate-200 bg-slate-100 px-3 py-2 select-none"
+            />
 
             <tbody>
               {loading ? (

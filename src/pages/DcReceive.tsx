@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../services/apiClient";
+import { connectSocket } from "../services/socket";
 import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
 import { formatThaiDateTime } from "../utils/dateTime";
 import ScanInput from "../components/tms/scan/ScanInput";
@@ -79,6 +80,19 @@ export default function DcReceive() {
 
   useEffect(() => {
     void loadSerials();
+  }, [loadSerials]);
+
+  useEffect(() => {
+    const socket = connectSocket();
+    const join = () => socket.emit("dc-receive:join");
+    const refresh = () => void loadSerials();
+    socket.on("connect", join);
+    if (socket.connected) join();
+    socket.on("dc-receive:updated", refresh);
+    return () => {
+      socket.off("connect", join);
+      socket.off("dc-receive:updated", refresh);
+    };
   }, [loadSerials]);
 
   const scanToRight = async (value?: string) => {

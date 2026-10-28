@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../services/apiClient";
+import { connectSocket } from "../services/socket";
 import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
 import CustomerDropdown, { type Customer } from "../components/tms/dropdown/CustomerDropdown";
 import ScanInput from "../components/tms/scan/ScanInput";
@@ -117,6 +118,19 @@ export default function WarehouseScan() {
 
   useEffect(() => {
     fetchSerials();
+  }, [fetchSerials]);
+
+  useEffect(() => {
+    const socket = connectSocket();
+    const join = () => socket.emit("warehouse-receive:join");
+    const refresh = () => void fetchSerials();
+    socket.on("connect", join);
+    if (socket.connected) join();
+    socket.on("warehouse-receive:updated", refresh);
+    return () => {
+      socket.off("connect", join);
+      socket.off("warehouse-receive:updated", refresh);
+    };
   }, [fetchSerials]);
 
   const handleReceiveScan = async (value?: string) => {

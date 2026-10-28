@@ -5,6 +5,7 @@ import alertSound from "../../assets/sounds/alert.mp3";
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../services/apiClient";
+import { connectSocket } from "../services/socket";
 import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
 import type { DestinationWarning, TruckLoadDetail, TruckLoadDetailResponse, TruckloadWarehouseOption as WarehouseOption, VehicleLoadResponse, VehicleLoadRow } from "../types/truckload";
 
@@ -210,6 +211,20 @@ export default function TruckloadScan() {
   useEffect(() => {
     void fetchSerials();
   }, [fetchSerials]);
+
+  useEffect(() => {
+    if (!truckLoadId) return;
+    const socket = connectSocket();
+    const join = () => socket.emit("truckload-scan:join", truckLoadId);
+    const refresh = () => void fetchSerials();
+    socket.on("connect", join);
+    if (socket.connected) join();
+    socket.on("truckload-scan:updated", refresh);
+    return () => {
+      socket.off("connect", join);
+      socket.off("truckload-scan:updated", refresh);
+    };
+  }, [fetchSerials, truckLoadId]);
 
   useEffect(() => {
     if (destinationWarning || loading || loadingOptions || saving || truckLoad?.is_close === "Y") return;

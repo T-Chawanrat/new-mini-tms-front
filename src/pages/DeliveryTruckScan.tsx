@@ -5,6 +5,7 @@ import alertSound from "../../assets/sounds/alert.mp3";
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../services/apiClient";
+import { connectSocket } from "../services/socket";
 import { normalizeSerialText } from "../utils/textSanitizer";
 import type { DeliveryProductRow as ProductRow, DeliveryRouteOption as RouteOption, DeliveryTruck } from "../types/deliveryTruck";
 
@@ -70,7 +71,7 @@ export default function DeliveryTruckScan() {
     void fetchRouteOptions();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     if (!truckLoadId) return;
 
     try {
@@ -81,11 +82,25 @@ export default function DeliveryTruckScan() {
       setPendingRows([]);
       setLoadedRows([]);
     }
-  };
+  }, [truckLoadId]);
 
   useEffect(() => {
     void fetchProducts();
-  }, [truckLoadId]);
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    if (!truckLoadId) return;
+    const socket = connectSocket();
+    const join = () => socket.emit("delivery-truck-scan:join", truckLoadId);
+    const refresh = () => void fetchProducts();
+    socket.on("connect", join);
+    if (socket.connected) join();
+    socket.on("delivery-truck-scan:updated", refresh);
+    return () => {
+      socket.off("connect", join);
+      socket.off("delivery-truck-scan:updated", refresh);
+    };
+  }, [fetchProducts, truckLoadId]);
 
   useEffect(() => {
     if (saving || deleting || truck?.is_close === "Y") return;
