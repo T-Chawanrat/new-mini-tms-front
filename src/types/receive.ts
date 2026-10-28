@@ -4,6 +4,7 @@ export type ReceiveForm = {
   customer_id: string;
   customer_code: string;
   customer_name: string;
+  assigned_warehouse_id: string;
   shipper_id: string;
   shipper_code: string;
   shipper_name: string;
@@ -43,6 +44,7 @@ export type ReceiveForm = {
 
 export type CustomerOption = { id: number; code: string; name: string };
 export type PaymentOption = { id: number; name: string };
+export type WarehouseOption = { id: number; name: string };
 export type ShipperOption = {
   shipper_id: number;
   shipper_code: string;

@@ -6,6 +6,7 @@ export const emptyReceiveForm: ReceiveForm = {
   customer_id: "",
   customer_code: "",
   customer_name: "",
+  assigned_warehouse_id: "",
   shipper_id: "",
   shipper_code: "",
   shipper_name: "",

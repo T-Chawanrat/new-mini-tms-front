@@ -7,6 +7,7 @@ import ResizableColumns from "../components/tms/table/ResizableColumns";
 import { useAuth } from "../context/AuthContext";
 import AxiosInstance from "../services/apiClient";
 import CustomerDropdown, { type Customer } from "../components/tms/dropdown/CustomerDropdown";
+import SearchableSelect, { type SearchableOption } from "../components/tms/form/SearchableSelect";
 import { normalizeText, isBlankText, isValidThaiPhone, isPositiveNumberText } from "../utils/textSanitizer";
 import { formatExcelPreviewDate } from "../utils/dateTime";
 
@@ -51,6 +52,11 @@ type ImportResponse = {
   receive_count?: number;
   detail_count?: number;
   error?: string;
+};
+
+type Warehouse = {
+  id: number | string;
+  name: string;
 };
 
 const excelColumns: Array<keyof ImportRow> = [
@@ -179,6 +185,8 @@ export default function ReceiveImport() {
 
   const [customerId, setCustomerId] = useState("");
   const [customerText, setCustomerText] = useState("");
+  const [assignedWarehouseId, setAssignedWarehouseId] = useState("");
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
 
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
@@ -192,6 +200,10 @@ export default function ReceiveImport() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const selectedCustomerId = String(authUser?.customer_id || customerId || "");
+  const warehouseOptions = useMemo<SearchableOption[]>(
+    () => warehouses.map((warehouse) => ({ value: String(warehouse.id), label: warehouse.name })),
+    [warehouses],
+  );
 
   const isCustomerUser = Number(authUser?.role_id) === 2;
 
@@ -246,6 +258,8 @@ export default function ReceiveImport() {
 
   const disabledReason = !selectedCustomerId
     ? "ยังไม่ได้เลือกเจ้าของงาน"
+    : !assignedWarehouseId
+      ? "ยังไม่ได้เลือกคลังดูแลงาน"
     : !file
       ? "ยังไม่ได้เลือกไฟล์ Excel"
       : loadingFile
@@ -264,6 +278,20 @@ export default function ReceiveImport() {
       setCustomerText(customerIdText);
     }
   }, [authUser?.customer_id]);
+
+  useEffect(() => {
+    const loadWarehouses = async () => {
+      try {
+        const response = await AxiosInstance.get<Warehouse[]>("/warehouses");
+        setWarehouses(Array.isArray(response.data) ? response.data : []);
+      } catch (loadError) {
+        console.error("load warehouses error:", loadError);
+        setWarehouses([]);
+      }
+    };
+
+    void loadWarehouses();
+  }, []);
 
   const clearFile = () => {
     setFile(null);
@@ -355,7 +383,12 @@ export default function ReceiveImport() {
     setSuccess(null);
 
     if (!selectedCustomerId) {
-      setError("กรุณาเลือก Customer ก่อนนำเข้า");
+      setError("กรุณาเลือกเจ้าของงานก่อนนำเข้า");
+      return;
+    }
+
+    if (!assignedWarehouseId) {
+      setError("กรุณาเลือกคลังก่อนนำเข้า");
       return;
     }
 
@@ -394,6 +427,7 @@ export default function ReceiveImport() {
 
       formData.append("file", file);
       formData.append("customer_id", String(selectedCustomerId));
+      formData.append("assigned_warehouse_id", assignedWarehouseId);
 
       const res = await AxiosInstance.post<ImportResponse>("/create/receives/import", formData, {
         headers: {
@@ -444,9 +478,9 @@ export default function ReceiveImport() {
       </div>
 
       <div className="mb-2 rounded-md border border-slate-200 bg-white p-2 shadow-sm">
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[480px_1fr_auto] xl:items-end">
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[480px_180px_1fr_auto] xl:items-end">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-700">Customer</label>
+            <label className="mb-1 block text-xs font-semibold text-slate-700">เจ้าของงาน</label>
 
             {isCustomerUser ? (
               <input
@@ -473,6 +507,23 @@ export default function ReceiveImport() {
                 />
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-slate-700">คลัง</label>
+            <div className={saving ? "pointer-events-none opacity-70" : ""}>
+              <SearchableSelect
+                value={assignedWarehouseId}
+                options={warehouseOptions}
+                onChange={(value) => {
+                  setAssignedWarehouseId(value);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                placeholder="เลือกคลัง"
+                compact
+              />
+            </div>
           </div>
 
           <div>

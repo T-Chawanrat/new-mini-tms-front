@@ -13,13 +13,14 @@ import {
   emptyPackageRow,
   emptyReceiveForm,
 } from "./createReceiveConfig";
-import type { CustomerOption, GroupedRecipient, PackageRow, PaymentOption, ReceiveForm, RecipientOption, ShipperOption, ShipperROCodeOption } from "../../types/receive";
+import type { CustomerOption, GroupedRecipient, PackageRow, PaymentOption, ReceiveForm, RecipientOption, ShipperOption, ShipperROCodeOption, WarehouseOption } from "../../types/receive";
 
 export default function CreateReceivePage() {
   const [form, setForm] = useState<ReceiveForm>(emptyReceiveForm);
 
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [payments, setPayments] = useState<PaymentOption[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [shippers, setShippers] = useState<ShipperOption[]>([]);
   const [recipients, setRecipients] = useState<RecipientOption[]>([]);
 
@@ -164,6 +165,16 @@ export default function CreateReceivePage() {
     }
   };
 
+  const loadWarehouses = async () => {
+    try {
+      const res = await AxiosInstance.get<WarehouseOption[]>("/warehouses");
+      setWarehouses(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("LOAD WAREHOUSES ERROR:", err);
+      setWarehouses([]);
+    }
+  };
+
   const loadReceiveOptions = async (customerId: string) => {
     if (!customerId) return;
 
@@ -253,6 +264,7 @@ export default function CreateReceivePage() {
   useEffect(() => {
     loadCustomers();
     loadPayments();
+    loadWarehouses();
   }, []);
 
   useEffect(() => {
@@ -533,6 +545,7 @@ export default function CreateReceivePage() {
 
   const validateReceive = () => {
     if (!form.customer_id) return "กรุณาเลือกเจ้าของงาน";
+    if (!form.assigned_warehouse_id) return "กรุณาเลือกคลังดูแลงาน";
     if (!form.shipper_id) return "กรุณาเลือกผู้ส่ง";
     if (!form.recipient_id || !form.recipient_detail_id) return "กรุณาเลือกผู้รับ";
     if (!form.address) return "กรุณาระบุที่อยู่ผู้รับ";
@@ -586,6 +599,7 @@ export default function CreateReceivePage() {
           reference_no: form.reference_no || null,
 
           customer_id: form.customer_id,
+          assigned_warehouse_id: form.assigned_warehouse_id,
           shipper_id: form.shipper_id,
           recipient_id: form.recipient_id,
           recipient_detail_id: form.recipient_detail_id,
@@ -698,6 +712,7 @@ export default function CreateReceivePage() {
           <ReceiveHeaderForm
             form={form}
             payments={payments}
+            warehouses={warehouses}
             roCodes={roCodes}
             loadingCustomers={loadingCustomers}
             loadingOptions={loadingOptions}

@@ -10,6 +10,8 @@ type SearchableSelectProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  controlClassName?: string;
+  compact?: boolean;
   disabled?: boolean;
   portal?: boolean;
 };
@@ -20,6 +22,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   onChange,
   placeholder = "เลือกข้อมูล",
   className = "",
+  controlClassName = "",
+  compact = false,
   disabled = false,
   portal = false,
 }) => {
@@ -84,7 +88,9 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   return (
     <div ref={dropdownRef} className={`relative w-full ${className}`}>
       <div
-        className="flex h-11 w-full cursor-text items-center rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100"
+        className={`flex w-full cursor-text items-center border bg-white text-sm text-slate-700 outline-none transition focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 ${
+          compact ? "h-9 rounded-md border-slate-300 px-2.5" : "h-11 rounded-lg border-slate-200 px-3"
+        } ${controlClassName}`}
         onClick={() => { if (!disabled) setIsDropdownOpen(true); }}
       >
         <input

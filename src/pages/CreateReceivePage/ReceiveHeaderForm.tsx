@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import DatePicker from "../../components/tms/form/DatePicker";
 import RequiredLabel from "../../components/tms/form/RequiredLabel";
+import SearchableSelect from "../../components/tms/form/SearchableSelect";
 import {
   buttonInputClass,
   checkboxInputClass,
@@ -13,11 +14,12 @@ import {
   readOnlyInputClass,
   selectClass,
 } from "./createReceiveConfig";
-import type { PaymentOption, ReceiveForm, ShipperROCodeOption, UpdateReceiveForm } from "../../types/receive";
+import type { PaymentOption, ReceiveForm, ShipperROCodeOption, UpdateReceiveForm, WarehouseOption } from "../../types/receive";
 
 type ReceiveHeaderFormProps = {
   form: ReceiveForm;
   payments: PaymentOption[];
+  warehouses: WarehouseOption[];
   roCodes: ShipperROCodeOption[];
   loadingCustomers: boolean;
   loadingOptions: boolean;
@@ -38,6 +40,7 @@ type ReceiveHeaderFormProps = {
 export default function ReceiveHeaderForm({
   form,
   payments,
+  warehouses,
   roCodes,
   loadingCustomers,
   loadingOptions,
@@ -62,14 +65,14 @@ export default function ReceiveHeaderForm({
     <div className="space-y-2">
       {/* แถวบน */}
       <div className="rounded-md border border-slate-200 bg-white p-2">
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[178px_1.55fr_1fr_204px]">
-          <div className="grid grid-cols-[58px_110px] items-center gap-1.5">
-            <label className={`${labelClass} whitespace-nowrap`}>เลขที่บิล</label>
-            <input className={disabledInputClass} value={form.receive_code} disabled placeholder="Auto" />
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[120px_minmax(250px,1.2fr)_240px_minmax(130px,0.65fr)_204px]">
+          <div>
+            <label className={`mb-1 block ${labelClass}`}>เลขที่บิล</label>
+            <input className={`${disabledInputClass} !rounded-md`} value={form.receive_code} disabled placeholder="Auto" />
           </div>
 
-          <div className="grid grid-cols-[78px_1fr] items-center gap-1.5">
-            <RequiredLabel required className={`${labelClass} whitespace-nowrap`}>
+          <div>
+            <RequiredLabel required className={`mb-1 block ${labelClass}`}>
               เจ้าของงาน
             </RequiredLabel>
             <button type="button" onClick={onOpenCustomerModal} className={buttonInputClass}>
@@ -83,18 +86,31 @@ export default function ReceiveHeaderForm({
             </button>
           </div>
 
-          <div className="grid grid-cols-[66px_1fr] items-center gap-1.5">
-            <label className={`${labelClass} whitespace-nowrap`}>Reference</label>
+          <div>
+            <RequiredLabel required className={`mb-1 block ${labelClass}`}>
+              คลัง
+            </RequiredLabel>
+            <SearchableSelect
+              value={form.assigned_warehouse_id}
+              options={warehouses.map((warehouse) => ({ value: String(warehouse.id), label: warehouse.name }))}
+              onChange={(value) => updateForm("assigned_warehouse_id", value)}
+              placeholder="เลือกคลัง"
+              compact
+            />
+          </div>
+
+          <div>
+            <label className={`mb-1 block ${labelClass}`}>Reference</label>
             <input
-              className={inputClass}
+              className={`${inputClass} !rounded-md`}
               value={form.reference_no}
               onChange={(e) => updateForm("reference_no", e.target.value)}
               placeholder="Reference"
             />
           </div>
 
-          <div className="grid grid-cols-[50px_155px] items-center gap-0.5">
-            <label className={`${labelClass} whitespace-nowrap`}>วันที่ส่ง</label>
+          <div>
+            <label className={`mb-1 block ${labelClass}`}>วันที่ส่ง</label>
             <div className={`${datePickerWrapClass} [&_.MuiFormControl-root]:!border-0 [&_.MuiFormControl-root]:!shadow-none [&_.MuiOutlinedInput-root]:!border-0 [&_.MuiOutlinedInput-notchedOutline]:!border [&_.MuiOutlinedInput-notchedOutline]:!border-slate-200`}>
               <DatePicker
                 variant="compact"
