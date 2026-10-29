@@ -30,7 +30,7 @@ type PendingImage = { file: File; preview: string };
 const time = (value?: string) =>
   value ? new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value)) : "";
 
-export default function DeliveryIssueInbox() {
+export default function IssueInbox() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const requestedCode = searchParams.get("bill_no")?.trim() || "";

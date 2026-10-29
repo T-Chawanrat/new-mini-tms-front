@@ -2,15 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeftRight, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import alertSound from "../../assets/sounds/alert.mp3";
-import errorSound from "../../assets/sounds/error.mp3";
-import successSound from "../../assets/sounds/success.mp3";
-import MoveTkDestinationWarning from "../components/tms/movement/moveTk/MoveTkDestinationWarning";
-import MoveTkProductTable from "../components/tms/movement/moveTk/MoveTkProductTable";
-import type { MoveTkProduct, MoveTkTruck } from "../components/tms/movement/moveTk/types";
-import ScanInput from "../components/tms/scan/ScanInput";
-import AxiosInstance from "../services/apiClient";
-import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
+import alertSound from "../../../assets/sounds/alert.mp3";
+import errorSound from "../../../assets/sounds/error.mp3";
+import successSound from "../../../assets/sounds/success.mp3";
+import MoveTkDestinationWarning from "../../components/tms/movement/moveTk/MoveTkDestinationWarning";
+import MoveTkProductTable from "../../components/tms/movement/moveTk/MoveTkProductTable";
+import type { MoveTkProduct, MoveTkTruck } from "../../components/tms/movement/moveTk/types";
+import ScanInput from "../../components/tms/scan/ScanInput";
+import AxiosInstance from "../../services/apiClient";
+import { formatThaiNumber, normalizeSerialText } from "../../utils/textSanitizer";
 
 type MoveTkProductsResponse = {
   data?: MoveTkProduct[];

@@ -1,9 +1,9 @@
 // client/src/pages/ManageHolidays.tsx
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import AxiosInstance from "../services/apiClient";
-import DatePicker from "../components/tms/form/DatePicker";
-import DataGrid from "../components/tms/table/DataGrid";
+import AxiosInstance from "../../services/apiClient";
+import DatePicker from "../../components/tms/form/DatePicker";
+import DataGrid from "../../components/tms/table/DataGrid";
 import { Pencil, Trash2, RefreshCw, Plus } from "lucide-react";
 import type {
   Holiday,
@@ -12,7 +12,7 @@ import type {
   HolidayId as Id,
   HolidaySelectedStatus as SelectedStatus,
   HolidayStatusValue as StatusValue,
-} from "../types/holiday";
+} from "../../types/holiday";
 
 type GridCellParams<T> = {
   value?: string | number | null;

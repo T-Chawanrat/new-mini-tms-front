@@ -32,7 +32,7 @@ const getDriverTypeLabel = (driverType?: string) => {
   return driverType || "-";
 };
 
-export default function DeliveryPendingReportDt() {
+export default function PendingReportDt() {
   const [rows, setRows] = useState<DeliveryDtRow[]>([]);
   const [search, setSearch] = useState("");
   const [deliveryStatus, setDeliveryStatus] = useState("PENDING");

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import SearchableSelect from "../components/tms/form/SearchableSelect";
-import AxiosInstance from "../services/apiClient";
-import { useAuth } from "../context/AuthContext";
-import AddressSearchDropdown from "../components/tms/dropdown/AddressSearchDropdown";
+import SearchableSelect from "../../components/tms/form/SearchableSelect";
+import AxiosInstance from "../../services/apiClient";
+import { useAuth } from "../../context/AuthContext";
+import AddressSearchDropdown from "../../components/tms/dropdown/AddressSearchDropdown";
 import { FileImage, Pencil, Trash2, X } from "lucide-react";
-import { cleanCodeInput, cleanNameInput, cleanNumberInput } from "../utils/textSanitizer";
-import DataGrid from "../components/tms/table/DataGrid";
-import RequiredLabel from "../components/tms/form/RequiredLabel";
+import { cleanCodeInput, cleanNameInput, cleanNumberInput } from "../../utils/textSanitizer";
+import DataGrid from "../../components/tms/table/DataGrid";
+import RequiredLabel from "../../components/tms/form/RequiredLabel";
 import type {
   ROGridRow,
   RORow,
@@ -18,7 +18,7 @@ import type {
   ShipperRow,
   ShipperSelectedStatus as SelectedStatus,
   ShipperStatusValue as StatusValue,
-} from "../types/shipper";
+} from "../../types/shipper";
 
 type GridCellParams<T> = {
   value?: string | number | null;

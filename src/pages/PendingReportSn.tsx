@@ -45,7 +45,7 @@ type DeliverySnRow = {
   status_message?: string;
 };
 
-export default function DeliveryPendingReportSn() {
+export default function PendingReportSn() {
   const [rows, setRows] = useState<DeliverySnRow[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [search, setSearch] = useState("");

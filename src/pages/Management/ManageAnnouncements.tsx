@@ -10,10 +10,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import ImageUpload, { type UploadedImage, type UploadedImages } from "../components/tms/form/ImageUpload";
-import AxiosInstance from "../services/apiClient";
-import { getUploadUrl } from "../services/uploadUrl";
-import type { Announcement } from "../types/announcement";
+import ImageUpload, { type UploadedImage, type UploadedImages } from "../../components/tms/form/ImageUpload";
+import AxiosInstance from "../../services/apiClient";
+import { getUploadUrl } from "../../services/uploadUrl";
+import type { Announcement } from "../../types/announcement";
 
 const emptyForm = {
   title: "",

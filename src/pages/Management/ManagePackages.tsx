@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import SearchableSelect from "../components/tms/form/SearchableSelect";
-import AxiosInstance from "../services/apiClient";
-import { useAuth } from "../context/AuthContext";
+import SearchableSelect from "../../components/tms/form/SearchableSelect";
+import AxiosInstance from "../../services/apiClient";
+import { useAuth } from "../../context/AuthContext";
 import { Pencil, X } from "lucide-react";
-import DataGrid from "../components/tms/table/DataGrid";
-import RequiredLabel from "../components/tms/form/RequiredLabel";
-import { cleanCodeInput, cleanNumberInput } from "../utils/textSanitizer";
+import DataGrid from "../../components/tms/table/DataGrid";
+import RequiredLabel from "../../components/tms/form/RequiredLabel";
+import { cleanCodeInput, cleanNumberInput } from "../../utils/textSanitizer";
 
 type Customer = {
   id: number;

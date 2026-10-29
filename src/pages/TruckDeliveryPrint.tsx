@@ -23,7 +23,7 @@ const formatThaiDate = (value: string | null | undefined) => {
   return date.toLocaleDateString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-export default function DeliveryTruckPrint() {
+export default function TruckDeliveryPrint() {
   const { truckLoadId } = useParams<{ truckLoadId: string }>();
   const navigate = useNavigate();
   const [truck, setTruck] = useState<DeliveryTruckPrintHeader | null>(null);

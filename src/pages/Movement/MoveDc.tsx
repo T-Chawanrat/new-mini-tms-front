@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowRightLeft, X } from "lucide-react";
 
-import errorSound from "../../assets/sounds/error.mp3";
-import successSound from "../../assets/sounds/success.mp3";
-import AxiosInstance from "../services/apiClient";
-import { normalizeSerialText } from "../utils/textSanitizer";
+import errorSound from "../../../assets/sounds/error.mp3";
+import successSound from "../../../assets/sounds/success.mp3";
+import AxiosInstance from "../../services/apiClient";
+import { normalizeSerialText } from "../../utils/textSanitizer";
 
 type Warehouse = { id: number; name: string };
 type ProductRow = {

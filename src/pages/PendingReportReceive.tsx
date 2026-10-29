@@ -40,7 +40,7 @@ type DeliveryReceiveRow = {
   status_message?: string;
 };
 
-export default function DeliveryPendingReportReceive() {
+export default function PendingReportReceive() {
   const [rows, setRows] = useState<DeliveryReceiveRow[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [search, setSearch] = useState("");

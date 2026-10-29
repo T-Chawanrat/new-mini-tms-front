@@ -10,9 +10,11 @@ import { normalizeSerialText } from "../utils/textSanitizer";
 import type { DeliveryProductRow as ProductRow, DeliveryRouteOption as RouteOption, DeliveryTruck } from "../types/deliveryTruck";
 
 type RequestError = {
-  response?: { data?: { code?: string; message?: string; data?: Partial<ProductRow> } };
+  response?: { data?: { code?: string; message?: string; data?: Partial<ProductRow> & { warning_codes?: string[] } } };
   message?: string;
 };
+
+type ScanWarningProduct = ProductRow & { warningCodes: string[] };
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (typeof error !== "object" || error === null) return fallback;
@@ -20,7 +22,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return requestError.response?.data?.message || requestError.message || fallback;
 };
 
-export default function DeliveryTruckScan() {
+export default function TruckDeliveryScan() {
   const { truckLoadId } = useParams<{ truckLoadId: string }>();
   const navigate = useNavigate();
   const loadInputRef = useRef<HTMLInputElement | null>(null);
@@ -40,7 +42,7 @@ export default function DeliveryTruckScan() {
   const [deleting, setDeleting] = useState(false);
   const [pendingFilter, setPendingFilter] = useState("matched");
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
-  const [routeMismatchProduct, setRouteMismatchProduct] = useState<ProductRow | null>(null);
+  const [scanWarningProduct, setScanWarningProduct] = useState<ScanWarningProduct | null>(null);
   const routeMismatchCancelRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -115,9 +117,9 @@ export default function DeliveryTruckScan() {
   }, [activeSide, deleting, loadedRows.length, saving, truck?.is_close]);
 
   useEffect(() => {
-    if (!routeMismatchProduct) return;
+    if (!scanWarningProduct) return;
     routeMismatchCancelRef.current?.focus();
-  }, [routeMismatchProduct]);
+  }, [scanWarningProduct]);
 
   useEffect(() => {
     successAudioRef.current = new Audio(successSound);
@@ -172,15 +174,16 @@ export default function DeliveryTruckScan() {
     } catch (error) {
       const requestError = error as RequestError;
       const warning = requestError.response?.data;
-      if (warning?.code === "ROUTE_MISSING" || warning?.code === "ROUTE_MISMATCH") {
+      if (warning?.code === "SCAN_WARNING") {
         const listedProduct = pendingRows.find((row) => normalizeSerialText(row.serial_no) === normalizeSerialText(serialNo));
-        setRouteMismatchProduct({
+        setScanWarningProduct({
           serial_no: warning.data?.serial_no || listedProduct?.serial_no || serialNo,
           customer_name: listedProduct?.customer_name || null,
           recipient_name: listedProduct?.recipient_name || "",
           now_warehouse_id: listedProduct?.now_warehouse_id || null,
           to_warehouse_id: listedProduct?.to_warehouse_id || null,
           route_id: warning.data?.route_id ?? listedProduct?.route_id ?? null,
+          warningCodes: warning.data?.warning_codes || [],
         });
         playSound("alert");
         return;
@@ -239,10 +242,10 @@ export default function DeliveryTruckScan() {
     }
   };
 
-  const confirmRouteMismatch = async () => {
-    const product = routeMismatchProduct;
+  const confirmScanWarning = async () => {
+    const product = scanWarningProduct;
     if (!product) return;
-    setRouteMismatchProduct(null);
+    setScanWarningProduct(null);
     await loadProduct(product.serial_no, true);
   };
 
@@ -456,23 +459,22 @@ export default function DeliveryTruckScan() {
 
       <p className="sr-only">กำลังยิงที่ฝั่ง {activeSide}</p>
 
-      {routeMismatchProduct && (
+      {scanWarningProduct && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl">
-            <h3 className="text-base font-bold text-amber-700">
-              {routeMismatchProduct.route_id === null ? "แจ้งเตือนยังไม่มีสายรถ" : "แจ้งเตือนสายรถไม่ตรงกัน"}
-            </h3>
-            <p className="mt-2 text-sm text-slate-700">
-              {routeMismatchProduct.route_id === null
-                ? "สินค้านี้ยังไม่ได้กำหนดสายรถ ต้องการยิงขึ้นรถต่อใช่หรือไม่"
-                : "สินค้านี้อยู่คนละสายรถกับใบรถกระจายที่เลือก ต้องการยิงขึ้นรถต่อใช่หรือไม่"}
-            </p>
+            <h3 className="text-base font-bold text-amber-700">ยืนยันยิงขึ้นรถ</h3>
+            <p className="mt-2 text-sm text-slate-700">รายการนี้มีเงื่อนไขไม่ตรงกับใบรถที่เลือก</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">
+              {scanWarningProduct.warningCodes.includes("WAREHOUSE_MISMATCH") && <li>คลังปลายทางไม่ตรงกับคลังของใบรถ</li>}
+              {scanWarningProduct.warningCodes.includes("ROUTE_MISSING") && <li>ยังไม่ได้กำหนดสายรถ</li>}
+              {scanWarningProduct.warningCodes.includes("ROUTE_MISMATCH") && <li>สายรถไม่ตรงกับใบรถที่เลือก</li>}
+            </ul>
             <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
               <div>
-                SN: <strong>{routeMismatchProduct.serial_no}</strong>
+                SN: <strong>{scanWarningProduct.serial_no}</strong>
               </div>
               <div>
-                ผู้รับ: <strong>{routeMismatchProduct.recipient_name || "-"}</strong>
+                ผู้รับ: <strong>{scanWarningProduct.recipient_name || "-"}</strong>
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
@@ -480,7 +482,7 @@ export default function DeliveryTruckScan() {
                 ref={routeMismatchCancelRef}
                 type="button"
                 onClick={() => {
-                  setRouteMismatchProduct(null);
+                  setScanWarningProduct(null);
                   setLoadSerial("");
                   loadInputRef.current?.focus();
                 }}
@@ -491,7 +493,7 @@ export default function DeliveryTruckScan() {
               </button>
               <button
                 type="button"
-                onClick={() => void confirmRouteMismatch()}
+                onClick={() => void confirmScanWarning()}
                 disabled={saving}
                 className="h-9 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 disabled:bg-slate-300"
               >

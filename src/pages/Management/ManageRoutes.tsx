@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import AxiosInstance from "../services/apiClient";
+import AxiosInstance from "../../services/apiClient";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
-import AddressSearchDropdown from "../components/tms/dropdown/AddressSearchDropdown";
-import DataGrid from "../components/tms/table/DataGrid";
+import AddressSearchDropdown from "../../components/tms/dropdown/AddressSearchDropdown";
+import DataGrid from "../../components/tms/table/DataGrid";
 import { type GridColDef } from "@mui/x-data-grid";
 import type {
   DeleteRouteDetailTarget as DeleteDetailTarget,
@@ -11,7 +11,7 @@ import type {
   RouteRow,
   RouteStatusTarget as StatusTarget,
   RouteWarehouse as Warehouse,
-} from "../types/route";
+} from "../../types/route";
 
 const thaiDays: Record<string, string> = {
   Monday: "จ",

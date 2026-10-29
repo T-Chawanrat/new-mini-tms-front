@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import SearchableSelect from "../components/tms/form/SearchableSelect";
+import SearchableSelect from "../../components/tms/form/SearchableSelect";
 import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { ChevronDown, ChevronRight, Pencil, Plus, X } from "lucide-react";
 import L from "leaflet";
@@ -9,11 +9,11 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-import AxiosInstance from "../services/apiClient";
-import { useAuth } from "../context/AuthContext";
-import AddressSearchDropdown from "../components/tms/dropdown/AddressSearchDropdown";
-import RequiredLabel from "../components/tms/form/RequiredLabel";
-import { removeSpaces } from "../utils/textSanitizer";
+import AxiosInstance from "../../services/apiClient";
+import { useAuth } from "../../context/AuthContext";
+import AddressSearchDropdown from "../../components/tms/dropdown/AddressSearchDropdown";
+import RequiredLabel from "../../components/tms/form/RequiredLabel";
+import { removeSpaces } from "../../utils/textSanitizer";
 import type {
   AddressSearchRow,
   ApiRecipientRow,
@@ -27,7 +27,7 @@ import type {
   RecipientType,
   SelectedStatus,
   StatusValue,
-} from "../types/recipient";
+} from "../../types/recipient";
 
 type RecipientDetailsInlinePanelProps = {
   recipient: Recipient;

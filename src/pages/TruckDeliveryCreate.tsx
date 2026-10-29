@@ -27,7 +27,7 @@ const truckStatusLabel: Record<string, string> = {
   DC_TRUCK: "คลังไปหาลูกค้า",
 };
 
-export default function DeliveryTruckCreate() {
+export default function TruckDeliveryCreate() {
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [driverType, setDriverType] = useState<DriverType>("EMPLOYEE");

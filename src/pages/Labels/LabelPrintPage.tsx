@@ -4,13 +4,13 @@ import { ChevronDown, ChevronRight, Printer, RefreshCcw, Search } from "lucide-r
 import TablePagination from "@mui/material/TablePagination";
 import { useSearchParams } from "react-router-dom";
 
-import AxiosInstance from "../services/apiClient";
+import AxiosInstance from "../../services/apiClient";
 
-import DatePicker from "../components/tms/form/DatePicker";
-import SearchableSelect from "../components/tms/form/SearchableSelect";
-import LabelCard from "../components/tms/labels/LabelCard";
-import LabelPrintStyle from "../components/tms/labels/LabelPrintStyle";
-import ResizableColumns from "../components/tms/table/ResizableColumns";
+import DatePicker from "../../components/tms/form/DatePicker";
+import SearchableSelect from "../../components/tms/form/SearchableSelect";
+import LabelCard from "../../components/tms/labels/LabelCard";
+import LabelPrintStyle from "../../components/tms/labels/LabelPrintStyle";
+import ResizableColumns from "../../components/tms/table/ResizableColumns";
 
 import type {
   LabelFilters,
@@ -21,11 +21,11 @@ import type {
   Option,
   Pagination,
   PrintResponse,
-} from "../types/label";
+} from "../../types/label";
 
-import { defaultLabelFilters, defaultLabelPagination } from "../types/label";
+import { defaultLabelFilters, defaultLabelPagination } from "../../types/label";
 
-import { buildLabelReceiveQueryParams, buildLabelSerialQueryParams, formatDate, formatDateTime, formatNumber, getText } from "../utils/labelHelpers";
+import { buildLabelReceiveQueryParams, buildLabelSerialQueryParams, formatDate, formatDateTime, formatNumber, getText } from "../../utils/labelHelpers";
 
 const LABEL_API_PATH = "/labels";
 
