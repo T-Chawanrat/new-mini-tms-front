@@ -286,8 +286,8 @@ export default function MoveTkScan() {
           </div>
         </div>
         <div className="mt-2.5 grid gap-3 border-t border-slate-100 pt-2.5 lg:grid-cols-2">
-          <ScanInput label="ยิงย้ายสินค้า" value={addInput} onChange={setAddInput} onScan={(value) => void scan(value)} inputRef={addInputRef} disabled={loading || !sourceTruck || !targetTruck} placeholder="ยิง SN เพื่อเพิ่มในรายการรอยืนยัน" />
-          <ScanInput label="ยิงลบรายการ" value={removeInput} onChange={setRemoveInput} onScan={(value) => void removeProduct(value)} inputRef={removeInputRef} disabled={loading || movingRows.length === 0} placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย" tone="amber" />
+          <ScanInput label="ยิงย้ายสินค้า" value={addInput} onChange={setAddInput} onScan={(value) => void scan(value)} inputRef={addInputRef} disabled={loading || !sourceTruck || !targetTruck} preventSpaces placeholder="ยิง SN เพื่อเพิ่มในรายการรอยืนยัน" />
+          <ScanInput label="ยิงลบรายการ" value={removeInput} onChange={setRemoveInput} onScan={(value) => void removeProduct(value)} inputRef={removeInputRef} disabled={loading || movingRows.length === 0} preventSpaces placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย" tone="amber" />
         </div>
       </section>
 

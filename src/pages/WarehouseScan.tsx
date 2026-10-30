@@ -295,6 +295,7 @@ export default function WarehouseScan() {
             onScan={(value) => void handleReceiveScan(value)}
             inputRef={receiveInputRef}
             disabled={loading}
+            preventSpaces
             placeholder="ยิง SN เพื่อเพิ่มในรายการรอยืนยัน"
           />
 
@@ -305,6 +306,7 @@ export default function WarehouseScan() {
             onScan={(value) => void handleRemoveScan(value)}
             inputRef={removeInputRef}
             disabled={loading || scannedRows.length === 0}
+            preventSpaces
             placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย"
             tone="amber"
           />

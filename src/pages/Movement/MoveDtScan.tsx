@@ -9,7 +9,7 @@ import MoveTkDestinationWarning from "../../components/tms/movement/moveTk/MoveT
 import MoveTkProductTable from "../../components/tms/movement/moveTk/MoveTkProductTable";
 import type { MoveTkProduct, MoveTkTruck } from "../../components/tms/movement/moveTk/types";
 import AxiosInstance from "../../services/apiClient";
-import { formatThaiNumber, normalizeSerialText } from "../../utils/textSanitizer";
+import { formatThaiNumber, normalizeSerialText, preventSpaceKey, removeSpaces } from "../../utils/textSanitizer";
 
 export default function MoveDtScan() {
   const navigate = useNavigate();
@@ -205,8 +205,10 @@ export default function MoveDtScan() {
             <input
               ref={addInputRef}
               value={addInput}
-              onChange={(event) => setAddInput(event.target.value)}
+              onChange={(event) => setAddInput(removeSpaces(event.target.value))}
               onKeyDown={(event) => {
+                if (preventSpaceKey(event)) return;
+
                 if (event.key === "Enter") {
                   event.preventDefault();
                   void scan();

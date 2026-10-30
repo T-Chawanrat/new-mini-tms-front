@@ -4,7 +4,7 @@ import { ArrowRight, ArrowRightLeft, X } from "lucide-react";
 import errorSound from "../../../assets/sounds/error.mp3";
 import successSound from "../../../assets/sounds/success.mp3";
 import AxiosInstance from "../../services/apiClient";
-import { normalizeSerialText } from "../../utils/textSanitizer";
+import { normalizeSerialText, preventSpaceKey, removeSpaces } from "../../utils/textSanitizer";
 
 type Warehouse = { id: number; name: string };
 type ProductRow = {
@@ -117,7 +117,7 @@ export default function MoveDc() {
   });
 
   const handleDraftScan = async () => {
-    const rawSerial = scanSerial.trim();
+    const rawSerial = removeSpaces(scanSerial);
     const serial = normalizeSerialText(rawSerial);
 
     if (!fromWarehouseId || !toWarehouseId) {
@@ -146,7 +146,7 @@ export default function MoveDc() {
   };
 
   const handleRemoveScan = async () => {
-    const rawSerial = removeSerial.trim();
+    const rawSerial = removeSpaces(removeSerial);
     if (!rawSerial) return;
 
     try {
@@ -228,7 +228,7 @@ export default function MoveDc() {
           <div className="hidden h-9 items-center justify-center text-slate-400 md:flex"><ArrowRight size={19} /></div>
           <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-2"><label className="mb-1 block text-xs font-semibold text-emerald-700">คลังปลายทาง</label><select value={toWarehouseId} onChange={(event) => setToWarehouseId(event.target.value)} disabled={moving || saving || hasDrafts} className="h-9 w-full rounded-md border border-emerald-200 bg-white px-2.5 text-sm text-slate-800 outline-none focus:border-emerald-500 disabled:bg-slate-100"><option value="">เลือกคลังปลายทาง</option>{warehouses.filter((warehouse) => String(warehouse.id) !== fromWarehouseId).map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>)}</select></div>
         </div>
-        <div className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-slate-100 pt-2.5 lg:grid-cols-2">
+        <div className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-slate-100 pt-2.5 lg:grid-cols-2" onKeyDownCapture={preventSpaceKey}>
           <div><label className="mb-1 block text-xs font-medium text-slate-600">ยิงย้ายสินค้า</label><input ref={scanInputRef} value={scanSerial} onChange={(event) => setScanSerial(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void handleDraftScan(); }} disabled={moving || saving || !fromWarehouseId || !toWarehouseId} placeholder="ยิง SN เพื่อเพิ่มรายการรอยืนยัน" className="h-9 w-full rounded-md border border-slate-300 px-3 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100" /></div>
           <div><label className="mb-1 block text-xs font-medium text-slate-600">ยิงลบรายการ</label><input ref={removeInputRef} value={removeSerial} onChange={(event) => setRemoveSerial(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void handleRemoveScan(); }} disabled={moving || saving || !hasDrafts} placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย" className="h-9 w-full rounded-md border border-slate-300 px-3 font-mono text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-100" /></div>
         </div>

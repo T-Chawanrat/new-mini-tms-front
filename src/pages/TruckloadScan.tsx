@@ -6,7 +6,8 @@ import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../services/apiClient";
 import { connectSocket } from "../services/socket";
-import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
+import { formatThaiNumber, normalizeSerialText, preventSpaceKey, removeSpaces } from "../utils/textSanitizer";
+import MismatchModal from "../components/tms/modal/MismatchModal";
 import type {
   DestinationWarning,
   TruckLoadDetail,
@@ -30,9 +31,6 @@ export default function TruckloadScan() {
   const navigate = useNavigate();
 
   const loadInputRef = useRef<HTMLInputElement | null>(null);
-  const destinationWarningCancelRef = useRef<HTMLButtonElement | null>(null);
-  const destinationWarningConfirmRef = useRef<HTMLButtonElement | null>(null);
-
   const removeInputRef = useRef<HTMLInputElement | null>(null);
 
   const successAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -67,12 +65,6 @@ export default function TruckloadScan() {
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    if (!destinationWarning) return;
-
-    destinationWarningCancelRef.current?.focus();
-  }, [destinationWarning]);
 
   useEffect(() => {
     successAudioRef.current = new Audio(successSound);
@@ -472,8 +464,10 @@ export default function TruckloadScan() {
               type="text"
               value={loadSerialInput}
               onFocus={() => setActiveScanSide("load")}
-              onChange={(event) => setLoadSerialInput(event.target.value)}
+              onChange={(event) => setLoadSerialInput(removeSpaces(event.target.value))}
               onKeyDown={(event) => {
+                if (preventSpaceKey(event)) return;
+
                 if (event.key === "Enter") {
                   event.preventDefault();
 
@@ -494,8 +488,10 @@ export default function TruckloadScan() {
               type="text"
               value={removeSerialInput}
               onFocus={() => setActiveScanSide("remove")}
-              onChange={(event) => setRemoveSerialInput(event.target.value)}
+              onChange={(event) => setRemoveSerialInput(removeSpaces(event.target.value))}
               onKeyDown={(event) => {
+                if (preventSpaceKey(event)) return;
+
                 if (event.key === "Enter") {
                   event.preventDefault();
 
@@ -520,57 +516,26 @@ export default function TruckloadScan() {
 
       {info && <div className="mb-3 shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{info}</div>}
 
-      {destinationWarning && (
-        <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4"
-          onKeyDown={(event) => {
-            if (event.key === "ArrowLeft") {
-              event.preventDefault();
-              destinationWarningCancelRef.current?.focus();
-            }
-
-            if (event.key === "ArrowRight") {
-              event.preventDefault();
-              destinationWarningConfirmRef.current?.focus();
-            }
-
-            if (event.key === "Tab") event.preventDefault();
-          }}
-        >
-          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl">
-            <h3 className="text-base font-bold text-amber-700">แจ้งเตือนปลายทางไม่ตรงกัน</h3>
-            <p className="mt-2 text-sm text-slate-700">ของชิ้นนี้ปลายทางไม่ใช่ DC ที่เลือก ยืนยันจะยิงขึ้นรถใช่หรือไม่</p>
-            <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              <div>SN: {destinationWarning.serial_no}</div>
-              <div>ปลายทางของพัสดุ: {destinationWarning.to_warehouse_name || destinationWarning.to_warehouse_id || "-"}</div>
-              <div>DC ที่เลือก: {truckLoad?.to_warehouse_name || truckLoad?.to_warehouse_id || "-"}</div>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                ref={destinationWarningCancelRef}
-                type="button"
-                onClick={() => {
-                  setDestinationWarning(null);
-                  focusLoadInput();
-                }}
-                disabled={saving}
-                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
-              >
-                ไม่
-              </button>
-              <button
-                ref={destinationWarningConfirmRef}
-                type="button"
-                onClick={() => void handleConfirmDestinationMismatch()}
-                disabled={saving}
-                className="h-9 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-300"
-              >
-                {saving ? "กำลังบันทึก..." : "ใช่"}
-              </button>
-            </div>
+      <MismatchModal
+        open={Boolean(destinationWarning)}
+        saving={saving}
+        title="แจ้งเตือนปลายทางไม่ตรงกัน"
+        description="ของชิ้นนี้ปลายทางไม่ใช่ DC ที่เลือก ยืนยันจะยิงขึ้นรถใช่หรือไม่"
+        confirmLabel={saving ? "กำลังบันทึก..." : "ใช่"}
+        onConfirm={() => void handleConfirmDestinationMismatch()}
+        onCancel={() => {
+          setDestinationWarning(null);
+          focusLoadInput();
+        }}
+      >
+        {destinationWarning && (
+          <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <div>SN: {destinationWarning.serial_no}</div>
+            <div>ปลายทางของพัสดุ: {destinationWarning.to_warehouse_name || destinationWarning.to_warehouse_id || "-"}</div>
+            <div>DC ที่เลือก: {truckLoad?.to_warehouse_name || truckLoad?.to_warehouse_id || "-"}</div>
           </div>
-        </div>
-      )}
+        )}
+      </MismatchModal>
 
       {deleteConfirmOpen && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4">

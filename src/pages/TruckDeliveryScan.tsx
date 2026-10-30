@@ -6,7 +6,8 @@ import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
 import AxiosInstance from "../services/apiClient";
 import { connectSocket } from "../services/socket";
-import { normalizeSerialText } from "../utils/textSanitizer";
+import { normalizeSerialText, preventSpaceKey, removeSpaces } from "../utils/textSanitizer";
+import MismatchModal from "../components/tms/modal/MismatchModal";
 import type { DeliveryProductRow as ProductRow, DeliveryRouteOption as RouteOption, DeliveryTruck } from "../types/deliveryTruck";
 
 type RequestError = {
@@ -43,7 +44,6 @@ export default function TruckDeliveryScan() {
   const [pendingFilter, setPendingFilter] = useState("matched");
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [scanWarningProduct, setScanWarningProduct] = useState<ScanWarningProduct | null>(null);
-  const routeMismatchCancelRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!truckLoadId) return;
@@ -115,11 +115,6 @@ export default function TruckDeliveryScan() {
       }
     }, 0);
   }, [activeSide, deleting, loadedRows.length, saving, truck?.is_close]);
-
-  useEffect(() => {
-    if (!scanWarningProduct) return;
-    routeMismatchCancelRef.current?.focus();
-  }, [scanWarningProduct]);
 
   useEffect(() => {
     successAudioRef.current = new Audio(successSound);
@@ -286,7 +281,7 @@ export default function TruckDeliveryScan() {
                       {[route.route_code, route.route_name].filter(Boolean).join(" - ") || `สายรถ #${route.route_id}`}
                     </option>
                   ))}
-                <option value="unassigned">ไม่มีสายรถ</option>
+                <option value="unassigned">ไม่มีสายรถ / สายรถไม่ตรง</option>
               </select>
             )}
             <span
@@ -418,8 +413,10 @@ export default function TruckDeliveryScan() {
               ref={loadInputRef}
               value={loadSerial}
               onFocus={() => setActiveSide("load")}
-              onChange={(event) => setLoadSerial(event.target.value)}
+              onChange={(event) => setLoadSerial(removeSpaces(event.target.value))}
               onKeyDown={(event) => {
+                if (preventSpaceKey(event)) return;
+
                 if (event.key === "Enter") void handleScan("load");
               }}
               disabled={saving || isTruckClosed}
@@ -433,8 +430,10 @@ export default function TruckDeliveryScan() {
               ref={removeInputRef}
               value={removeSerial}
               onFocus={() => setActiveSide("remove")}
-              onChange={(event) => setRemoveSerial(event.target.value)}
+              onChange={(event) => setRemoveSerial(removeSpaces(event.target.value))}
               onKeyDown={(event) => {
+                if (preventSpaceKey(event)) return;
+
                 if (event.key === "Enter") void handleScan("remove");
               }}
               disabled={saving || isTruckClosed || loadedRows.length === 0}
@@ -459,11 +458,20 @@ export default function TruckDeliveryScan() {
 
       <p className="sr-only">กำลังยิงที่ฝั่ง {activeSide}</p>
 
-      {scanWarningProduct && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl">
-            <h3 className="text-base font-bold text-amber-700">ยืนยันยิงขึ้นรถ</h3>
-            <p className="mt-2 text-sm text-slate-700">รายการนี้มีเงื่อนไขไม่ตรงกับใบรถที่เลือก</p>
+      <MismatchModal
+        open={Boolean(scanWarningProduct)}
+        saving={saving}
+        title="ยืนยันยิงขึ้นรถ"
+        description="รายการนี้มีเงื่อนไขไม่ตรงกับใบรถที่เลือก"
+        onConfirm={() => void confirmScanWarning()}
+        onCancel={() => {
+          setScanWarningProduct(null);
+          setLoadSerial("");
+          loadInputRef.current?.focus();
+        }}
+      >
+        {scanWarningProduct && (
+          <>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">
               {scanWarningProduct.warningCodes.includes("WAREHOUSE_MISMATCH") && <li>คลังปลายทางไม่ตรงกับคลังของใบรถ</li>}
               {scanWarningProduct.warningCodes.includes("ROUTE_MISSING") && <li>ยังไม่ได้กำหนดสายรถ</li>}
@@ -477,32 +485,9 @@ export default function TruckDeliveryScan() {
                 ผู้รับ: <strong>{scanWarningProduct.recipient_name || "-"}</strong>
               </div>
             </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                ref={routeMismatchCancelRef}
-                type="button"
-                onClick={() => {
-                  setScanWarningProduct(null);
-                  setLoadSerial("");
-                  loadInputRef.current?.focus();
-                }}
-                disabled={saving}
-                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50"
-              >
-                ไม่
-              </button>
-              <button
-                type="button"
-                onClick={() => void confirmScanWarning()}
-                disabled={saving}
-                className="h-9 rounded-md bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700 disabled:bg-slate-300"
-              >
-                ใช่
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </MismatchModal>
 
       {deleteConfirmOpen && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4">

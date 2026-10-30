@@ -261,6 +261,7 @@ export default function DcReceive() {
             onScan={(value) => void scanToRight(value)}
             inputRef={receiveInputRef}
             disabled={loading}
+            preventSpaces
             placeholder="ยิง SN เพื่อเพิ่มในรายการรอยืนยัน"
           />
           <ScanInput
@@ -270,6 +271,7 @@ export default function DcReceive() {
             onScan={(value) => void removeFromDraft(value)}
             inputRef={removeInputRef}
             disabled={loading || !scannedRows.length}
+            preventSpaces
             placeholder="ยิง SN ฝั่งขวาเพื่อส่งกลับฝั่งซ้าย"
             tone="amber"
           />

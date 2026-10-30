@@ -5,6 +5,12 @@ export const removeSpaces = (value: string) => {
   return value.replace(/\s/g, "");
 };
 
+export const preventSpaceKey = (event: Pick<KeyboardEvent, "key" | "code" | "preventDefault">) => {
+  if (event.key !== " " && event.code !== "Space") return false;
+  event.preventDefault();
+  return true;
+};
+
 // input ทั่วไปที่เป็น code เช่น username, employee_code, license_no
 // อนุญาต: อังกฤษ, ตัวเลข, underscore, dash
 export const cleanCodeInput = (value: string) => {

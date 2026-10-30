@@ -1,4 +1,5 @@
 import { type RefObject } from "react";
+import { preventSpaceKey, removeSpaces } from "../../../utils/textSanitizer";
 
 type ScanInputProps = {
   label: string;
@@ -9,6 +10,7 @@ type ScanInputProps = {
   disabled?: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
   tone?: "blue" | "amber";
+  preventSpaces?: boolean;
 };
 
 const toneClasses = {
@@ -25,6 +27,7 @@ export default function ScanInput({
   disabled = false,
   inputRef,
   tone = "blue",
+  preventSpaces = false,
 }: ScanInputProps) {
   return (
     <div className="min-w-0">
@@ -33,8 +36,10 @@ export default function ScanInput({
         ref={inputRef}
         type="text"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange(preventSpaces ? removeSpaces(event.target.value) : event.target.value)}
         onKeyDown={(event) => {
+          if (preventSpaces && preventSpaceKey(event)) return;
+
           if (event.key !== "Enter") return;
           event.preventDefault();
           onScan(event.currentTarget.value);

@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import ChangePassword from "../pages/ChangePassword";
 import ProtectedRoute from "./ProtectedRoute";
+import UserProfiles from "../pages/OtherPage/UserProfiles";
 
 const SignIn = lazy(() => import("../pages/AuthPages/SignIn"));
 const Announcements = lazy(() => import("../pages/Announcements"));
@@ -105,6 +106,9 @@ export default function AppRoutes() {
       </Route>
       <Route path="/signin" element={<SignIn />} />
       <Route path="*" element={<NotFound />} />
+      <Route path="profile" element={<UserProfiles />} />
+      
+      
       </Routes>
     </Suspense>
   );
