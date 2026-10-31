@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import ConfirmModal from "../components/tms/modal/ConfirmModal";
 
 import errorSound from "../../assets/sounds/error.mp3";
 import successSound from "../../assets/sounds/success.mp3";
@@ -301,45 +301,18 @@ export default function DcReceive() {
           {renderTable(scannedRows, "ยังไม่มีรายการรอยืนยัน", "green")}
         </section>
       </div>
-      {confirmSaveOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm animate-scaleIn rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <h2 className="text-lg font-semibold text-slate-800">ยืนยันรับสินค้าเข้าคลัง DC</h2>
-              <button
-                type="button"
-                onClick={() => setConfirmSaveOpen(false)}
-                disabled={saving}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
-                title="ปิด"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-5 text-sm text-slate-600">
-              ต้องการรับสินค้าเข้า DC <strong className="text-slate-800">{formatThaiNumber(scannedRows.length)} รายการ</strong> ใช่หรือไม่
-            </div>
-            <div className="flex justify-end gap-3 border-t border-slate-100 px-5 py-4">
-              <button
-                type="button"
-                onClick={() => setConfirmSaveOpen(false)}
-                disabled={saving}
-                className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 disabled:opacity-60"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                onClick={() => void saveDcReceive()}
-                disabled={saving}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-              >
-                {saving ? "กำลังบันทึก..." : "ยืนยันบันทึก"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={confirmSaveOpen}
+        title="ยืนยันรับสินค้าเข้าคลัง DC"
+        description={<>ต้องการรับสินค้าเข้า DC <strong className="text-slate-800">{formatThaiNumber(scannedRows.length)} รายการ</strong> ใช่หรือไม่</>}
+        confirmLabel="ยืนยันบันทึก"
+        loading={saving}
+        success
+        closeOnBackdrop={false}
+        closeOnEscape={false}
+        onClose={() => setConfirmSaveOpen(false)}
+        onConfirm={() => void saveDcReceive()}
+      />
     </div>
   );
 }

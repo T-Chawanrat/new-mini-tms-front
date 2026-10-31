@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import ConfirmModal from "../components/tms/modal/ConfirmModal";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import alertSound from "../../assets/sounds/alert.mp3";
@@ -489,32 +490,7 @@ export default function TruckDeliveryScan() {
         )}
       </MismatchModal>
 
-      {deleteConfirmOpen && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
-            <h3 className="text-base font-bold text-red-700">ยืนยันลบใบรถกระจาย</h3>
-            <p className="mt-2 text-sm text-slate-700">ต้องการลบใบรถกระจาย {truck?.truck_code || "นี้"} ใช่หรือไม่</p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmOpen(false)}
-                disabled={deleting}
-                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50"
-              >
-                ไม่
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleDelete()}
-                disabled={deleting}
-                className="h-9 rounded-md bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 disabled:bg-slate-300"
-              >
-                {deleting ? "กำลังลบ..." : "ใช่"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal open={deleteConfirmOpen} title="ยืนยันลบใบรถกระจาย" description={`ต้องการลบใบรถกระจาย ${truck?.truck_code || "นี้"} ใช่หรือไม่`} cancelLabel="ไม่" confirmLabel="ใช่" loadingLabel="กำลังลบ..." loading={deleting} danger closeOnBackdrop={false} closeOnEscape={false} onClose={() => setDeleteConfirmOpen(false)} onConfirm={() => void handleDelete()} />
     </div>
   );
 }

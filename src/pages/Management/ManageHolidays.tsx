@@ -1,9 +1,11 @@
 // client/src/pages/ManageHolidays.tsx
+import StatusModal from "../../components/tms/modal/StatusModal";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import AxiosInstance from "../../services/apiClient";
 import DatePicker from "../../components/tms/form/DatePicker";
 import DataGrid from "../../components/tms/table/DataGrid";
+import ConfirmModal from "../../components/tms/modal/ConfirmModal";
 import { Pencil, Trash2, RefreshCw, Plus } from "lucide-react";
 import type {
   Holiday,
@@ -89,6 +91,7 @@ export default function ManageHolidays() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<Id | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Holiday | null>(null);
 
   const [statusModal, setStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<SelectedStatus | null>(null);
@@ -191,15 +194,15 @@ export default function ManageHolidays() {
     });
   };
 
-  const handleDelete = async (row: Holiday) => {
-    const ok = window.confirm(`ต้องการลบวันหยุด "${row.holiday_name}" ใช่ไหม?`);
-
-    if (!ok) return;
+  const handleDelete = async () => {
+    const row = deleteTarget;
+    if (!row) return;
 
     try {
       setDeletingId(row.id);
 
       await AxiosInstance.delete(`/holidays/${row.id}`);
+      setDeleteTarget(null);
 
       if (editing?.id === row.id) {
         resetForm();
@@ -373,7 +376,7 @@ export default function ManageHolidays() {
 
             <button
               type="button"
-              onClick={() => handleDelete(params.row)}
+              onClick={() => setDeleteTarget(params.row)}
               disabled={deletingId === params.row.id}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
               title="ลบวันหยุด"
@@ -498,45 +501,8 @@ export default function ManageHolidays() {
         <DataGrid rows={gridRows} columns={columns} loading={loading} getRowId={(row: HolidayGridRow) => row.id} height="100%" pageSize={100} striped rowHoverColor="#dbeafe" />
       </div>
 
-      {statusModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          onClick={() => {
-            setStatusModal(false);
-            setSelectedStatus(null);
-          }}
-        >
-          <div className="w-[300px] rounded-2xl bg-white p-6 shadow-xl animate-scaleIn" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-4 text-lg font-semibold text-slate-800">สถานะ</h3>
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                disabled={selectedStatus?.current === "ACTIVE"}
-                onClick={() => changeStatus("ACTIVE")}
-                className={`rounded-lg px-4 py-2 ${
-                  selectedStatus?.current === "ACTIVE"
-                    ? "cursor-not-allowed bg-green-50 text-green-300"
-                    : "bg-green-100 text-green-600 hover:bg-green-200"
-                }`}
-              >
-                Active
-              </button>
-
-              <button
-                type="button"
-                disabled={selectedStatus?.current === "INACTIVE"}
-                onClick={() => changeStatus("INACTIVE")}
-                className={`rounded-lg px-4 py-2 ${
-                  selectedStatus?.current === "INACTIVE" ? "cursor-not-allowed bg-red-50 text-red-300" : "bg-red-100 text-red-500 hover:bg-red-200"
-                }`}
-              >
-                Inactive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StatusModal open={statusModal} current={selectedStatus?.current ?? null} onClose={() => { setStatusModal(false); setSelectedStatus(null); }} onChange={(status) => void changeStatus(status === "ACTIVE" ? "ACTIVE" : "INACTIVE")} />
+      <ConfirmModal open={Boolean(deleteTarget)} title="ยืนยันลบวันหยุด" description={<>ต้องการลบวันหยุด <strong className="text-slate-800">{deleteTarget?.holiday_name || "-"}</strong> ใช่ไหม?</>} confirmLabel="ลบ" loadingLabel="กำลังลบ..." loading={deletingId !== null} danger onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
     </div>
   );
 }

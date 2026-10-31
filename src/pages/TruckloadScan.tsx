@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ConfirmModal from "../components/tms/modal/ConfirmModal";
 import { useNavigate, useParams } from "react-router-dom";
 
 import alertSound from "../../assets/sounds/alert.mp3";
@@ -537,32 +538,7 @@ export default function TruckloadScan() {
         )}
       </MismatchModal>
 
-      {deleteConfirmOpen && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl">
-            <h3 className="text-base font-bold text-red-700">ยืนยันลบใบปิดบรรทุก</h3>
-            <p className="mt-2 text-sm text-slate-700">ต้องการลบใบปิดบรรทุก {truckLoad?.truck_code || "นี้"} ใช่หรือไม่</p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmOpen(false)}
-                disabled={deleting}
-                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-              >
-                ไม่
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleDeleteTruckLoad()}
-                disabled={deleting}
-                className="h-9 rounded-md bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 disabled:bg-slate-300"
-              >
-                {deleting ? "กำลังลบ..." : "ใช่"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal open={deleteConfirmOpen} title="ยืนยันลบใบปิดบรรทุก" description={`ต้องการลบใบปิดบรรทุก ${truckLoad?.truck_code || "นี้"} ใช่หรือไม่`} cancelLabel="ไม่" confirmLabel="ใช่" loadingLabel="กำลังลบ..." loading={deleting} danger closeOnBackdrop={false} closeOnEscape={false} onClose={() => setDeleteConfirmOpen(false)} onConfirm={() => void handleDeleteTruckLoad()} />
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-2">
         <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">

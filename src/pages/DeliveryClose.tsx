@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ConfirmModal from "../components/tms/modal/ConfirmModal";
 import { CalendarClock, CheckCircle2, FileSignature, Search, X } from "lucide-react";
 
 import ImageUpload, { type UploadedImages } from "../components/tms/form/ImageUpload";
@@ -432,49 +433,7 @@ export default function DeliveryClose() {
         </section>
       )}
 
-      {closeTarget && closeConfirmationOpen && (
-        <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="confirm-close-title"
-        >
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl animate-scaleIn">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-              <CheckCircle2 size={26} />
-            </div>
-            <h2 id="confirm-close-title" className="mt-4 text-center text-lg font-bold text-slate-800">
-              ยืนยันปิดงาน?
-            </h2>
-            <p className="mt-2 text-center text-sm text-slate-600">
-              Receive Code <span className="font-semibold text-slate-800">{closeTarget.bill_no}</span>
-              <br />
-              ปิดงาน SN ที่เลือก {selectedSerialIds.length} กล่อง
-            </p>
-            <div className="mt-5 flex justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCloseConfirmationOpen(false)}
-                disabled={closeSaving}
-                className="h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed"
-              >
-                กลับไปแก้ไข
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCloseConfirmationOpen(false);
-                  void saveClose();
-                }}
-                disabled={closeSaving}
-                className="inline-flex h-10 items-center gap-2 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-              >
-                <CheckCircle2 size={16} /> ยืนยันปิดงาน
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal open={Boolean(closeTarget && closeConfirmationOpen)} title="ยืนยันปิดงาน?" description={<div className="text-center">Receive Code <span className="font-semibold text-slate-800">{closeTarget?.bill_no}</span><br />ปิดงาน SN ที่เลือก {selectedSerialIds.length} กล่อง</div>} cancelLabel="กลับไปแก้ไข" confirmLabel="ยืนยันปิดงาน" loading={closeSaving} success closeOnBackdrop={false} closeOnEscape={false} onClose={() => setCloseConfirmationOpen(false)} onConfirm={() => { setCloseConfirmationOpen(false); void saveClose(); }} />
     </div>
   );
 }

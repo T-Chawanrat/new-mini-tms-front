@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import StatusModal from "../../components/tms/modal/StatusModal";
 import AxiosInstance from "../../services/apiClient";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import AddressSearchDropdown from "../../components/tms/dropdown/AddressSearchDropdown";
 import DataGrid from "../../components/tms/table/DataGrid";
+import ConfirmModal from "../../components/tms/modal/ConfirmModal";
 import { type GridColDef } from "@mui/x-data-grid";
 import type {
   DeleteRouteDetailTarget as DeleteDetailTarget,
@@ -471,71 +473,20 @@ export default function ManageRoutes() {
         </aside>
       </div>
 
-      {statusTarget && (
-        <div onClick={() => setStatusTarget(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div onClick={(event) => event.stopPropagation()} className="w-[300px] animate-scaleIn rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="mb-1 text-lg font-semibold text-slate-800">สถานะ</h2>
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                disabled={updatingStatus || statusTarget.is_deleted === "N"}
-                onClick={() => void handleUpdateRouteStatus("N")}
-                className={`rounded-lg px-4 py-2 ${statusTarget.is_deleted === "N" ? "cursor-not-allowed bg-green-50 text-green-300" : "bg-green-100 text-green-600 hover:bg-green-200"}`}
-              >
-                Active
-              </button>
-              <button
-                type="button"
-                disabled={updatingStatus || statusTarget.is_deleted === "Y"}
-                onClick={() => void handleUpdateRouteStatus("Y")}
-                className={`rounded-lg px-4 py-2 ${statusTarget.is_deleted === "Y" ? "cursor-not-allowed bg-red-50 text-red-300" : "bg-red-100 text-red-500 hover:bg-red-200"}`}
-              >
-                Inactive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StatusModal open={Boolean(statusTarget)} current={statusTarget ? statusTarget.is_deleted === "N" ? "ACTIVE" : "INACTIVE" : null} loading={updatingStatus} onClose={() => setStatusTarget(null)} onChange={(status) => void handleUpdateRouteStatus(status === "ACTIVE" ? "N" : "Y")} />
 
-      {deleteDetailTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm animate-scaleIn rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <h2 className="text-lg font-semibold text-slate-800">ยืนยันลบตำบล</h2>
-              <button
-                type="button"
-                onClick={() => setDeleteDetailTarget(null)}
-                disabled={deletingDetail}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                title="ปิด"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-5 text-sm text-slate-600">
-              ต้องการลบตำบล <strong className="text-slate-800">{deleteDetailTarget.subdistrict_name || "-"}</strong> ออกจากสายรถนี้ใช่หรือไม่
-            </div>
-            <div className="flex justify-end gap-3 border-t border-slate-100 px-5 py-4">
-              <button
-                type="button"
-                onClick={() => setDeleteDetailTarget(null)}
-                disabled={deletingDetail}
-                className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 disabled:opacity-60"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleDeleteDetail()}
-                disabled={deletingDetail}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-              >
-                {deletingDetail ? "กำลังลบ..." : "ลบ"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={Boolean(deleteDetailTarget)}
+        title="ยืนยันลบตำบล"
+        description={<>ต้องการลบตำบล <strong className="text-slate-800">{deleteDetailTarget?.subdistrict_name || "-"}</strong> ออกจากสายรถนี้ใช่หรือไม่</>}
+        confirmLabel="ลบ"
+        loadingLabel="กำลังลบ..."
+        loading={deletingDetail}
+        danger
+        closeOnBackdrop={false}
+        onClose={() => setDeleteDetailTarget(null)}
+        onConfirm={() => void handleDeleteDetail()}
+      />
 
       {routeModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

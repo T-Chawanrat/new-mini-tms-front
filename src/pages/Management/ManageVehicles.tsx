@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import StatusModal from "../../components/tms/modal/StatusModal";
 import AxiosInstance from "../../services/apiClient";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -863,52 +864,7 @@ export default function ManageVehicles() {
         )}
 
         {/* STATUS MODAL */}
-        {statusModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeStatusModal}>
-            <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
-
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  disabled={selected?.current === "ACTIVE"}
-                  onClick={() => changeStatus("ACTIVE")}
-                  className={`px-4 py-2 rounded-lg ${
-                    selected?.current === "ACTIVE"
-                      ? "bg-green-50 text-green-300 cursor-not-allowed"
-                      : "bg-green-100 text-green-600 hover:bg-green-200"
-                  }`}
-                >
-                  Active
-                </button>
-
-                <button
-                  type="button"
-                  disabled={selected?.current === "MAINTENANCE"}
-                  onClick={() => changeStatus("MAINTENANCE")}
-                  className={`px-4 py-2 rounded-lg ${
-                    selected?.current === "MAINTENANCE"
-                      ? "bg-yellow-50 text-yellow-300 cursor-not-allowed"
-                      : "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
-                  }`}
-                >
-                  Maintenance
-                </button>
-
-                <button
-                  type="button"
-                  disabled={selected?.current === "INACTIVE"}
-                  onClick={() => changeStatus("INACTIVE")}
-                  className={`px-4 py-2 rounded-lg ${
-                    selected?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
-                  }`}
-                >
-                  Inactive
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <StatusModal open={statusModal} current={selected?.current === "ACTIVE" || selected?.current === "INACTIVE" || selected?.current === "MAINTENANCE" ? selected.current : null} showMaintenance onClose={closeStatusModal} onChange={(status) => void changeStatus(status)} />
       </div>
     </LocalizationProvider>
   );

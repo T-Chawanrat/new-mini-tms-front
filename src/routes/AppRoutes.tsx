@@ -31,6 +31,8 @@ const ManageCustomers = lazy(() => import("../pages/Management/ManageCustomer"))
 const ManageAnnouncements = lazy(() => import("../pages/Management/ManageAnnouncements"));
 const ManageHolidays = lazy(() => import("../pages/Management/ManageHolidays"));
 const ManagePackages = lazy(() => import("../pages/Management/ManagePackages"));
+const ManagePermissions = lazy(() => import("../pages/Management/ManagePermissions"));
+const ManageRolePermissions = lazy(() => import("../pages/Management/ManageRolePermissions"));
 const ManageRecipients = lazy(() => import("../pages/Management/ManageRecipients"));
 const ManageRoutes = lazy(() => import("../pages/Management/ManageRoutes"));
 const ManageShippers = lazy(() => import("../pages/Management/ManageShippers"));
@@ -55,8 +57,8 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">กำลังโหลด...</div>}>
       <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
+      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        <Route index element={<Announcements />} />
         <Route path="/dashboard" element={<Announcements />} />
         <Route path="/manage/vehicles" element={<ManageVehicles />} />
         <Route path="/contractor-create" element={<ContractorCreate />} />
@@ -68,6 +70,8 @@ export default function AppRoutes() {
         <Route path="/manage/recipients" element={<ManageRecipients />} />
         <Route path="/manage/recipients2" element={<ManageRecipients />} />
         <Route path="/manage/packages" element={<ManagePackages />} />
+        <Route path="/manage/permissions" element={<ManagePermissions />} />
+        <Route path="/manage/role-permissions" element={<ManageRolePermissions />} />
         <Route path="/manage/routes" element={<ManageRoutes />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/create-do" element={<CreateReceivePage />} />
@@ -106,7 +110,7 @@ export default function AppRoutes() {
       </Route>
       <Route path="/signin" element={<SignIn />} />
       <Route path="*" element={<NotFound />} />
-      <Route path="profile" element={<UserProfiles />} />
+      <Route path="profile" element={<ProtectedRoute><UserProfiles /></ProtectedRoute>} />
       
       
       </Routes>

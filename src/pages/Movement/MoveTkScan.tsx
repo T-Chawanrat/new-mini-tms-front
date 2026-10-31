@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeftRight, X } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
+import ConfirmModal from "../../components/tms/modal/ConfirmModal";
 import { useNavigate, useParams } from "react-router-dom";
 
 import alertSound from "../../../assets/sounds/alert.mp3";
@@ -330,21 +331,18 @@ export default function MoveTkScan() {
           <MoveTkProductTable rows={movingRows} moved destinationTruck={targetTruck} emptyText="ยังไม่มีรายการรอยืนยัน" />
         </section>
       </div>
-      {confirmSaveOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm animate-scaleIn rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <h2 className="text-lg font-semibold text-slate-800">ยืนยันย้ายสินค้า</h2>
-              <button type="button" onClick={() => setConfirmSaveOpen(false)} disabled={saving} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50" title="ปิด"><X size={20} /></button>
-            </div>
-            <div className="p-5 text-sm text-slate-600">ต้องการย้ายสินค้า <strong className="text-slate-800">{formatThaiNumber(movingRows.length)} รายการ</strong> ใช่หรือไม่</div>
-            <div className="flex justify-end gap-3 border-t border-slate-100 px-5 py-4">
-              <button type="button" onClick={() => setConfirmSaveOpen(false)} disabled={saving} className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 disabled:opacity-60">ยกเลิก</button>
-              <button type="button" onClick={() => void saveMoveProducts()} disabled={saving} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">{saving ? "กำลังบันทึก..." : "ยืนยันบันทึก"}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={confirmSaveOpen}
+        title="ยืนยันย้ายสินค้า"
+        description={<>ต้องการย้ายสินค้า <strong className="text-slate-800">{formatThaiNumber(movingRows.length)} รายการ</strong> ใช่หรือไม่</>}
+        confirmLabel="ยืนยันบันทึก"
+        loading={saving}
+        success
+        closeOnBackdrop={false}
+        closeOnEscape={false}
+        onClose={() => setConfirmSaveOpen(false)}
+        onConfirm={() => void saveMoveProducts()}
+      />
     </div>
   );
 }

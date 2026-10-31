@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowRightLeft, X } from "lucide-react";
+import { ArrowRight, ArrowRightLeft } from "lucide-react";
+import ConfirmModal from "../../components/tms/modal/ConfirmModal";
 
 import errorSound from "../../../assets/sounds/error.mp3";
 import successSound from "../../../assets/sounds/success.mp3";
@@ -236,9 +237,18 @@ export default function MoveDc() {
         {info && <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{info}</div>}
       </section>
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-2"><Table title={`รอย้ายจาก: ${fromWarehouseName}`} rows={pendingRows} /><Table title={`รายการรอยืนยัน: ${toWarehouseName}`} rows={movedRows} moved /></div>
-      {confirmSaveOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div className="w-full max-w-sm animate-scaleIn rounded-2xl bg-white shadow-xl"><div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><h2 className="text-lg font-semibold text-slate-800">ยืนยันย้ายสินค้าระหว่างคลัง</h2><button type="button" onClick={() => setConfirmSaveOpen(false)} disabled={saving} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50" title="ปิด"><X size={18} /></button></div><div className="px-5 py-4 text-sm text-slate-600">{`ต้องการย้าย ${movedRows.length} รายการ จาก ${fromWarehouseName} ไป ${toWarehouseName} ใช่หรือไม่`}</div><div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-4"><button type="button" onClick={() => setConfirmSaveOpen(false)} disabled={saving} className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50">ไม่</button><button type="button" onClick={() => void handleConfirmSave()} disabled={saving} className="h-9 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-300">{saving ? "กำลังบันทึก..." : "ใช่"}</button></div></div></div>
-      )}
+      <ConfirmModal
+        open={confirmSaveOpen}
+        title="ยืนยันย้ายสินค้าระหว่างคลัง"
+        description={`ต้องการย้าย ${movedRows.length} รายการ จาก ${fromWarehouseName} ไป ${toWarehouseName} ใช่หรือไม่`}
+        confirmLabel="ใช่" cancelLabel="ไม่"
+        loading={saving}
+        success
+        closeOnBackdrop={false}
+        closeOnEscape={false}
+        onClose={() => setConfirmSaveOpen(false)}
+        onConfirm={() => void handleConfirmSave()}
+      />
     </div>
   );
 }

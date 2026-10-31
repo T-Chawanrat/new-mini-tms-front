@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import StatusModal from "../../components/tms/modal/StatusModal";
 import AxiosInstance from "../../services/apiClient";
-import { useAuth } from "../../context/AuthContext";
 import { Pencil, X } from "lucide-react";
 import AddressSearchDropdown, { type ZipAddressRow } from "../../components/tms/dropdown/AddressSearchDropdown";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput, cleanEmailInput } from "../../utils/textSanitizer";
@@ -8,7 +8,6 @@ import DataGrid from "../../components/tms/table/DataGrid";
 import RequiredLabel from "../../components/tms/form/RequiredLabel";
 
 export default function ManageCustomers() {
-  const { user } = useAuth();
 
   const [rows, setRows] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -463,7 +462,6 @@ export default function ManageCustomers() {
               <Pencil size={14} />
             </button>
 
-            {[1, 10].includes(Number(user?.role_id)) && (
               <button
                 type="button"
                 onClick={() => openUserModal(params.row)}
@@ -471,12 +469,11 @@ export default function ManageCustomers() {
               >
                 + User
               </button>
-            )}
           </div>
         ),
       },
     ],
-    [user?.role_id],
+    [],
   );
 
   return (
@@ -648,37 +645,7 @@ export default function ManageCustomers() {
       )}
 
       {/* STATUS MODAL */}
-      {statusModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeStatusModal}>
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                disabled={selectedStatus?.current === 1}
-                onClick={() => changeStatus(1)}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === 1 ? "bg-green-50 text-green-300 cursor-not-allowed" : "bg-green-100 text-green-600 hover:bg-green-200"
-                }`}
-              >
-                Active
-              </button>
-
-              <button
-                type="button"
-                disabled={selectedStatus?.current === 0}
-                onClick={() => changeStatus(0)}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === 0 ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
-                }`}
-              >
-                Inactive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StatusModal open={statusModal} current={selectedStatus ? selectedStatus.current === 1 ? "ACTIVE" : "INACTIVE" : null} onClose={closeStatusModal} onChange={(status) => void changeStatus(status === "ACTIVE" ? 1 : 0)} />
 
       {/* CREATE CUSTOMER USER MODAL */}
       {showUserModal && (

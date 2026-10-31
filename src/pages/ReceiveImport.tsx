@@ -199,13 +199,12 @@ export default function ReceiveImport() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const selectedCustomerId = String(authUser?.customer_id || customerId || "");
+  const selectedCustomerId = customerId;
   const warehouseOptions = useMemo<SearchableOption[]>(
     () => warehouses.map((warehouse) => ({ value: String(warehouse.id), label: warehouse.name })),
     [warehouses],
   );
 
-  const isCustomerUser = Number(authUser?.role_id) === 2;
 
   const duplicates = useMemo(() => findDuplicateSerials(rows), [rows]);
 
@@ -269,15 +268,6 @@ export default function ReceiveImport() {
           : !rows.length
             ? "อ่านข้อมูล Excel ไม่ได้ / ไม่มี rows"
             : "";
-
-  useEffect(() => {
-    if (authUser?.customer_id) {
-      const customerIdText = String(authUser.customer_id);
-
-      setCustomerId(customerIdText);
-      setCustomerText(customerIdText);
-    }
-  }, [authUser?.customer_id]);
 
   useEffect(() => {
     const loadWarehouses = async () => {
@@ -482,13 +472,6 @@ export default function ReceiveImport() {
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-700">เจ้าของงาน</label>
 
-            {isCustomerUser ? (
-              <input
-                className="h-8 w-full rounded-md border border-slate-300 bg-slate-100 px-2 text-xs text-slate-700"
-                value={selectedCustomerId || "-"}
-                disabled
-              />
-            ) : (
               <div className={saving ? "pointer-events-none opacity-70" : ""}>
                 <CustomerDropdown
                   value={customerText}
@@ -506,7 +489,6 @@ export default function ReceiveImport() {
                   }}
                 />
               </div>
-            )}
           </div>
 
           <div>

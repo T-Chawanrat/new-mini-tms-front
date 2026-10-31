@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import StatusModal from "../../components/tms/modal/StatusModal";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
 import AxiosInstance from "../../services/apiClient";
 import { useAuth } from "../../context/AuthContext";
@@ -71,10 +72,6 @@ const emptyDetailForm = {
 export default function ManagePackages() {
   const { user } = useAuth();
 
-  const roleId = Number(user?.role_id);
-  const isCustomer = roleId === 2;
-  const canManage = !isCustomer;
-  const canSelectCustomer = !isCustomer;
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [rows, setRows] = useState<PackageRow[]>([]);
@@ -149,12 +146,7 @@ export default function ManagePackages() {
   };
 
   const fetchData = async () => {
-    if (isCustomer && !customerId) {
-      setRows([]);
-      return;
-    }
-
-    if (canSelectCustomer && !customerId) {
+    if (!customerId) {
       setRows([]);
       return;
     }
@@ -197,17 +189,7 @@ export default function ManagePackages() {
   useEffect(() => {
     if (!user) return;
 
-    if (isCustomer) {
-      if (user.customer_id) {
-        setCustomerId(String(user.customer_id));
-      }
-
-      return;
-    }
-
-    if (canSelectCustomer) {
-      fetchCustomers();
-    }
+    fetchCustomers();
   }, [user]);
 
   useEffect(() => {
@@ -249,8 +231,6 @@ export default function ManagePackages() {
   };
 
   const handleSave = async () => {
-    if (!canManage) return;
-
     const package_code = cleanCodeInput(form.package_code);
     const package_name = form.package_name.trim();
 
@@ -337,7 +317,7 @@ export default function ManagePackages() {
   };
 
   const handleSaveDetail = async () => {
-    if (!canManage || !selectedPackage) return;
+    if (!selectedPackage) return;
 
     const package_detail_code = cleanCodeInput(detailForm.package_detail_code);
     const package_detail_name = detailForm.package_detail_name.trim();
@@ -472,8 +452,6 @@ export default function ManagePackages() {
           </div>
         ),
       },
-      ...(!isCustomer
-        ? [
             {
               field: "customer_name",
               headerName: "ลูกค้า",
@@ -485,8 +463,6 @@ export default function ManagePackages() {
                 </div>
               ),
             },
-          ]
-        : []),
       {
         field: "detail_count",
         headerName: "รายการ",
@@ -513,8 +489,7 @@ export default function ManagePackages() {
         filterable: false,
         align: "center" as const,
         headerAlign: "center" as const,
-        renderCell: (params: any) =>
-          canManage ? (
+        renderCell: (params: any) => (
             <button type="button" onClick={() => openStatusModal("PACKAGE", params.row)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
               {params.row.is_actived === "Y" ? (
                 <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
@@ -524,17 +499,13 @@ export default function ManagePackages() {
                 <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">Inactive</span>
               )}
             </button>
-          ) : params.row.is_actived === "Y" ? (
-            <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">Active</span>
-          ) : (
-            <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">Inactive</span>
           ),
       },
       {
         field: "actions",
         headerName: "จัดการ",
-        width: canManage ? 170 : 110,
-        minWidth: canManage ? 150 : 100,
+        width: 170,
+        minWidth: 150,
         sortable: false,
         filterable: false,
         resizable: false,
@@ -550,7 +521,6 @@ export default function ManagePackages() {
               ราคา
             </button>
 
-            {canManage && (
               <button
                 type="button"
                 onClick={() => openEdit(params.row)}
@@ -558,12 +528,11 @@ export default function ManagePackages() {
               >
                 <Pencil size={14} />
               </button>
-            )}
           </div>
         ),
       },
     ],
-    [isCustomer, canManage],
+    [],
   );
 
   const detailColumns = useMemo(
@@ -638,8 +607,7 @@ export default function ManagePackages() {
         filterable: false,
         align: "center" as const,
         headerAlign: "center" as const,
-        renderCell: (params: any) =>
-          canManage ? (
+        renderCell: (params: any) => (
             <button type="button" onClick={() => openStatusModal("DETAIL", params.row)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
               {params.row.is_actived === "Y" ? (
                 <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
@@ -649,10 +617,6 @@ export default function ManagePackages() {
                 <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">Inactive</span>
               )}
             </button>
-          ) : params.row.is_actived === "Y" ? (
-            <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium">Active</span>
-          ) : (
-            <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium">Inactive</span>
           ),
       },
       {
@@ -665,8 +629,7 @@ export default function ManagePackages() {
         resizable: false,
         align: "center" as const,
         headerAlign: "center" as const,
-        renderCell: (params: any) =>
-          canManage ? (
+        renderCell: (params: any) => (
             <div className="flex h-full w-full items-center justify-center">
               <button
                 type="button"
@@ -676,12 +639,10 @@ export default function ManagePackages() {
                 <Pencil size={14} />
               </button>
             </div>
-          ) : (
-            <span className="text-xs text-slate-400">ดูอย่างเดียว</span>
           ),
       },
     ],
-    [canManage],
+    [],
   );
 
   return (
@@ -689,20 +650,16 @@ export default function ManagePackages() {
       <div className="flex justify-between items-center mt-[-15px] mb-2 shrink-0">
         <div>
           <h2 className="text-xl font-semibold mb-1 text-slate-800">Package Management</h2>
-          <p className="text-sm text-slate-500">{isCustomer ? "ดูราคาค่าส่งของคุณ" : "จัดการราคาค่าส่งของลูกค้า"}</p>
+          <p className="text-sm text-slate-500">จัดการราคาค่าส่งของลูกค้า</p>
         </div>
 
-        {canManage && (
           <button type="button" onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
             + เพิ่ม Package
           </button>
-        )}
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
-        {canSelectCustomer && (
           <SearchableSelect value={customerId} onChange={setCustomerId} placeholder="เลือกลูกค้า" className="!w-full sm:!w-[32rem]" options={[{ value: "", label: "เลือกลูกค้า" }, ...customers.map((c) => ({ value: String(c.id), label: `${c.id} ${c.code ? `${c.code} - ` : ""}${c.name} (${c.type})` }))]} />
-        )}
 
         <input
           placeholder="ค้นหา Package Code / Package Name"
@@ -811,11 +768,9 @@ export default function ManagePackages() {
               </div>
 
               <div className="flex gap-2">
-                {canManage && (
                   <button type="button" onClick={openCreateDetail} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                     + เพิ่มราคา
                   </button>
-                )}
                 <button type="button" onClick={closeDetailModal} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
                   <X size={18} />
                 </button>
@@ -964,37 +919,7 @@ export default function ManagePackages() {
         </div>
       )}
 
-      {statusModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70]" onClick={closeStatusModal}>
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                disabled={selectedStatus?.current === "Y" || saving}
-                onClick={() => changeStatus("Y")}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "Y" ? "bg-green-50 text-green-300 cursor-not-allowed" : "bg-green-100 text-green-600 hover:bg-green-200"
-                }`}
-              >
-                Active
-              </button>
-
-              <button
-                type="button"
-                disabled={selectedStatus?.current === "N" || saving}
-                onClick={() => changeStatus("N")}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "N" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
-                }`}
-              >
-                Inactive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StatusModal open={statusModal} current={selectedStatus ? selectedStatus.current === "Y" ? "ACTIVE" : "INACTIVE" : null} loading={saving} onClose={closeStatusModal} onChange={(status) => void changeStatus(status === "ACTIVE" ? "Y" : "N")} />
     </div>
   );
 }

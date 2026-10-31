@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import ConfirmModal from "../components/tms/modal/ConfirmModal";
 
 import { FolderOpen, PackageCheck, Plus, Printer, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -746,39 +747,7 @@ export default function TruckLoadCreate() {
         </div>
       )}
 
-      {confirmAction && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="relative w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl animate-scaleIn">
-            <button type="button" onClick={() => setConfirmAction(null)} className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
-              <X size={18} />
-            </button>
-            <h3 className="text-base font-bold text-slate-800">ยืนยันปิดบรรทุกและปล่อยรถ</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              {`ต้องการปิดบรรทุกและปล่อยรถของใบ ${confirmAction.row.truck_code} ใช่หรือไม่`}
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmAction(null)}
-                className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50"
-              >
-                ไม่
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const action = confirmAction;
-                  setConfirmAction(null);
-                  void handleCloseAndGoTruckLoad(action.row);
-                }}
-                className="h-9 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                ใช่
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal open={Boolean(confirmAction)} title="ยืนยันปิดบรรทุกและปล่อยรถ" description={`ต้องการปิดบรรทุกและปล่อยรถของใบ ${confirmAction?.row.truck_code || ""} ใช่หรือไม่`} cancelLabel="ไม่" confirmLabel="ใช่" closeOnBackdrop={false} closeOnEscape={false} onClose={() => setConfirmAction(null)} onConfirm={() => { if (!confirmAction) return; const action = confirmAction; setConfirmAction(null); void handleCloseAndGoTruckLoad(action.row); }} />
     </div>
   );
 }

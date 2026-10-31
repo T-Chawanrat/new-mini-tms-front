@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import StatusModal from "../../components/tms/modal/StatusModal";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
 import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { ChevronDown, ChevronRight, Pencil, Plus, X } from "lucide-react";
@@ -268,8 +269,6 @@ function RecipientDetailsInlinePanel({ recipient, onCreateDetail, onEditDetail, 
 export default function ManageRecipients() {
   const { user } = useAuth();
 
-  const isCustomer = Number(user?.role_id) === 2;
-  const canSelectCustomer = !isCustomer;
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [recipientTypes, setRecipientTypes] = useState<RecipientType[]>([]);
@@ -474,15 +473,8 @@ export default function ManageRecipients() {
 
     fetchRecipientTypes();
 
-    if (isCustomer) {
-      if (user.customer_id) {
-        setCustomerId(String(user.customer_id));
-      }
-      return;
-    }
-
     fetchCustomers();
-  }, [user, isCustomer]);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -925,9 +917,6 @@ export default function ManageRecipients() {
           <h2 className="text-xl font-semibold mb-1 text-slate-800">Recipient Management</h2>
 
           <p className="text-sm text-slate-500">
-            {isCustomer ? (
-              <>จัดการผู้รับของคุณ</>
-            ) : (
               <>
                 จัดการผู้รับของลูกค้า
                 {selectedCustomer ? (
@@ -937,7 +926,6 @@ export default function ManageRecipients() {
                   </span>
                 ) : null}
               </>
-            )}
           </p>
         </div>
 
@@ -953,7 +941,6 @@ export default function ManageRecipients() {
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 shrink-0">
         <div className="flex flex-col lg:flex-row gap-3">
-          {canSelectCustomer && (
             <SearchableSelect
               value={customerId}
               onChange={(value) => {
@@ -973,7 +960,6 @@ export default function ManageRecipients() {
               className="lg:!w-[32rem] lg:shrink-0"
               options={[{ value: "", label: "เลือกผู้รับ" }, ...customers.map((customer: Customer) => ({ value: String(customer.id), label: `${customer.id} ${customer.code} - ${customer.name}` }))]}
             />
-          )}
 
           <input
             placeholder="ค้นหา code / ชื่อผู้รับ / ที่อยู่ / เบอร์ / รหัสไปรษณีย์"
@@ -1265,45 +1251,7 @@ export default function ManageRecipients() {
         </div>
       )}
 
-      {statusModal && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={() => {
-            setStatusModal(false);
-            setSelectedStatus(null);
-          }}
-        >
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                disabled={selectedStatus?.current === "ACTIVE"}
-                onClick={() => changeStatus("ACTIVE")}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "ACTIVE"
-                    ? "bg-green-50 text-green-300 cursor-not-allowed"
-                    : "bg-green-100 text-green-600 hover:bg-green-200"
-                }`}
-              >
-                Active
-              </button>
-
-              <button
-                type="button"
-                disabled={selectedStatus?.current === "INACTIVE"}
-                onClick={() => changeStatus("INACTIVE")}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
-                }`}
-              >
-                Inactive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StatusModal open={statusModal} current={selectedStatus?.current ?? null} onClose={closeStatusModal} onChange={(status) => void changeStatus(status === "ACTIVE" ? "ACTIVE" : "INACTIVE")} />
     </div>
   );
 }

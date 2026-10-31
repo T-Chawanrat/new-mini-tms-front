@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import StatusModal from "../../components/tms/modal/StatusModal";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
 import AxiosInstance from "../../services/apiClient";
 import { useAuth } from "../../context/AuthContext";
@@ -7,6 +8,7 @@ import { FileImage, Pencil, Trash2, X } from "lucide-react";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput } from "../../utils/textSanitizer";
 import DataGrid from "../../components/tms/table/DataGrid";
 import RequiredLabel from "../../components/tms/form/RequiredLabel";
+import ConfirmModal from "../../components/tms/modal/ConfirmModal";
 import type {
   ROGridRow,
   RORow,
@@ -60,9 +62,6 @@ const getErrorMessage = (err: unknown, fallback: string) => {
 export default function ManageShippers() {
   const { user } = useAuth();
 
-  const roleId = Number(user?.role_id);
-  const isCustomer = roleId === 2;
-  const canSelectCustomer = roleId === 1 || roleId === 11;
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerId, setCustomerId] = useState("");
@@ -87,6 +86,8 @@ export default function ManageShippers() {
   const [roRows, setRoRows] = useState<RORow[]>([]);
   const [roLoading, setRoLoading] = useState(false);
   const [roSaving, setRoSaving] = useState(false);
+  const [deleteROTarget, setDeleteROTarget] = useState<RORow | null>(null);
+  const [deletingRO, setDeletingRO] = useState(false);
 
   const roFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -228,16 +229,7 @@ export default function ManageShippers() {
   useEffect(() => {
     if (!user) return;
 
-    if (isCustomer) {
-      if (user.customer_id) {
-        setCustomerId(String(user.customer_id));
-      }
-      return;
-    }
-
-    if (canSelectCustomer) {
-      fetchCustomers();
-    }
+    fetchCustomers();
   }, [user]);
 
   useEffect(() => {
@@ -438,15 +430,14 @@ export default function ManageShippers() {
     resetROForm();
   };
 
-  const handleDeleteRO = async (row: RORow) => {
+  const handleDeleteRO = async () => {
+    const row = deleteROTarget;
     if (!customerId || !selectedShipper?.shipper_id || !row?.ro_code_id) return;
 
-    const ok = window.confirm(`ต้องการลบ RO "${row.ro_code}" ใช่ไหม?`);
-
-    if (!ok) return;
-
     try {
+      setDeletingRO(true);
       await AxiosInstance.delete(`/manage/shippers/${customerId}/${selectedShipper.shipper_id}/ro-codes/${row.ro_code_id}`);
+      setDeleteROTarget(null);
 
       if (roEditing?.ro_code_id === row.ro_code_id) {
         resetROForm();
@@ -457,6 +448,8 @@ export default function ManageShippers() {
       alert("ลบ RO สำเร็จ");
     } catch (err) {
       alert(getErrorMessage(err, "delete ro failed"));
+    } finally {
+      setDeletingRO(false);
     }
   };
 
@@ -789,7 +782,7 @@ export default function ManageShippers() {
 
             <button
               type="button"
-              onClick={() => handleDeleteRO(params.row)}
+              onClick={() => setDeleteROTarget(params.row)}
               className="w-6 h-6 flex items-center justify-center rounded-md bg-red-50 text-red-500 border border-red-200 hover:bg-red-100"
               title="ลบ RO"
             >
@@ -809,14 +802,10 @@ export default function ManageShippers() {
           <h2 className="text-xl font-semibold mb-1 text-slate-800">Shipper Management</h2>
 
           <p className="text-sm text-slate-500">
-            {isCustomer ? (
-              <>จัดการผู้ส่งของคุณ</>
-            ) : (
               <>
                 จัดการผู้ส่งของลูกค้า
                 {selectedCustomer ? <span className="font-medium text-slate-700"> {selectedCustomer.name}</span> : null}
               </>
-            )}
           </p>
         </div>
 
@@ -826,9 +815,7 @@ export default function ManageShippers() {
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
-        {canSelectCustomer && (
           <SearchableSelect value={customerId} onChange={setCustomerId} placeholder="เลือกผู้ส่ง" className="!w-full sm:!w-[32rem]" options={[{ value: "", label: "เลือกผู้ส่ง" }, ...customers.map((c) => ({ value: String(c.id), label: `${c.id} ${c.code} - ${c.name}` }))]} />
-        )}
 
         <input
           placeholder="ค้นหา code / ชื่อผู้ส่ง / เบอร์โทร"
@@ -1113,45 +1100,8 @@ export default function ManageShippers() {
         </div>
       )}
 
-      {statusModal && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={() => {
-            setStatusModal(false);
-            setSelectedStatus(null);
-          }}
-        >
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4 text-slate-800">สถานะ</h3>
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                disabled={selectedStatus?.current === "ACTIVE"}
-                onClick={() => changeStatus("ACTIVE")}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "ACTIVE"
-                    ? "bg-green-50 text-green-300 cursor-not-allowed"
-                    : "bg-green-100 text-green-600 hover:bg-green-200"
-                }`}
-              >
-                Active
-              </button>
-
-              <button
-                type="button"
-                disabled={selectedStatus?.current === "INACTIVE"}
-                onClick={() => changeStatus("INACTIVE")}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedStatus?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
-                }`}
-              >
-                Inactive
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StatusModal open={statusModal} current={selectedStatus?.current ?? null} onClose={() => { setStatusModal(false); setSelectedStatus(null); }} onChange={(status) => void changeStatus(status === "ACTIVE" ? "ACTIVE" : "INACTIVE")} />
+      <ConfirmModal open={Boolean(deleteROTarget)} title="ยืนยันลบ RO" description={<>ต้องการลบ RO <strong className="text-slate-800">{deleteROTarget?.ro_code || "-"}</strong> ใช่ไหม?</>} confirmLabel="ลบ" loadingLabel="กำลังลบ..." loading={deletingRO} danger onClose={() => setDeleteROTarget(null)} onConfirm={() => void handleDeleteRO()} />
     </div>
   );
 }

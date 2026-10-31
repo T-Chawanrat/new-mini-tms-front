@@ -1,14 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
+import StatusModal from "../../components/tms/modal/StatusModal";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
 import AxiosInstance from "../../services/apiClient";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import DatePicker from "../../components/tms/form/DatePicker";
 import { useAuth } from "../../context/AuthContext";
-import { Pencil, X } from "lucide-react";
+import { Pencil, ShieldCheck, X } from "lucide-react";
 import { cleanCodeInput, cleanNameInput, cleanNumberInput, cleanEmailInput } from "../../utils/textSanitizer";
 import DataGrid from "../../components/tms/table/DataGrid";
 import RequiredLabel from "../../components/tms/form/RequiredLabel";
+import { useNavigate } from "react-router-dom";
 
 const genderFromTitle = (titleName: string) => {
   if (titleName === "นาย") return "ชาย";
@@ -32,6 +34,7 @@ export default function ManageUsers() {
   const [editModal, setEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const titleOptions = ["นาย", "นาง", "นางสาว"];
   const [editForm, setEditForm] = useState({
@@ -554,27 +557,36 @@ export default function ManageUsers() {
       {
         field: "actions",
         headerName: "จัดการ",
-        width: 110,
-        minWidth: 100,
+        width: 150,
+        minWidth: 140,
         sortable: false,
         filterable: false,
         resizable: false,
         align: "center" as const,
         headerAlign: "center" as const,
         renderCell: (params: any) => (
-          <div className="flex h-full w-full items-center justify-center">
+          <div className="flex h-full w-full items-center justify-center gap-2">
             <button
               type="button"
               onClick={() => openEdit(params.row)}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+              title="แก้ไขผู้ใช้"
             >
               <Pencil size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/manage/permissions?user_id=${params.row.id}`)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-100"
+              title="กำหนดสิทธิ์"
+            >
+              <ShieldCheck size={15} />
             </button>
           </div>
         ),
       },
     ],
-    [],
+    [navigate],
   );
 
   return (
@@ -587,6 +599,8 @@ export default function ManageUsers() {
             <p className="text-sm text-slate-500">จัดการผู้ใช้งานในระบบ</p>
           </div>
 
+          <div className="flex items-center gap-2">
+          <button type="button" onClick={() => navigate("/manage/role-permissions")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"><ShieldCheck size={17} className="text-blue-600" /> สิทธิ์ตาม role</button>
           <button
             type="button"
             onClick={() => {
@@ -598,6 +612,7 @@ export default function ManageUsers() {
           >
             + เพิ่มผู้ใช้
           </button>
+          </div>
         </div>
 
         {/* FILTER */}
@@ -944,39 +959,7 @@ export default function ManageUsers() {
         )}
 
         {/* STATUS MODAL */}
-        {statusModal && (
-          <div onClick={closeStatusModal} className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-xl w-[300px] animate-scaleIn">
-              <h3 className="text-lg font-semibold mb-1 text-slate-800">สถานะ</h3>
-
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  disabled={selected?.current === "ACTIVE"}
-                  onClick={() => changeStatus("ACTIVE")}
-                  className={`px-4 py-2 rounded-lg ${
-                    selected?.current === "ACTIVE"
-                      ? "bg-green-50 text-green-300 cursor-not-allowed"
-                      : "bg-green-100 text-green-600 hover:bg-green-200"
-                  }`}
-                >
-                  Active
-                </button>
-
-                <button
-                  type="button"
-                  disabled={selected?.current === "INACTIVE"}
-                  onClick={() => changeStatus("INACTIVE")}
-                  className={`px-4 py-2 rounded-lg ${
-                    selected?.current === "INACTIVE" ? "bg-red-50 text-red-300 cursor-not-allowed" : "bg-red-100 text-red-500 hover:bg-red-200"
-                  }`}
-                >
-                  Inactive
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <StatusModal open={statusModal} current={selected?.current ?? null} onClose={closeStatusModal} onChange={(status) => void changeStatus(status === "ACTIVE" ? "ACTIVE" : "INACTIVE")} />
       </div>
     </LocalizationProvider>
   );

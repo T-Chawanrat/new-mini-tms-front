@@ -7,7 +7,7 @@ import React, {
   type ReactNode,
 } from "react";
 
-import { setTokenExpiredHandler } from "../services/apiClient";
+import AxiosInstance, { setTokenExpiredHandler } from "../services/apiClient";
 import TokenExpiredModal from "../components/tms/modal/TokenExpiredModal";
 
 export interface UserType {
@@ -37,6 +37,10 @@ interface AuthContextType {
   logout: () => void;
   tokenExpired: boolean;
   triggerTokenExpired: () => void;
+  permissions: string[];
+  permissionsLoading: boolean;
+  permissionsError: boolean;
+  isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,6 +96,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const [tokenExpired, setTokenExpired] = useState(false);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+  const [permissionsError, setPermissionsError] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setPermissions([]);
+    setIsSuperAdmin(false);
+    setPermissionsError(false);
+    if (!isLoggedIn || !user?.id) {
+      setPermissionsLoading(false);
+      return;
+    }
+    setPermissionsLoading(true);
+    AxiosInstance.get<{ permissions: string[]; is_super_admin: boolean }>("/manage/permissions/me")
+      .then(({ data }) => { if (active) { setPermissions(data.permissions); setIsSuperAdmin(data.is_super_admin); } })
+      .catch(() => { if (active) setPermissionsError(true); })
+      .finally(() => { if (active) setPermissionsLoading(false); });
+    return () => { active = false; };
+  }, [isLoggedIn, user?.id]);
 
   const clearAuthData = useCallback(() => {
     setUserState(null);
@@ -168,6 +193,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         logout,
         tokenExpired,
         triggerTokenExpired,
+        permissions,
+        permissionsLoading,
+        permissionsError,
+        isSuperAdmin,
       }}
     >
       {children}

@@ -4,6 +4,7 @@ import { LogOut, File } from "lucide-react";
 import { ChevronDownIcon, GridIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "../context/AuthContext";
+import { permissionForPath } from "../routes/permissions";
 
 type NavItem = {
   name: string;
@@ -13,7 +14,6 @@ type NavItem = {
     name: string;
     path: string;
     icon?: React.ReactNode;
-    roles?: number[];
   }[];
 };
 
@@ -26,13 +26,11 @@ const navItems: NavItem[] = [
         name: "ประกาศและราคาน้ำมัน",
         path: "/dashboard",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "จัดการประกาศ",
         path: "/manage/announcements",
         icon: <File size={20} />,
-        roles: [1, 5, 11],
       },
     ],
   },
@@ -44,19 +42,16 @@ const navItems: NavItem[] = [
         name: "จัดการผู้รับ",
         path: "/manage/recipients",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "จัดการสายรถ",
         path: "/manage/routes",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "สร้างรถเสริม",
         path: "/contractor-create",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
     ],
   },
@@ -68,37 +63,31 @@ const navItems: NavItem[] = [
         name: "สร้างบิล",
         path: "/create-do",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "นำเข้าบิล",
         path: "/std",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "รายการบิล",
         path: "/receive-report",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "พิมพ์สติกเกอร์",
         path: "/label-print",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ปิดงานจัดส่ง",
         path: "/delivery-close",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "แชทแจ้งปัญหา",
         path: "/delivery-issue-chat",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
     ],
   },
@@ -110,37 +99,31 @@ const navItems: NavItem[] = [
         name: "ยิงรับเข้าคลังต้นทาง",
         path: "/warehouse-scan",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "สินค้าในคลัง",
         path: "/product-warehouse",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "สินค้าบนรถ",
         path: "/product-truck",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ใบปิดบรรทุก",
         path: "/truck-create",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ใบรถกระจายสินค้า",
         path: "/delivery-truck-create",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ยิงรับเข้าคลังปลายทาง",
         path: "/dc-receive",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
     ],
   },
@@ -152,19 +135,16 @@ const navItems: NavItem[] = [
         name: "ตามเลขที่บิล",
         path: "/delivery-pending-report/receive",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ตาม S/N",
         path: "/delivery-pending-report/sn",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ตามใบรถกระจาย",
         path: "/delivery-pending-report/dt",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
     ],
   },
@@ -176,55 +156,46 @@ const navItems: NavItem[] = [
         name: "จัดการผู้ใช้งาน",
         path: "/manage/users",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "จัดการลูกค้า",
         path: "/manage/customers",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "จัดการรถ",
         path: "/manage/vehicles",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "จัดการผู้ส่ง",
         path: "/manage/shippers",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "จัดการผู้รับ",
         path: "/manage/recipients2",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "จัดการแพ็กเกจ",
         path: "/manage/packages",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "จัดการวันหยุด",
         path: "/manage-holidays",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ย้ายสินค้า",
         path: "/move",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "แก้ไขรูปปิดงาน",
         path: "/delivery-close-media",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
     ],
   },
@@ -236,37 +207,31 @@ const navItems: NavItem[] = [
         name: "ประวัติการพิมพ์ Label",
         path: "/logs/label-print",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ประวัติบนรถขนย้าย",
         path: "/logs/product-trucks",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ประวัติบนรถกระจาย",
         path: "/logs/delivery-trucks",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ประวัติสินค้าในคลัง",
         path: "/logs/product-warehouses",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ประวัติการสร้างบิล",
         path: "/logs/receive-create",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
       {
         name: "ประวัติการนำเข้าข้อมูล",
         path: "/logs/receive-imports",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
     ],
   },
@@ -278,7 +243,6 @@ const navItems: NavItem[] = [
         name: "แผนที่",
         path: "/map",
         icon: <File size={20} />,
-        roles: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       },
     ],
   },
@@ -290,9 +254,8 @@ const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
-  const roleId = Number(user?.role_id);
-  const canSee = (roles?: number[]) => !roles || roles.includes(roleId);
+  const { logout, user, permissions, isSuperAdmin } = useAuth();
+  const canSee = (path: string) => isSuperAdmin || Boolean(permissionForPath(path) && permissions.includes(permissionForPath(path)!));
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -353,7 +316,7 @@ const AppSidebar: React.FC = () => {
 
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-4">
-      {items.map((nav, index) => (
+      {items.map((nav, index) => nav.subItems && !nav.subItems.some((item) => canSee(item.path)) ? null : (
         <li key={nav.name} className="relative">
           {nav.subItems ? (
             <>
@@ -384,7 +347,7 @@ const AppSidebar: React.FC = () => {
               {nav.subItems && !isExpanded && !isMobileOpen && openSubmenu?.type === menuType && openSubmenu?.index === index && (
                 <div className="mt-2 space-y-2 overflow-hidden transition-all duration-300">
                   {nav.subItems
-                    .filter((subItem) => canSee(subItem.roles))
+                    .filter((subItem) => canSee(subItem.path))
                     .map((subItem) => (
                       <Link
                         key={subItem.name}
@@ -412,7 +375,7 @@ const AppSidebar: React.FC = () => {
                 >
                   <ul className="mt-2 space-y-1 ml-9">
                     {nav.subItems
-                      .filter((subItem) => canSee(subItem.roles))
+                      .filter((subItem) => canSee(subItem.path))
                       .map((subItem) => (
                         <li key={subItem.name}>
                           <Link
