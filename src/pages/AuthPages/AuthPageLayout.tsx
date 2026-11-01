@@ -21,7 +21,7 @@ export default function AuthLayout({
                 <img
                   width={231}
                   height={48}
-                  src="/tms/logotrachtechwhite.png"
+                  src="/logotrachtechwhite.png"
                   alt="Tranchtech Logo"
                   className="h-auto w-[231px] object-contain"
                 />

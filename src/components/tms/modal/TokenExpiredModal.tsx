@@ -37,7 +37,7 @@ const TokenExpiredModal: React.FC<Props> = ({ isOpen }) => {
         <button
           type="button"
           onClick={() => {
-            window.location.replace("/tms/signin");
+            window.location.replace("/signin");
           }}
           className="w-full rounded-lg bg-red-500 px-4 py-2.5 font-medium text-white transition-colors hover:bg-red-600"
         >

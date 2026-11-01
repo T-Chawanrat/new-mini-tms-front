@@ -205,7 +205,7 @@ export default function LabelCard({ item }: LabelCardProps) {
       </section>
 
       <footer className="label-footer">
-        <img src="/tms/logotrachtech.png" alt="Trantech Logo" className="label-company-logo" />
+        <img src="/logotrachtech.png" alt="Trantech Logo" className="label-company-logo" />
 
         <div className="label-company-content">
           <p className="label-company-name">จัดส่งโดย บริษัท ทรานเทค แมนเนจเม้นส์ กรุ๊ป จำกัด</p>

@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 
 export default function App() {
   return (
-    <Router basename="/tms">
+    <Router>
       <ScrollToTop />
       <AppRoutes />
     </Router>

@@ -153,7 +153,7 @@ export default function TruckDeliveryPrint() {
             <>
               <header className="delivery-truck-print-header grid grid-cols-[1fr_58mm] items-start gap-[5mm] border-b border-black pb-[3mm] text-[11px] leading-[1.4]">
                 <div className="-mt-3">
-                  <img src="/tms/logo.jpg" alt="Trantech" className="delivery-truck-print-logo" />
+                  <img src="/logo.jpg" alt="Trantech" className="delivery-truck-print-logo" />
                   <div className="mt-[3mm] text-[11px] leading-[1.4]">
                     <div className="font-bold">บริษัท ทรานเทค แมนเนจเม้นท์ กรุ๊ป จำกัด</div>
                     <div>เลขที่ 19/13 หมู่2 ตำบลคลองข่อย อำเภอปากเกร็ด จังหวัดนนทบุรี 11120</div>

@@ -280,7 +280,7 @@ export default function ReceiveReportPrint() {
               >
               <header className="grid grid-cols-[1fr_60mm] items-start gap-[4mm]">
                 <div>
-                  <img src="/tms/logo.jpg" alt="Trantech" className="receive-report-print-logo h-auto w-[28mm] object-contain object-left-top" />
+                  <img src="/logo.jpg" alt="Trantech" className="receive-report-print-logo h-auto w-[28mm] object-contain object-left-top" />
                   <div className="mt-[1mm] text-[9px] font-medium leading-[1.4]">
                     <div className="text-[9.5px] font-bold">บริษัท ทรานเทค แมนเนจเม้นท์ กรุ๊ป จำกัด</div>
                     <div>เลขที่ 19/13 หมู่ 2 ตำบลคลองข่อย อำเภอปากเกร็ด จังหวัดนนทบุรี 11120</div>

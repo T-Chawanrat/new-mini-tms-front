@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -168,9 +169,9 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
         </button>
       </Dropdown>
 
-      {showChangePasswordModal && (
+      {showChangePasswordModal && createPortal(
         <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6"
+          className="font-thai fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6"
           onClick={() => setShowChangePasswordModal(false)}
         >
           <div
@@ -190,7 +191,8 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
               onClose={() => setShowChangePasswordModal(false)}
             />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
