@@ -804,6 +804,11 @@ span.flatpickr-weekday,
   height: 32px;
   animation: spin 1s linear infinite;
 }
+
+body.receive-options-loading,
+body.receive-options-loading * {
+  cursor: wait !important;
+}
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

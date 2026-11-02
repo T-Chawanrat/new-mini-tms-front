@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { useEffect } from "react";
 import DatePicker from "../../components/tms/form/DatePicker";
 import RequiredLabel from "../../components/tms/form/RequiredLabel";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
@@ -54,6 +55,12 @@ export default function ReceiveHeaderForm({
   recipientTransitDays = null,
   holidayDates = [],
 }: ReceiveHeaderFormProps) {
+  useEffect(() => {
+    if (!loadingOptions) return;
+    document.body.classList.add("receive-options-loading");
+    return () => document.body.classList.remove("receive-options-loading");
+  }, [loadingOptions]);
+
   const deliveryMinDate =
     recipientTransitDays === null || recipientTransitDays === undefined
       ? undefined

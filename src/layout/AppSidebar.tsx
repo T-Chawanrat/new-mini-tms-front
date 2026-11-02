@@ -22,43 +22,23 @@ const navItems: NavItem[] = [
     icon: <GridIcon />,
     name: "ข้อมูลวันนี้",
     subItems: [
-      {
-        name: "ประกาศและราคาน้ำมัน",
-        path: "/dashboard",
-        icon: <File size={20} />,
-      },
-      {
-        name: "จัดการประกาศ",
-        path: "/manage/announcements",
-        icon: <File size={20} />,
-      },
+      { name: "ประกาศและราคาน้ำมัน", path: "/dashboard", icon: <File size={20} /> },
+      { name: "จัดการประกาศ", path: "/manage/announcements", icon: <File size={20} /> },
     ],
   },
   {
     icon: <GridIcon />,
     name: "จัดการข้อมูลหลัก",
     subItems: [
-      {
-        name: "จัดการผู้รับ",
-        path: "/manage/recipients",
-        icon: <File size={20} />,
-      },
-      {
-        name: "จัดการสายรถ",
-        path: "/manage/routes",
-        icon: <File size={20} />,
-      },
-      {
-        name: "สร้างรถเสริม",
-        path: "/contractor-create",
-        icon: <File size={20} />,
-      },
       { name: "จัดการผู้ใช้งาน", path: "/manage/users", icon: <File size={20} /> },
       { name: "จัดการลูกค้า", path: "/manage/customers", icon: <File size={20} /> },
       { name: "จัดการรถ", path: "/manage/vehicles", icon: <File size={20} /> },
       { name: "จัดการผู้ส่ง", path: "/manage/shippers", icon: <File size={20} /> },
+      { name: "จัดการผู้รับ", path: "/manage/recipients", icon: <File size={20} /> },
       { name: "จัดการแพ็กเกจ", path: "/manage/packages", icon: <File size={20} /> },
       { name: "จัดการวันหยุด", path: "/manage/holidays", icon: <File size={20} /> },
+      { name: "จัดการสายรถ", path: "/manage/routes", icon: <File size={20} /> },
+      { name: "สร้างรถเสริม", path: "/contractor-create", icon: <File size={20} /> },
       { name: "ย้ายสินค้า", path: "/move", icon: <File size={20} /> },
       { name: "แก้ไขรูปปิดงาน", path: "/delivery-close-media", icon: <File size={20} /> },
     ],
@@ -67,140 +47,52 @@ const navItems: NavItem[] = [
     icon: <GridIcon />,
     name: "จัดการบิล",
     subItems: [
-      {
-        name: "สร้างบิล",
-        path: "/create",
-        icon: <File size={20} />,
-      },
-      {
-        name: "นำเข้าบิล",
-        path: "/import",
-        icon: <File size={20} />,
-      },
-      {
-        name: "รายการบิล",
-        path: "/receive-report",
-        icon: <File size={20} />,
-      },
-      {
-        name: "พิมพ์สติกเกอร์",
-        path: "/label-print",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ปิดงานจัดส่ง",
-        path: "/delivery-close",
-        icon: <File size={20} />,
-      },
-      {
-        name: "แชทแจ้งปัญหา",
-        path: "/delivery-issue-chat",
-        icon: <File size={20} />,
-      },
+      { name: "สร้างบิล", path: "/create", icon: <File size={20} /> },
+      { name: "นำเข้าบิล", path: "/import", icon: <File size={20} /> },
+      { name: "รายการบิล", path: "/receive-report", icon: <File size={20} /> },
+      { name: "พิมพ์สติกเกอร์", path: "/label-print", icon: <File size={20} /> },
+      { name: "ปิดงานจัดส่ง", path: "/delivery-close", icon: <File size={20} /> },
+      { name: "แชทแจ้งปัญหา", path: "/delivery-issue-chat", icon: <File size={20} /> },
     ],
   },
   {
     icon: <GridIcon />,
     name: "คลังสินค้าและขนส่ง",
     subItems: [
-      {
-        name: "ยิงรับเข้าคลังต้นทาง",
-        path: "/wh-receive",
-        icon: <File size={20} />,
-      },
-      {
-        name: "สินค้าในคลัง",
-        path: "/product-warehouse",
-        icon: <File size={20} />,
-      },
-      {
-        name: "สินค้าบนรถ",
-        path: "/product-truck",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ใบปิดบรรทุก",
-        path: "/truck-create",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ใบรถกระจายสินค้า",
-        path: "/delivery-truck-create",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ยิงรับเข้าคลังปลายทาง",
-        path: "/dc-receive",
-        icon: <File size={20} />,
-      },
+      { name: "ยิงรับเข้าคลังต้นทาง", path: "/wh-receive", icon: <File size={20} /> },
+      { name: "สินค้าในคลัง", path: "/product-warehouse", icon: <File size={20} /> },
+      { name: "สินค้าบนรถ", path: "/product-truck", icon: <File size={20} /> },
+      { name: "ใบปิดบรรทุก", path: "/truck-create", icon: <File size={20} /> },
+      { name: "ใบรถกระจายสินค้า", path: "/delivery-truck-create", icon: <File size={20} /> },
+      { name: "ยิงรับเข้าคลังปลายทาง", path: "/dc-receive", icon: <File size={20} /> },
     ],
   },
   {
     icon: <GridIcon />,
     name: "รายงาน",
     subItems: [
-      {
-        name: "ตามเลขที่บิล",
-        path: "/pending-report/receive",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ตาม S/N",
-        path: "/pending-report/sn",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ตามใบรถกระจาย",
-        path: "/pending-report/dt",
-        icon: <File size={20} />,
-      },
+      { name: "ตามเลขที่บิล", path: "/pending-report/receive", icon: <File size={20} /> },
+      { name: "ตาม S/N", path: "/pending-report/sn", icon: <File size={20} /> },
+      { name: "ตามใบรถกระจาย", path: "/pending-report/dt", icon: <File size={20} /> },
     ],
   },
-   {
+  {
     icon: <GridIcon />,
     name: "Logs",
     subItems: [
-      {
-        name: "ประวัติการพิมพ์ Label",
-        path: "/logs/label-print",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ประวัติบนรถขนย้าย",
-        path: "/logs/product-trucks",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ประวัติบนรถกระจาย",
-        path: "/logs/delivery-trucks",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ประวัติสินค้าในคลัง",
-        path: "/logs/product-warehouses",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ประวัติการสร้างบิล",
-        path: "/logs/receive-create",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ประวัติการนำเข้าข้อมูล",
-        path: "/logs/receive-imports",
-        icon: <File size={20} />,
-      },
+      { name: "ประวัติการพิมพ์ Label", path: "/logs/label-print", icon: <File size={20} /> },
+      { name: "ประวัติบนรถขนย้าย", path: "/logs/product-trucks", icon: <File size={20} /> },
+      { name: "ประวัติบนรถกระจาย", path: "/logs/delivery-trucks", icon: <File size={20} /> },
+      { name: "ประวัติสินค้าในคลัง", path: "/logs/product-warehouses", icon: <File size={20} /> },
+      { name: "ประวัติการสร้างบิล", path: "/logs/receive-create", icon: <File size={20} /> },
+      { name: "ประวัติการนำเข้าข้อมูล", path: "/logs/receive-imports", icon: <File size={20} /> },
     ],
   },
   {
     icon: <GridIcon />,
     name: "แผนที่",
     subItems: [
-      {
-        name: "แผนที่",
-        path: "/map",
-        icon: <File size={20} />,
-      },
+    { name: "แผนที่", path: "/map", icon: <File size={20} /> },
     ],
   },
 ];
@@ -273,97 +165,101 @@ const AppSidebar: React.FC = () => {
 
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-4">
-      {items.map((nav, index) => nav.subItems && !nav.subItems.some((item) => canSee(item.path)) ? null : (
-        <li key={nav.name} className="relative">
-          {nav.subItems ? (
-            <>
-              <button
-                onClick={() => handleSubmenuToggle(index, menuType)}
-                className={`menu-item group outline-none focus:outline-none focus-visible:outline-none ${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index ? "menu-item-active" : "menu-item-inactive"
-                } cursor-pointer ${!isExpanded ? "lg:justify-center" : "lg:justify-start"}`}
-              >
-                <span
-                  className={`menu-item-icon-size  ${
-                    openSubmenu?.type === menuType && openSubmenu?.index === index ? "menu-item-icon-active" : "menu-item-icon-inactive"
-                  }`}
+      {items.map((nav, index) =>
+        nav.subItems && !nav.subItems.some((item) => canSee(item.path)) ? null : (
+          <li key={nav.name} className="relative">
+            {nav.subItems ? (
+              <>
+                <button
+                  onClick={() => handleSubmenuToggle(index, menuType)}
+                  className={`menu-item group outline-none focus:outline-none focus-visible:outline-none ${
+                    openSubmenu?.type === menuType && openSubmenu?.index === index ? "menu-item-active" : "menu-item-inactive"
+                  } cursor-pointer ${!isExpanded ? "lg:justify-center" : "lg:justify-start"}`}
                 >
-                  {nav.icon}
-                </span>
-                {(isExpanded || isMobileOpen) && <span className="menu-item-text">{nav.name}</span>}
-                {(isExpanded || isMobileOpen) && (
-                  <ChevronDownIcon
-                    className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                      openSubmenu?.type === menuType && openSubmenu?.index === index ? "rotate-180 text-brand-500" : ""
+                  <span
+                    className={`menu-item-icon-size  ${
+                      openSubmenu?.type === menuType && openSubmenu?.index === index ? "menu-item-icon-active" : "menu-item-icon-inactive"
                     }`}
-                  />
-                )}
-              </button>
+                  >
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isMobileOpen) && <span className="menu-item-text">{nav.name}</span>}
+                  {(isExpanded || isMobileOpen) && (
+                    <ChevronDownIcon
+                      className={`ml-auto w-5 h-5 transition-transform duration-200 ${
+                        openSubmenu?.type === menuType && openSubmenu?.index === index ? "rotate-180 text-brand-500" : ""
+                      }`}
+                    />
+                  )}
+                </button>
 
-              {/* ← แสดง subItems เมื่อ sidebar ย่อ (แสดงเฉพาะไอคอน) */}
-              {nav.subItems && !isExpanded && !isMobileOpen && openSubmenu?.type === menuType && openSubmenu?.index === index && (
-                <div className="mt-2 space-y-2 overflow-hidden transition-all duration-300">
-                  {nav.subItems
-                    .filter((subItem) => canSee(subItem.path))
-                    .map((subItem) => (
-                      <Link
-                        key={subItem.name}
-                        to={subItem.path}
-                        className={`flex h-10 w-full items-center justify-center rounded-md outline-none transition-colors focus:outline-none focus-visible:outline-none ${
-                          isActive(subItem.path) ? "bg-brand-50 text-brand-500" : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                        title={subItem.name}
-                      >
-                        <span className={`${isActive(subItem.path) ? "text-brand-500" : "text-gray-600"}`}>{subItem.icon}</span>
-                      </Link>
-                    ))}
-                </div>
-              )}
-
-              {nav.subItems && (isExpanded || isMobileOpen) && (
-                <div
-                  ref={(el) => {
-                    subMenuRefs.current[`${menuType}-${index}`] = el;
-                  }}
-                  className="overflow-hidden transition-all duration-300"
-                  style={{
-                    height: openSubmenu?.type === menuType && openSubmenu?.index === index ? `${subMenuHeight[`${menuType}-${index}`]}px` : "0px",
-                  }}
-                >
-                  <ul className="mt-2 space-y-1 ml-9">
+                {/* ← แสดง subItems เมื่อ sidebar ย่อ (แสดงเฉพาะไอคอน) */}
+                {nav.subItems && !isExpanded && !isMobileOpen && openSubmenu?.type === menuType && openSubmenu?.index === index && (
+                  <div className="mt-2 space-y-2 overflow-hidden transition-all duration-300">
                     {nav.subItems
                       .filter((subItem) => canSee(subItem.path))
                       .map((subItem) => (
-                        <li key={subItem.name}>
-                          <Link
-                            to={subItem.path}
-                            className={`menu-dropdown-item outline-none focus:outline-none focus-visible:outline-none ${
-                              isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
-                            }`}
-                          >
-                            {subItem.name}
-                          </Link>
-                        </li>
+                        <Link
+                          key={subItem.name}
+                          to={subItem.path}
+                          className={`flex h-10 w-full items-center justify-center rounded-md outline-none transition-colors focus:outline-none focus-visible:outline-none ${
+                            isActive(subItem.path) ? "bg-brand-50 text-brand-500" : "text-gray-600 hover:bg-gray-100"
+                          }`}
+                          title={subItem.name}
+                        >
+                          <span className={`${isActive(subItem.path) ? "text-brand-500" : "text-gray-600"}`}>{subItem.icon}</span>
+                        </Link>
                       ))}
-                  </ul>
-                </div>
-              )}
-            </>
-          ) : (
-            nav.path && (
-              <Link
-                to={nav.path}
-                className={`menu-item group outline-none focus:outline-none focus-visible:outline-none ${
-                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                }`}
-              >
-                <span className={`menu-item-icon-size ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>{nav.icon}</span>
-                {(isExpanded || isMobileOpen) && <span className="menu-item-text">{nav.name}</span>}
-              </Link>
-            )
-          )}
-        </li>
-      ))}
+                  </div>
+                )}
+
+                {nav.subItems && (isExpanded || isMobileOpen) && (
+                  <div
+                    ref={(el) => {
+                      subMenuRefs.current[`${menuType}-${index}`] = el;
+                    }}
+                    className="overflow-hidden transition-all duration-300"
+                    style={{
+                      height: openSubmenu?.type === menuType && openSubmenu?.index === index ? `${subMenuHeight[`${menuType}-${index}`]}px` : "0px",
+                    }}
+                  >
+                    <ul className="mt-2 space-y-1 ml-9">
+                      {nav.subItems
+                        .filter((subItem) => canSee(subItem.path))
+                        .map((subItem) => (
+                          <li key={subItem.name}>
+                            <Link
+                              to={subItem.path}
+                              className={`menu-dropdown-item outline-none focus:outline-none focus-visible:outline-none ${
+                                isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
+                              }`}
+                            >
+                              {subItem.name}
+                            </Link>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              nav.path && (
+                <Link
+                  to={nav.path}
+                  className={`menu-item group outline-none focus:outline-none focus-visible:outline-none ${
+                    isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                  }`}
+                >
+                  <span className={`menu-item-icon-size ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isMobileOpen) && <span className="menu-item-text">{nav.name}</span>}
+                </Link>
+              )
+            )}
+          </li>
+        ),
+      )}
     </ul>
   );
 
