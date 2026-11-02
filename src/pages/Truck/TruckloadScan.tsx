@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ConfirmModal from "../components/tms/modal/ConfirmModal";
+import ConfirmModal from "../../components/tms/modal/ConfirmModal";
 import { useNavigate, useParams } from "react-router-dom";
 
-import alertSound from "../../assets/sounds/alert.mp3";
-import errorSound from "../../assets/sounds/error.mp3";
-import successSound from "../../assets/sounds/success.mp3";
-import AxiosInstance from "../services/apiClient";
-import { connectSocket } from "../services/socket";
-import { formatThaiNumber, normalizeSerialText, preventSpaceKey, removeSpaces } from "../utils/textSanitizer";
-import MismatchModal from "../components/tms/modal/MismatchModal";
+import alertSound from "../../../assets/sounds/alert.mp3";
+import errorSound from "../../../assets/sounds/error.mp3";
+import successSound from "../../../assets/sounds/success.mp3";
+import AxiosInstance from "../../services/apiClient";
+import { connectSocket } from "../../services/socket";
+import { formatThaiNumber, normalizeSerialText, preventSpaceKey, removeSpaces } from "../../utils/textSanitizer";
+import MismatchModal from "../../components/tms/modal/MismatchModal";
 import type {
   DestinationWarning,
   TruckLoadDetail,
   TruckLoadDetailResponse,
   VehicleLoadResponse,
   VehicleLoadRow,
-} from "../types/truckload";
+} from "../../types/truckload";
 
 type LoadProductError = {
   response?: {

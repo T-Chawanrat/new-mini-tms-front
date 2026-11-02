@@ -2,7 +2,8 @@ import dayjs from "dayjs";
 import DatePicker from "../../components/tms/form/DatePicker";
 import RequiredLabel from "../../components/tms/form/RequiredLabel";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
-import {
+import Select from "../../components/tms/form/Select";
+import { 
   buttonInputClass,
   checkboxInputClass,
   datePickerWrapClass,
@@ -12,7 +13,6 @@ import {
   inputClass,
   labelClass,
   readOnlyInputClass,
-  selectClass,
 } from "./createReceiveConfig";
 import type { PaymentOption, ReceiveForm, ShipperROCodeOption, UpdateReceiveForm, WarehouseOption } from "../../types/receive";
 
@@ -310,13 +310,7 @@ export default function ReceiveHeaderForm({
           <div className="grid grid-cols-[88px_135px] items-center gap-1.5">
             <label className={labelClass}>ประเภทการจ่าย</label>
 
-            <select className={selectClass} value={form.payment_type_id} onChange={(e) => updateForm("payment_type_id", e.target.value)}>
-              {payments.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
+            <Select className="!h-9 !rounded-md !text-[13px]" value={String(form.payment_type_id)} onChange={(value) => updateForm("payment_type_id", value)} options={payments.map((item) => ({ value: String(item.id), label: item.name }))} />
           </div>
 
           <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-1.5">
@@ -382,28 +376,16 @@ export default function ReceiveHeaderForm({
                 }
               />
 
-              <select
-                className={form.is_document_return === "Y" ? selectClass : disabledInputClass}
+              <Select
+                className="!h-9 !rounded-md !text-[13px] disabled:!bg-slate-100"
                 value={form.document_return}
                 disabled={form.is_document_return !== "Y" || loadingROCodes || !form.shipper_id}
-                onChange={(e) => updateForm("document_return", e.target.value)}
-              >
-                <option value="">
-                  {loadingROCodes
-                    ? "กำลังโหลด..."
-                    : !form.shipper_id
-                      ? "เลือกผู้ส่งก่อน"
-                      : roCodes.length === 0
-                        ? "ไม่มีเอกสารรับกลับ"
-                        : "เลือกเอกสารรับกลับ"}
-                </option>
-
-                {roCodes.map((item) => (
-                  <option key={item.ro_code_id} value={String(item.ro_code_id)}>
-                    {item.ro_code} - {item.ro_name}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => updateForm("document_return", value)}
+                options={[
+                  { value: "", label: loadingROCodes ? "กำลังโหลด..." : !form.shipper_id ? "เลือกผู้ส่งก่อน" : roCodes.length === 0 ? "ไม่มีเอกสารรับกลับ" : "เลือกเอกสารรับกลับ" },
+                  ...roCodes.map((item) => ({ value: String(item.ro_code_id), label: `${item.ro_code} - ${item.ro_name}` })),
+                ]}
+              />
             </div>
           </div>
         </div>

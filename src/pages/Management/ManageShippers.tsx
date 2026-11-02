@@ -1,3 +1,4 @@
+import Select from "../../components/tms/form/Select";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import StatusModal from "../../components/tms/modal/StatusModal";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
@@ -870,14 +871,7 @@ export default function ManageShippers() {
 
                 <div>
                   <RequiredLabel>ประเภทผู้ส่ง</RequiredLabel>
-                  <select
-                    className="input-modern w-full"
-                    value={form.shipper_type_id}
-                    onChange={(e) => handleChange("shipper_type_id", e.target.value)}
-                  >
-                    <option value="1">บุคคลธรรมดา</option>
-                    <option value="2">นิติบุคคล</option>
-                  </select>
+                  <Select value={String(form.shipper_type_id)} onChange={(next) => handleChange("shipper_type_id", next)} options={[{ value: "1", label: "บุคคลธรรมดา" }, { value: "2", label: "นิติบุคคล" }]} />
                 </div>
               </div>
 

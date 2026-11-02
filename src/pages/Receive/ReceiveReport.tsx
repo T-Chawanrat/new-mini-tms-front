@@ -1,13 +1,14 @@
+import Select from "../../components/tms/form/Select";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Printer, RefreshCcw, Search, X } from "lucide-react";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
-import AxiosInstance from "../services/apiClient";
-import DatePicker from "../components/tms/form/DatePicker";
-import SearchableSelect from "../components/tms/form/SearchableSelect";
-import DataGrid from "../components/tms/table/DataGrid";
-import ResizableColumns from "../components/tms/table/ResizableColumns";
-import type { Filters, Option, Pagination, ReceiveReportRow, ReceiveReportSummary, ReceiveSerialRow } from "../types/receiveReport";
+import AxiosInstance from "../../services/apiClient";
+import DatePicker from "../../components/tms/form/DatePicker";
+import SearchableSelect from "../../components/tms/form/SearchableSelect";
+import DataGrid from "../../components/tms/table/DataGrid";
+import ResizableColumns from "../../components/tms/table/ResizableColumns";
+import type { Filters, Option, Pagination, ReceiveReportRow, ReceiveReportSummary, ReceiveSerialRow } from "../../types/receiveReport";
 import {
   buildReceiveReportQueryParams,
   defaultReceiveReportFilters,
@@ -21,7 +22,7 @@ import {
   receiveReportMinWidths,
   receiveSerialHeaders,
   receiveSerialMinWidths,
-} from "../utils/receiveReport";
+} from "../../utils/receiveReport";
 
 const formatOptionalNumber = (value: number | string | null | undefined, digits = 0) =>
   value === null || value === undefined || value === "" ? "-" : formatNumber(value, digits);
@@ -673,17 +674,7 @@ export default function ReceiveReport() {
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] text-slate-500">แสดง</span>
 
-              <select
-                value={limit}
-                onChange={(e) => handleLimitChange(e.target.value)}
-                className="h-7 rounded-md border border-slate-300 bg-white px-1.5 text-[11px] text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              >
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-                <option value={500}>500</option>
-              </select>
+              <Select value={String(limit)} onChange={(next) => handleLimitChange(next)} options={[{ value: "25", label: "25" }, { value: "50", label: "50" }, { value: "100", label: "100" }, { value: "200", label: "200" }, { value: "500", label: "500" }]} className="!h-7 !w-[76px] rounded-md !text-[11px]" />
 
               <span className="text-[11px] text-slate-500">รายการ</span>
             </div>

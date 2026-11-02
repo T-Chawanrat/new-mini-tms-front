@@ -1,3 +1,4 @@
+import Select from "../../components/tms/form/Select";
 import { useEffect, useMemo, useState } from "react";
 import StatusModal from "../../components/tms/modal/StatusModal";
 import AxiosInstance from "../../services/apiClient";
@@ -548,10 +549,7 @@ export default function ManageCustomers() {
 
                 <div>
                   <RequiredLabel>ประเภทลูกค้า</RequiredLabel>
-                  <select className="input-modern w-full" value={form.type} onChange={(e) => handleChange("type", e.target.value)}>
-                    <option value="BUSINESS">BUSINESS</option>
-                    <option value="EXPRESS">EXPRESS</option>
-                  </select>
+                  <Select value={String(form.type)} onChange={(next) => handleChange("type", next)} options={[{ value: "BUSINESS", label: "BUSINESS" }, { value: "EXPRESS", label: "EXPRESS" }]} />
                 </div>
 
                 <div>

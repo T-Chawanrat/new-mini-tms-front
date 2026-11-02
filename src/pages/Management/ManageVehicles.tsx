@@ -1,3 +1,4 @@
+import Select from "../../components/tms/form/Select";
 import { useEffect, useMemo, useState } from "react";
 import StatusModal from "../../components/tms/modal/StatusModal";
 import AxiosInstance from "../../services/apiClient";
@@ -569,32 +570,11 @@ export default function ManageVehicles() {
             }}
           />
 
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="input-modern w-[180px]">
-            <option value="">ประเภทรถ</option>
-            {vehicleTypes.map((x) => (
-              <option key={x.id} value={x.id}>
-                {x.name}
-              </option>
-            ))}
-          </select>
+          <Select value={String(filterType)} onChange={(next) => setFilterType(next)} options={[{ value: "", label: "ประเภทรถ" }, ...vehicleTypes.map((x) => ({ value: String(x.id), label: x.name }))]} className="!w-[180px] shrink-0" />
 
-          <select value={filterOwnerType} onChange={(e) => setFilterOwnerType(e.target.value)} className="input-modern w-[160px]">
-            <option value="">เจ้าของรถ</option>
-            {OWNER_TYPES.map((x) => (
-              <option key={x.value} value={x.value}>
-                {x.label}
-              </option>
-            ))}
-          </select>
+          <Select value={String(filterOwnerType)} onChange={(next) => setFilterOwnerType(next)} options={[{ value: "", label: "เจ้าของรถ" }, ...OWNER_TYPES.map((x) => ({ value: String(x.value), label: x.label }))]} className="!w-[160px] shrink-0" />
 
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="input-modern w-[160px]">
-            <option value="">สถานะ</option>
-            {STATUS.map((x) => (
-              <option key={x.value} value={x.value}>
-                {x.label}
-              </option>
-            ))}
-          </select>
+          <Select value={String(filterStatus)} onChange={(next) => setFilterStatus(next)} options={[{ value: "", label: "สถานะ" }, ...STATUS.map((x) => ({ value: String(x.value), label: x.label }))]} className="!w-[160px] shrink-0" />
 
           <button type="button" onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
             ค้นหา
@@ -610,7 +590,7 @@ export default function ManageVehicles() {
         {showModal && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
             <div
-              className="relative bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[90vh] overflow-auto animate-scaleIn"
+              className="relative bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[96dvh] overflow-auto animate-scaleIn"
               onClick={(e) => e.stopPropagation()}
             >
               <button type="button" onClick={closeModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
@@ -627,31 +607,12 @@ export default function ManageVehicles() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <RequiredLabel required>ประเภทรถ</RequiredLabel>
-                      <select
-                        className="input-modern w-full"
-                        value={form.vehicle_type_id}
-                        onChange={(e) => handleVehicleTypeChange(e.target.value)}
-                      >
-                        <option value="">เลือกประเภทรถ</option>
-                        {vehicleTypes.map((x) => (
-                          <option key={x.id} value={x.id}>
-                            {x.name}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={String(form.vehicle_type_id)} onChange={(next) => handleVehicleTypeChange(next)} options={[{ value: "", label: "เลือกประเภทรถ" }, ...vehicleTypes.map((x) => ({ value: String(x.id), label: x.name }))]} />
                     </div>
 
                     <div>
                       <RequiredLabel required>ยี่ห้อรถ</RequiredLabel>
-                      <select className="input-modern w-full" value={form.brand_id} onChange={(e) => handleChange("brand_id", e.target.value)}>
-                        <option value="">เลือกยี่ห้อ</option>
-                        {brands.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.name}
-                          </option>
-                        ))}
-                        <option value="__OTHER__">อื่นๆ</option>
-                      </select>
+                      <Select value={String(form.brand_id)} onChange={(next) => handleChange("brand_id", next)} options={[{ value: "", label: "เลือกยี่ห้อ" }, ...brands.map((b) => ({ value: String(b.id), label: b.name })), { value: "__OTHER__", label: "อื่นๆ" }]} />
                       {form.brand_id === "__OTHER__" && (
                         <input
                           className="input-modern mt-2 w-full"
@@ -680,18 +641,7 @@ export default function ManageVehicles() {
 
                     <div>
                       <RequiredLabel required>จังหวัดทะเบียน</RequiredLabel>
-                      <select
-                        className="input-modern w-full"
-                        value={form.license_plate_province_id}
-                        onChange={(e) => handleChange("license_plate_province_id", e.target.value)}
-                      >
-                        <option value="">เลือกจังหวัด</option>
-                        {provinces.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.province_name}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={String(form.license_plate_province_id)} onChange={(next) => handleChange("license_plate_province_id", next)} options={[{ value: "", label: "เลือกจังหวัด" }, ...provinces.map((p) => ({ value: String(p.id), label: p.province_name }))]} />
                     </div>
 
                     <div>
@@ -727,14 +677,7 @@ export default function ManageVehicles() {
 
                     <div>
                       <RequiredLabel>เชื้อเพลิง</RequiredLabel>
-                      <select className="input-modern w-full" value={form.fuel_type} onChange={(e) => handleChange("fuel_type", e.target.value)}>
-                        <option value="">เลือกเชื้อเพลิง</option>
-                        {FUEL_TYPES.map((x) => (
-                          <option key={x.value} value={x.value}>
-                            {x.label}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={String(form.fuel_type)} onChange={(next) => handleChange("fuel_type", next)} options={[{ value: "", label: "เลือกเชื้อเพลิง" }, ...FUEL_TYPES.map((x) => ({ value: String(x.value), label: x.label }))]} />
                     </div>
                   </div>
                 </div>
@@ -765,29 +708,12 @@ export default function ManageVehicles() {
 
                     <div>
                       <RequiredLabel required>Warehouse</RequiredLabel>
-                      <select
-                        className="input-modern w-full"
-                        value={form.warehouse_id}
-                        onChange={(e) => handleChange("warehouse_id", e.target.value)}
-                      >
-                        <option value="">เลือก warehouse</option>
-                        {warehouses.map((w) => (
-                          <option key={w.id} value={w.id}>
-                            {w.name}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={String(form.warehouse_id)} onChange={(next) => handleChange("warehouse_id", next)} options={[{ value: "", label: "เลือก warehouse" }, ...warehouses.map((w) => ({ value: String(w.id), label: w.name }))]} />
                     </div>
 
                     <div>
                       <RequiredLabel required>เจ้าของรถ</RequiredLabel>
-                      <select className="input-modern w-full" value={form.owner_type} onChange={(e) => handleChange("owner_type", e.target.value)}>
-                        {OWNER_TYPES.map((x) => (
-                          <option key={x.value} value={x.value}>
-                            {x.label}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={String(form.owner_type)} onChange={(next) => handleChange("owner_type", next)} options={[...OWNER_TYPES.map((x) => ({ value: String(x.value), label: x.label }))]} />
                     </div>
                   </div>
                 </div>

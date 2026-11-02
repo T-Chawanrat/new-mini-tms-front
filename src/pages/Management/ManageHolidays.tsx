@@ -1,3 +1,4 @@
+import Select from "../../components/tms/form/Select";
 // client/src/pages/ManageHolidays.tsx
 import StatusModal from "../../components/tms/modal/StatusModal";
 
@@ -465,13 +466,7 @@ export default function ManageHolidays() {
       <div className="mb-2 flex shrink-0 flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <input type="number" placeholder="ปี" value={year} onChange={(e) => setYear(e.target.value)} className="input-modern w-[130px]" />
 
-        <select value={month} onChange={(e) => setMonth(e.target.value)} className="input-modern w-[140px]">
-          {monthOptions.map((item) => (
-            <option key={item.value || "all"} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </select>
+        <Select value={String(month)} onChange={(next) => setMonth(next)} options={[...monthOptions.map((item) => ({ value: String(item.value), label: item.label }))]} className="!w-[140px] shrink-0" />
 
         <input
           placeholder="ค้นหาชื่อวันหยุด"

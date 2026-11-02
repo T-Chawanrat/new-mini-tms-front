@@ -1,7 +1,7 @@
 import { useState } from "react";
-import AxiosInstance from "../services/apiClient";
+import AxiosInstance from "../../services/apiClient";
 import { Eye, EyeOff, KeyRound } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 const RequiredLabel = ({ children }: { children: string }) => {
   return (

@@ -53,6 +53,14 @@ const navItems: NavItem[] = [
         path: "/contractor-create",
         icon: <File size={20} />,
       },
+      { name: "จัดการผู้ใช้งาน", path: "/manage/users", icon: <File size={20} /> },
+      { name: "จัดการลูกค้า", path: "/manage/customers", icon: <File size={20} /> },
+      { name: "จัดการรถ", path: "/manage/vehicles", icon: <File size={20} /> },
+      { name: "จัดการผู้ส่ง", path: "/manage/shippers", icon: <File size={20} /> },
+      { name: "จัดการแพ็กเกจ", path: "/manage/packages", icon: <File size={20} /> },
+      { name: "จัดการวันหยุด", path: "/manage/holidays", icon: <File size={20} /> },
+      { name: "ย้ายสินค้า", path: "/move", icon: <File size={20} /> },
+      { name: "แก้ไขรูปปิดงาน", path: "/delivery-close-media", icon: <File size={20} /> },
     ],
   },
   {
@@ -61,12 +69,12 @@ const navItems: NavItem[] = [
     subItems: [
       {
         name: "สร้างบิล",
-        path: "/create-do",
+        path: "/create",
         icon: <File size={20} />,
       },
       {
         name: "นำเข้าบิล",
-        path: "/std",
+        path: "/import",
         icon: <File size={20} />,
       },
       {
@@ -97,7 +105,7 @@ const navItems: NavItem[] = [
     subItems: [
       {
         name: "ยิงรับเข้าคลังต้นทาง",
-        path: "/warehouse-scan",
+        path: "/wh-receive",
         icon: <File size={20} />,
       },
       {
@@ -133,68 +141,17 @@ const navItems: NavItem[] = [
     subItems: [
       {
         name: "ตามเลขที่บิล",
-        path: "/delivery-pending-report/receive",
+        path: "/pending-report/receive",
         icon: <File size={20} />,
       },
       {
         name: "ตาม S/N",
-        path: "/delivery-pending-report/sn",
+        path: "/pending-report/sn",
         icon: <File size={20} />,
       },
       {
         name: "ตามใบรถกระจาย",
-        path: "/delivery-pending-report/dt",
-        icon: <File size={20} />,
-      },
-    ],
-  },
-   {
-    icon: <GridIcon />,
-    name: "Super Admin",
-    subItems: [
-      {
-        name: "จัดการผู้ใช้งาน",
-        path: "/manage/users",
-        icon: <File size={20} />,
-      },
-      {
-        name: "จัดการลูกค้า",
-        path: "/manage/customers",
-        icon: <File size={20} />,
-      },
-      {
-        name: "จัดการรถ",
-        path: "/manage/vehicles",
-        icon: <File size={20} />,
-      },
-      {
-        name: "จัดการผู้ส่ง",
-        path: "/manage/shippers",
-        icon: <File size={20} />,
-      },
-      {
-        name: "จัดการผู้รับ",
-        path: "/manage/recipients2",
-        icon: <File size={20} />,
-      },
-      {
-        name: "จัดการแพ็กเกจ",
-        path: "/manage/packages",
-        icon: <File size={20} />,
-      },
-      {
-        name: "จัดการวันหยุด",
-        path: "/manage-holidays",
-        icon: <File size={20} />,
-      },
-      {
-        name: "ย้ายสินค้า",
-        path: "/move",
-        icon: <File size={20} />,
-      },
-      {
-        name: "แก้ไขรูปปิดงาน",
-        path: "/delivery-close-media",
+        path: "/pending-report/dt",
         icon: <File size={20} />,
       },
     ],

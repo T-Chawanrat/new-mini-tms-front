@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, Megaphone, Pin, Search } from "lucide-react";
-import AxiosInstance from "../services/apiClient";
-import { getUploadUrl } from "../services/uploadUrl";
-import type { Announcement } from "../types/announcement";
+import AxiosInstance from "../../services/apiClient";
+import { getUploadUrl } from "../../services/uploadUrl";
+import type { Announcement } from "../../types/announcement";
 
 type OilPrice = { product: string; price: number; priceDate: string | null };
 

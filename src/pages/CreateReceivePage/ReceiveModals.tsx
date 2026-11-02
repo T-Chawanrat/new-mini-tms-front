@@ -4,10 +4,10 @@ import axios from "axios";
 import TablePagination from "@mui/material/TablePagination";
 import { X } from "lucide-react";
 import AxiosInstance from "../../services/apiClient";
+import Select from "../../components/tms/form/Select";
 import { calculatePackageRate, isWeightFix, moneyValue, toNum } from "../../utils/packageRate";
 import {
   inputClass,
-  selectClass,
 } from "./createReceiveConfig";
 import type { CustomerOption, GroupedPackageOption, GroupedRecipient, PackageOption, PackageRow, RecipientOption, ShipperOption, UpdatePackageForm } from "../../types/receive";
 
@@ -921,19 +921,16 @@ export default function ReceiveModals({
 
                   <div className="grid grid-cols-[96px_1fr] items-center gap-2">
                     <label className="text-[11px] font-medium text-slate-700">รายละเอียด</label>
-                    <select
-                      className={selectClass}
+                    <Select
+                      className="!h-9 !rounded-md !text-[13px]"
                       value={packageForm.package_detail_id}
-                      onChange={(e) => selectPackageDetail(e.target.value)}
+                      onChange={selectPackageDetail}
                       disabled={!packageForm.package_id || selectedPackageIsRateCalculate}
-                    >
-                      <option value="">{selectedPackageIsRateCalculate ? "ระบบจะคำนวณราคาให้" : "เลือกรายละเอียด"}</option>
-                      {selectedPackageDetails.map((item) => (
-                        <option key={String(item.package_detail_id)} value={String(item.package_detail_id)}>
-                          {item.package_detail_name || "-"}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        { value: "", label: selectedPackageIsRateCalculate ? "ระบบจะคำนวณราคาให้" : "เลือกรายละเอียด" },
+                        ...selectedPackageDetails.map((item) => ({ value: String(item.package_detail_id), label: item.package_detail_name || "-" })),
+                      ]}
+                    />
                   </div>
                 </div>
               </div>

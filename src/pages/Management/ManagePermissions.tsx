@@ -6,6 +6,7 @@ import { ArrowLeft, Check, ShieldCheck, UserRound } from "lucide-react";
 import AxiosInstance from "../../services/apiClient";
 import { permissionGroups } from "./permissionGroups";
 import ConfirmModal from "../../components/tms/modal/ConfirmModal";
+import ManageUserWarehouses from "./ManageUserWarehouses";
 
 type Permission = { id: number; permission_code: string; permission_name: string };
 type User = { id: number; username: string; first_name: string | null; last_name: string | null; role_id: number };
@@ -71,7 +72,7 @@ export default function ManagePermissions() {
         overrides: Object.entries(overrides).map(([id, is_allowed]) => ({ permission_id: Number(id), is_allowed })),
       });
       setConfirmOpen(false);
-      setMessage("บันทึกสิทธิ์แล้ว");
+      setMessage("บันทึกสิทธิ์เมนูแล้ว");
     } catch {
       setConfirmOpen(false);
       setMessage("ไม่สามารถบันทึกสิทธิ์ได้");
@@ -86,6 +87,7 @@ export default function ManagePermissions() {
   return (
     <div className="w-full space-y-5 px-4 py-6 sm:px-6">
       <Link to="/manage/users" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-blue-600"><ArrowLeft size={16} /> จัดการผู้ใช้งาน</Link>
+      {!loading && user && userId && <ManageUserWarehouses userId={userId} />}
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-50 text-blue-600"><ShieldCheck size={25} /></span><div><h1 className="text-xl font-bold text-slate-900">กำหนดสิทธิ์ผู้ใช้งาน</h1><p className="mt-1 text-sm text-slate-500">เลือกเมนูและหน้าที่ผู้ใช้งานสามารถเข้าถึงได้</p></div></div>
         <div className="flex items-center gap-3"><div className="flex min-w-0 items-center gap-2 rounded-xl bg-slate-50 px-4 py-3"><UserRound size={20} className="shrink-0 text-slate-500" /><span className="text-sm font-semibold text-slate-800">{loading ? "กำลังโหลด..." : name || "ไม่พบผู้ใช้งาน"}</span></div><button type="button" onClick={() => setConfirmOpen(true)} disabled={loading || saving || !user || permissions.length === 0} className="whitespace-nowrap rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">{saving ? "กำลังบันทึก..." : "บันทึกสิทธิ์"}</button></div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import StatusModal from "../../components/tms/modal/StatusModal";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
+import Select from "../../components/tms/form/Select";
 import AxiosInstance from "../../services/apiClient";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -22,12 +23,10 @@ export default function ManageUsers() {
   const [rows, setRows] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
-  const [zones, setZones] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [statusModal, setStatusModal] = useState(false);
   const [selected, setSelected] = useState<any>(null);
-  const [selectedZones, setSelectedZones] = useState<number[]>([]);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [error, setError] = useState("");
@@ -107,18 +106,9 @@ export default function ManageUsers() {
       }),
     ]);
 
-    const employeeRoles = [3, 4, 5, 6, 7, 8, 9, 10];
-
-    setRoles(r.data.filter((x: any) => employeeRoles.includes(x.id)));
+    setRoles(r.data);
     setWarehouses(w.data);
 
-    setZones([
-      { id: 1, zone_name: "กทม. ปริมณฑล" },
-      { id: 2, zone_name: "ภาคกลาง" },
-      { id: 3, zone_name: "ภาคเหนือ" },
-      { id: 4, zone_name: "ภาคใต้" },
-      { id: 5, zone_name: "ภาคอีสาน" },
-    ]);
   };
 
   useEffect(() => {
@@ -154,7 +144,6 @@ export default function ManageUsers() {
       license_expire: "",
     });
 
-    setSelectedZones([]);
     setError("");
   };
 
@@ -243,9 +232,9 @@ export default function ManageUsers() {
         return;
       }
 
-      if (![3, 4, 6, 9, 10].includes(role)) {
+      if (![1, 2, 4, 6, 9, 10].includes(role)) {
         if (!form.warehouse_id) {
-          setError("กรุณาเลือก warehouse");
+          setError("กรุณาเลือกสังกัดคลัง");
           return;
         }
       }
@@ -262,11 +251,6 @@ export default function ManageUsers() {
         }
       }
 
-      if (role === 3 && selectedZones.length === 0) {
-        setError("กรุณาเลือก zone อย่างน้อย 1");
-        return;
-      }
-
       const payload = {
         ...form,
         employee_code,
@@ -280,12 +264,11 @@ export default function ManageUsers() {
         tel,
         license_no,
         role_id: role,
-        zones: selectedZones,
       } as any;
 
-      if ([3, 4, 9, 10].includes(role)) {
+      if (role === 2) {
         payload.warehouse_id = null;
-      } else if (role === 6) {
+      } else if ([1, 4, 6, 9, 10].includes(role)) {
         payload.warehouse_id = 15;
       } else {
         payload.warehouse_id = form.warehouse_id ? Number(form.warehouse_id) : null;
@@ -681,21 +664,14 @@ export default function ManageUsers() {
 
                 <div>
                   <RequiredLabel required>คำนำหน้า</RequiredLabel>
-                  <select
-                    className="input-modern w-full"
+                  <Select
                     value={form.title_name}
-                    onChange={(e) => {
-                      const titleName = e.target.value;
+                    onChange={(titleName) => {
                       setForm((current) => ({ ...current, title_name: titleName, gender: genderFromTitle(titleName) }));
                     }}
-                  >
-                    <option value="">เลือกคำนำหน้า</option>
-                    {titleOptions.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="เลือกคำนำหน้า"
+                    options={titleOptions.map((title) => ({ value: title, label: title }))}
+                  />
                 </div>
 
                 <div>
@@ -752,14 +728,14 @@ export default function ManageUsers() {
                 </div>
 
                 <div>
-                  <RequiredLabel required>Role</RequiredLabel>
-                  <SearchableSelect value={form.role_id} onChange={(value) => handleChange("role_id", value)} placeholder="เลือก role" options={roles.map((r) => ({ value: String(r.id), label: r.name }))} />
+                  <RequiredLabel required>ตำแหน่ง</RequiredLabel>
+                  <SearchableSelect portal value={form.role_id} onChange={(value) => handleChange("role_id", value)} placeholder="เลือกตำแหน่ง" options={roles.map((r) => ({ value: String(r.id), label: r.name }))} />
                 </div>
 
-                {![3, 4, 6, 9, 10].includes(Number(form.role_id)) && (
+                {![1, 2, 4, 6, 9, 10].includes(Number(form.role_id)) && (
                   <div>
-                    <RequiredLabel required>Warehouse</RequiredLabel>
-                    <SearchableSelect value={form.warehouse_id} onChange={(value) => handleChange("warehouse_id", value)} placeholder="เลือก warehouse" options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))} />
+                    <RequiredLabel required>สังกัดคลัง</RequiredLabel>
+                    <SearchableSelect portal value={form.warehouse_id} onChange={(value) => handleChange("warehouse_id", value)} placeholder="เลือกสังกัดคลัง" options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))} />
                   </div>
                 )}
               </div>
@@ -785,31 +761,6 @@ export default function ManageUsers() {
                       placeholder="วันหมดอายุใบขับขี่"
                       required
                     />
-                  </div>
-                </div>
-              )}
-
-              {Number(form.role_id) === 3 && (
-                <div className="mt-5">
-                  <RequiredLabel required>Zones</RequiredLabel>
-
-                  <div className="grid grid-cols-2 gap-2 border border-slate-200 rounded-xl p-3">
-                    {zones.map((z) => (
-                      <label key={z.id} className="flex items-center gap-2 text-sm text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={selectedZones.includes(z.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedZones([...selectedZones, z.id]);
-                            } else {
-                              setSelectedZones(selectedZones.filter((x) => x !== z.id));
-                            }
-                          }}
-                        />
-                        {z.zone_name}
-                      </label>
-                    ))}
                   </div>
                 </div>
               )}
@@ -854,21 +805,14 @@ export default function ManageUsers() {
 
                 <div>
                   <RequiredLabel required>คำนำหน้า</RequiredLabel>
-                  <select
-                    className="input-modern w-full"
+                  <Select
                     value={editForm.title_name}
-                    onChange={(e) => {
-                      const titleName = e.target.value;
+                    onChange={(titleName) => {
                       setEditForm((current) => ({ ...current, title_name: titleName, gender: genderFromTitle(titleName) }));
                     }}
-                  >
-                    <option value="">เลือกคำนำหน้า</option>
-                    {titleOptions.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="เลือกคำนำหน้า"
+                    options={titleOptions.map((title) => ({ value: title, label: title }))}
+                  />
                 </div>
 
                 <div>

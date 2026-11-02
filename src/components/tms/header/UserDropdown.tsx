@@ -2,8 +2,10 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
+import { UserRound } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
-import ChangePassword from "../../../pages/ChangePassword";
+import ChangePassword from "../../../pages/AuthPages/ChangePassword";
+import UserProfiles from "../../../pages/AuthPages/UserProfiles";
 
 type UserDropdownProps = {
   variant?: "name" | "dots";
@@ -12,6 +14,7 @@ type UserDropdownProps = {
 export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -118,6 +121,12 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
 
         <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
           <li>
+            <button type="button" onClick={() => { closeDropdown(); setShowProfileModal(true); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-theme-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5">
+              <UserRound size={24} className="text-gray-500" />
+              Profile
+            </button>
+          </li>
+          <li>
             <button
               type="button"
               onClick={handleOpenChangePassword}
@@ -168,6 +177,16 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
           Logout
         </button>
       </Dropdown>
+
+      {showProfileModal && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}>
+          <div role="dialog" aria-modal="true" aria-label="โปรไฟล์ของฉัน" className="relative max-h-[90dvh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-slate-50 shadow-xl" onClick={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => setShowProfileModal(false)} aria-label="ปิดโปรไฟล์" className="absolute right-4 top-4 z-10 rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-200">✕</button>
+            <UserProfiles />
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {showChangePasswordModal && createPortal(
         <div

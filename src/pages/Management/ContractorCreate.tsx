@@ -1,3 +1,4 @@
+import Select from "../../components/tms/form/Select";
 import { useEffect, useState } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -222,16 +223,7 @@ export default function ContractorCreate() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
               <RequiredLabel>คำนำหน้า</RequiredLabel>
-              <select
-                className={inputClass}
-                value={form.title_name}
-                onChange={(event) => setValue("title_name", event.target.value)}
-              >
-                <option value="">เลือกคำนำหน้า</option>
-                <option value="นาย">นาย</option>
-                <option value="นาง">นาง</option>
-                <option value="นางสาว">นางสาว</option>
-              </select>
+              <Select value={String(form.title_name)} onChange={(next) => setValue("title_name", next)} options={[{ value: "", label: "เลือกคำนำหน้า" }, { value: "นาย", label: "นาย" }, { value: "นาง", label: "นาง" }, { value: "นางสาว", label: "นางสาว" }]} />
             </div>
             <div>
               <RequiredLabel required>ชื่อ</RequiredLabel>

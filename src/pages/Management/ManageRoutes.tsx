@@ -1,3 +1,4 @@
+import Select from "../../components/tms/form/Select";
 import { useEffect, useMemo, useState } from "react";
 import StatusModal from "../../components/tms/modal/StatusModal";
 import AxiosInstance from "../../services/apiClient";
@@ -505,16 +506,7 @@ export default function ManageRoutes() {
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">คลัง</label>
-                <select className="input-modern w-full" value={selectedWarehouseId} onChange={(event) => setSelectedWarehouseId(event.target.value)}>
-                  <option value="" disabled>
-                    เลือกคลัง
-                  </option>
-                  {warehouses.map((warehouse) => (
-                    <option key={warehouse.id} value={warehouse.id}>
-                      {warehouse.name}
-                    </option>
-                  ))}
-                </select>
+                <Select value={String(selectedWarehouseId)} onChange={(next) => setSelectedWarehouseId(next)} placeholder="เลือกคลัง" options={warehouses.map((warehouse) => ({ value: String(warehouse.id), label: warehouse.name }))} />
               </div>
               <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">รหัสสายรถ</label>

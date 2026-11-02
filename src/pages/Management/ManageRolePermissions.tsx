@@ -1,3 +1,4 @@
+import Select from "../../components/tms/form/Select";
 import { useEffect, useState } from "react";
 import Switch from "@mui/material/Switch";
 import { styled } from "@mui/material/styles";
@@ -102,20 +103,7 @@ export default function ManageRolePermissions() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-        <select
-          aria-label="เลือก role"
-          value={roleId}
-          disabled={loading || saving}
-          onChange={(event) => setRoleId(event.target.value)}
-          className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-400 sm:min-w-64"
-        >
-          <option value="">เลือก role</option>
-          {roles.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name}
-            </option>
-          ))}
-        </select>
+        <Select value={String(roleId)} onChange={(next) => setRoleId(next)} options={[{ value: "", label: "เลือก role" }, ...roles.map((role) => ({ value: String(role.id), label: role.name }))]} disabled={loading || saving} className="min-w-0 sm:min-w-64" aria-label="เลือก role" />
         <button
           type="button"
           onClick={() => setConfirmOpen(true)}

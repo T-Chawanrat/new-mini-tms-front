@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import ConfirmModal from "../components/tms/modal/ConfirmModal";
+import ConfirmModal from "../../components/tms/modal/ConfirmModal";
 
-import errorSound from "../../assets/sounds/error.mp3";
-import successSound from "../../assets/sounds/success.mp3";
-import AxiosInstance from "../services/apiClient";
-import { connectSocket } from "../services/socket";
-import { formatThaiNumber, normalizeSerialText } from "../utils/textSanitizer";
-import CustomerDropdown, { type Customer } from "../components/tms/dropdown/CustomerDropdown";
-import ScanInput from "../components/tms/scan/ScanInput";
+import errorSound from "../../../assets/sounds/error.mp3";
+import successSound from "../../../assets/sounds/success.mp3";
+import AxiosInstance from "../../services/apiClient";
+import { connectSocket } from "../../services/socket";
+import { formatThaiNumber, normalizeSerialText } from "../../utils/textSanitizer";
+import CustomerDropdown, { type Customer } from "../../components/tms/dropdown/CustomerDropdown";
+import ScanInput from "../../components/tms/scan/ScanInput";
 
 type WarehouseReceiveRow = {
   serial_no: string;
