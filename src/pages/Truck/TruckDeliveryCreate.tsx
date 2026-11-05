@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ConfirmModal from "../../components/tms/modal/ConfirmModal";
-import { FolderOpen, PackageCheck, Plus, Printer, X } from "lucide-react";
+import { FolderOpen, PackageCheck, Plus, Printer, RefreshCcw, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import DataGrid from "../../components/tms/table/DataGrid";
 import DatePicker from "../../components/tms/form/DatePicker";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
+import Select from "../../components/tms/form/Select";
 import AxiosInstance from "../../services/apiClient";
 import { formatThaiNumber } from "../../utils/textSanitizer";
 import { formatThaiDateTime } from "../../utils/dateTime";
@@ -28,6 +29,8 @@ const truckStatusLabel: Record<string, string> = {
   DC_TRUCK: "คลังไปหาลูกค้า",
 };
 
+type CompletionFilter = "ALL" | "PENDING" | "COMPLETED";
+
 export default function TruckDeliveryCreate() {
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -38,6 +41,7 @@ export default function TruckDeliveryCreate() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [completionFilter, setCompletionFilter] = useState<CompletionFilter>("PENDING");
   const [rows, setRows] = useState<DeliveryTruckRow[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -51,13 +55,15 @@ export default function TruckDeliveryCreate() {
   const fetchDeliveryTrucks = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await AxiosInstance.get<{ data?: DeliveryTruckApiRow[] }>("/delivery-trucks");
+      const response = await AxiosInstance.get<{ data?: DeliveryTruckApiRow[] }>("/delivery-trucks", {
+        params: { completion_status: completionFilter },
+      });
       const data = Array.isArray(response.data?.data) ? response.data.data : [];
       setRows(data.map((row) => ({ ...row, id: String(row.truck_load_id) })));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [completionFilter]);
 
   const fetchOptions = useCallback(async () => {
     const response = await AxiosInstance.get<{
@@ -301,7 +307,7 @@ export default function TruckDeliveryCreate() {
       </section>
 
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_.75fr_.75fr_.75fr_auto]">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">ค้นหาเลขที่ใบรถ</label>
             <input
@@ -319,24 +325,33 @@ export default function TruckDeliveryCreate() {
             <label className="mb-1 block text-xs font-medium text-slate-600">วันที่สิ้นสุด</label>
             <DatePicker value={dateTo} onChange={setDateTo} placeholder="เลือกวันที่สิ้นสุด" variant="compact" />
           </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">สถานะใบรถ</label>
+            <Select
+              value={completionFilter}
+              onChange={(value) => setCompletionFilter(value as CompletionFilter)}
+              options={[
+                { value: "ALL", label: "ทั้งหมด" },
+                { value: "PENDING", label: "กำลังดำเนินการ" },
+                { value: "COMPLETED", label: "เสร็จสิ้น" },
+              ]}
+              className="!h-9"
+            />
+          </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => void fetchDeliveryTrucks()}
-              className="h-9 rounded-md bg-slate-800 px-4 text-sm font-semibold text-white hover:bg-slate-900"
+              className="h-9 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
             >
               ค้นหา
             </button>
             <button
               type="button"
-              onClick={() => {
-                setSearch("");
-                setDateFrom("");
-                setDateTo("");
-              }}
+              onClick={() => void fetchDeliveryTrucks()}
               className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              ล้าง
+              <span className="inline-flex items-center gap-1.5"><RefreshCcw size={14} />รีเฟรช</span>
             </button>
           </div>
         </div>

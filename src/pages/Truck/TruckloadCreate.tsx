@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import ConfirmModal from "../../components/tms/modal/ConfirmModal";
 
-import { FolderOpen, PackageCheck, Plus, Printer, X } from "lucide-react";
+import { FolderOpen, PackageCheck, Plus, Printer, RefreshCcw, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import DataGrid from "../../components/tms/table/DataGrid";
 import SearchableSelect from "../../components/tms/form/SearchableSelect";
 import DatePicker from "../../components/tms/form/DatePicker";
+import Select from "../../components/tms/form/Select";
 import AxiosInstance from "../../services/apiClient";
 import { formatCodeNameOption, formatThaiNumber } from "../../utils/textSanitizer";
 import { formatThaiDateTime } from "../../utils/dateTime";
@@ -31,6 +32,8 @@ const truckTypeLabels: Record<string, string> = {
 type ConfirmAction = {
   row: TruckLoadRow;
 };
+
+type CompletionFilter = "ALL" | "PENDING" | "COMPLETED";
 
 type AxiosLikeError = {
   response?: {
@@ -118,6 +121,7 @@ export default function TruckLoadCreate() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [completionFilter, setCompletionFilter] = useState<CompletionFilter>("PENDING");
 
   const [loadingOptions, setLoadingOptions] = useState(false);
 
@@ -191,6 +195,8 @@ export default function TruckLoadCreate() {
 
           create_date_to: dateTo || undefined,
 
+          completion_status: completionFilter,
+
           page: 1,
           limit: 100,
         },
@@ -207,7 +213,7 @@ export default function TruckLoadCreate() {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, search]);
+  }, [completionFilter, dateFrom, dateTo, search]);
 
   useEffect(() => {
     void fetchTruckLoads();
@@ -246,14 +252,6 @@ export default function TruckLoadCreate() {
     setInfo(null);
 
     void fetchTruckLoads();
-  };
-
-  const handleReset = () => {
-    setSearch("");
-    setDateFrom("");
-    setDateTo("");
-    setInfo(null);
-    setError(null);
   };
 
   const handleCreate = async () => {
@@ -576,7 +574,7 @@ export default function TruckLoadCreate() {
       </section>
 
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_auto]">
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_.75fr_.75fr_.75fr_auto]">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">ค้นหาเลขใบปิดบรรทุก</label>
 
@@ -606,23 +604,37 @@ export default function TruckLoadCreate() {
             <DatePicker value={dateTo} onChange={setDateTo} placeholder="เลือกวันที่สิ้นสุด" variant="compact" />
           </div>
 
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">สถานะใบรถ</label>
+            <Select
+              value={completionFilter}
+              onChange={(value) => setCompletionFilter(value as CompletionFilter)}
+              options={[
+                { value: "ALL", label: "ทั้งหมด" },
+                { value: "PENDING", label: "กำลังดำเนินการ" },
+                { value: "COMPLETED", label: "เสร็จสิ้น" },
+              ]}
+              className="!h-9"
+            />
+          </div>
+
           <div className="flex gap-2">
             <button
               type="button"
               onClick={handleSearch}
               disabled={loading}
-              className="h-9 rounded-md bg-slate-800 px-4 text-sm font-semibold text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="h-9 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               ค้นหา
             </button>
 
             <button
               type="button"
-              onClick={handleReset}
+              onClick={handleSearch}
               disabled={loading}
               className="h-9 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
             >
-              ล้าง
+              <span className="inline-flex items-center gap-1.5"><RefreshCcw size={14} />รีเฟรช</span>
             </button>
           </div>
         </div>

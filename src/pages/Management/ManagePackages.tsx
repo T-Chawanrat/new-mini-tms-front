@@ -72,7 +72,6 @@ const emptyDetailForm = {
 export default function ManagePackages() {
   const { user } = useAuth();
 
-
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [rows, setRows] = useState<PackageRow[]>([]);
   const [details, setDetails] = useState<DetailRow[]>([]);
@@ -452,17 +451,17 @@ export default function ManagePackages() {
           </div>
         ),
       },
-            {
-              field: "customer_name",
-              headerName: "ลูกค้า",
-              width: 280,
-              minWidth: 220,
-              renderCell: (params: any) => (
-                <div title={params.value || ""} className="truncate">
-                  {params.value || "-"}
-                </div>
-              ),
-            },
+      {
+        field: "customer_name",
+        headerName: "ลูกค้า",
+        width: 280,
+        minWidth: 220,
+        renderCell: (params: any) => (
+          <div title={params.value || ""} className="truncate">
+            {params.value || "-"}
+          </div>
+        ),
+      },
       {
         field: "detail_count",
         headerName: "รายการ",
@@ -490,16 +489,14 @@ export default function ManagePackages() {
         align: "center" as const,
         headerAlign: "center" as const,
         renderCell: (params: any) => (
-            <button type="button" onClick={() => openStatusModal("PACKAGE", params.row)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
-              {params.row.is_actived === "Y" ? (
-                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
-                  Active
-                </span>
-              ) : (
-                <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">Inactive</span>
-              )}
-            </button>
-          ),
+          <button type="button" onClick={() => openStatusModal("PACKAGE", params.row)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
+            {params.row.is_actived === "Y" ? (
+              <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">Active</span>
+            ) : (
+              <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">Inactive</span>
+            )}
+          </button>
+        ),
       },
       {
         field: "actions",
@@ -521,13 +518,13 @@ export default function ManagePackages() {
               ราคา
             </button>
 
-              <button
-                type="button"
-                onClick={() => openEdit(params.row)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-              >
-                <Pencil size={14} />
-              </button>
+            <button
+              type="button"
+              onClick={() => openEdit(params.row)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+            >
+              <Pencil size={14} />
+            </button>
           </div>
         ),
       },
@@ -599,27 +596,6 @@ export default function ManagePackages() {
         renderCell: (params: any) => params.value ?? "-",
       },
       {
-        field: "is_actived",
-        headerName: "Status",
-        width: 130,
-        minWidth: 120,
-        sortable: false,
-        filterable: false,
-        align: "center" as const,
-        headerAlign: "center" as const,
-        renderCell: (params: any) => (
-            <button type="button" onClick={() => openStatusModal("DETAIL", params.row)} className="inline-block" title="คลิกเพื่อเปลี่ยนสถานะ">
-              {params.row.is_actived === "Y" ? (
-                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 font-medium hover:bg-green-200 cursor-pointer">
-                  Active
-                </span>
-              ) : (
-                <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-500 font-medium hover:bg-red-200 cursor-pointer">Inactive</span>
-              )}
-            </button>
-          ),
-      },
-      {
         field: "actions",
         headerName: "จัดการ",
         width: 110,
@@ -630,16 +606,16 @@ export default function ManagePackages() {
         align: "center" as const,
         headerAlign: "center" as const,
         renderCell: (params: any) => (
-            <div className="flex h-full w-full items-center justify-center">
-              <button
-                type="button"
-                onClick={() => openEditDetail(params.row)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
-              >
-                <Pencil size={14} />
-              </button>
-            </div>
-          ),
+          <div className="flex h-full w-full items-center justify-center">
+            <button
+              type="button"
+              onClick={() => openEditDetail(params.row)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100"
+            >
+              <Pencil size={14} />
+            </button>
+          </div>
+        ),
       },
     ],
     [],
@@ -653,13 +629,22 @@ export default function ManagePackages() {
           <p className="text-sm text-slate-500">จัดการราคาค่าส่งของลูกค้า</p>
         </div>
 
-          <button type="button" onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
-            + เพิ่ม Package
-          </button>
+        <button type="button" onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700 transition">
+          + เพิ่ม Package
+        </button>
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-2 flex gap-3 flex-wrap shrink-0">
-          <SearchableSelect value={customerId} onChange={setCustomerId} placeholder="เลือกลูกค้า" className="!w-full sm:!w-[32rem]" options={[{ value: "", label: "เลือกลูกค้า" }, ...customers.map((c) => ({ value: String(c.id), label: `${c.id} ${c.code ? `${c.code} - ` : ""}${c.name} (${c.type})` }))]} />
+        <SearchableSelect
+          value={customerId}
+          onChange={setCustomerId}
+          placeholder="เลือกลูกค้า"
+          className="!w-full sm:!w-[32rem]"
+          options={[
+            { value: "", label: "เลือกลูกค้า" },
+            ...customers.map((c) => ({ value: String(c.id), label: `${c.id} ${c.code ? `${c.code} - ` : ""}${c.name} (${c.type})` })),
+          ]}
+        />
 
         <input
           placeholder="ค้นหา Package Code / Package Name"
@@ -677,7 +662,16 @@ export default function ManagePackages() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
-        <DataGrid rows={gridRows} columns={packageColumns} loading={loading} getRowId={(row: any) => row.package_id} height="100%" pageSize={100} striped rowHoverColor="#dbeafe" />
+        <DataGrid
+          rows={gridRows}
+          columns={packageColumns}
+          loading={loading}
+          getRowId={(row: any) => row.package_id}
+          height="100%"
+          pageSize={100}
+          striped
+          rowHoverColor="#dbeafe"
+        />
       </div>
 
       {showModal && (
@@ -686,7 +680,12 @@ export default function ManagePackages() {
             className="relative bg-white p-6 rounded-2xl shadow-xl w-[620px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <button type="button" onClick={closeModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              aria-label="ปิด"
+            >
               <X size={18} />
             </button>
             <h3 className="text-lg font-semibold text-slate-800 mb-5">{editing ? "แก้ไข Package" : "เพิ่ม Package"}</h3>
@@ -768,10 +767,15 @@ export default function ManagePackages() {
               </div>
 
               <div className="flex gap-2">
-                  <button type="button" onClick={openCreateDetail} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-                    + เพิ่มราคา
-                  </button>
-                <button type="button" onClick={closeDetailModal} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+                <button type="button" onClick={openCreateDetail} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+                  + เพิ่มราคา
+                </button>
+                <button
+                  type="button"
+                  onClick={closeDetailModal}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="ปิด"
+                >
                   <X size={18} />
                 </button>
               </div>
@@ -799,7 +803,12 @@ export default function ManagePackages() {
             className="relative bg-white p-6 rounded-2xl shadow-xl w-[820px] max-h-[90vh] overflow-auto animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            <button type="button" onClick={closeDetailFormModal} className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">
+            <button
+              type="button"
+              onClick={closeDetailFormModal}
+              className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              aria-label="ปิด"
+            >
               <X size={18} />
             </button>
             <h3 className="text-lg font-semibold text-slate-800 mb-1">{editingDetail ? "แก้ไขราคา" : "เพิ่มราคา"}</h3>
@@ -919,7 +928,13 @@ export default function ManagePackages() {
         </div>
       )}
 
-      <StatusModal open={statusModal} current={selectedStatus ? selectedStatus.current === "Y" ? "ACTIVE" : "INACTIVE" : null} loading={saving} onClose={closeStatusModal} onChange={(status) => void changeStatus(status === "ACTIVE" ? "Y" : "N")} />
+      <StatusModal
+        open={statusModal}
+        current={selectedStatus ? (selectedStatus.current === "Y" ? "ACTIVE" : "INACTIVE") : null}
+        loading={saving}
+        onClose={closeStatusModal}
+        onChange={(status) => void changeStatus(status === "ACTIVE" ? "Y" : "N")}
+      />
     </div>
   );
 }

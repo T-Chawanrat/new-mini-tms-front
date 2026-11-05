@@ -273,7 +273,7 @@ export default function TruckDeliveryScan() {
               <Select
                 value={pendingFilter}
                 onChange={setPendingFilter}
-                className="!h-7 !w-auto max-w-[380px] !rounded-md !text-xs"
+                className="!h-7 !w-[300px] max-w-[calc(100vw-10rem)] !rounded-md !text-xs"
                 options={[
                   { value: "matched", label: `สายรถนี้: ${currentRouteLabel}` },
                   ...routeOptions

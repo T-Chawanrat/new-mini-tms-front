@@ -56,11 +56,12 @@ type AxiosLikeError = {
   message?: string;
 };
 
-type TruckTypeFilter = "DC_TRUCK_DC" | "DC_TRUCK";
+type TruckScope = "INBOUND" | "TRANSFER" | "DELIVERY";
 
-const truckTypeTabs: { value: TruckTypeFilter; label: string }[] = [
-  { value: "DC_TRUCK_DC", label: "รถขนย้าย" },
-  { value: "DC_TRUCK", label: "รถกระจาย" },
+const truckScopeTabs: { value: TruckScope; label: string }[] = [
+  { value: "INBOUND", label: "รถขนย้ายขาเข้า" },
+  { value: "TRANSFER", label: "รถขนย้ายขาออก" },
+  { value: "DELIVERY", label: "รถกระจาย" },
 ];
 
 const getErrorMessage = (error: unknown) => {
@@ -83,7 +84,7 @@ export default function ProductTruck() {
   const [rows, setRows] = useState<ProductTruckRow[]>([]);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [truckType, setTruckType] = useState<TruckTypeFilter>("DC_TRUCK_DC");
+  const [truckScope, setTruckScope] = useState<TruckScope>("INBOUND");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [totalItems, setTotalItems] = useState(0);
@@ -92,11 +93,13 @@ export default function ProductTruck() {
   const searchTerm = search.trim();
   const requestedSearch = searchTerm.length >= 3 ? searchTerm : "";
   const searchPending = requestedSearch !== debouncedSearch;
-  const showRoute = truckType !== "DC_TRUCK_DC";
-  const showDestinationWarehouse = truckType !== "DC_TRUCK";
+  const showRoute = truckScope === "DELIVERY";
+  const showTruckCode = truckScope === "INBOUND";
+  const showDestinationWarehouse = truckScope !== "DELIVERY";
   const tableHeaders = useMemo(
     () => [
       "#",
+      ...(showTruckCode ? ["ใบปิดบรรทุก"] : []),
       "เลขที่บิล",
       "Serial No",
       "เจ้าของงาน",
@@ -109,25 +112,25 @@ export default function ProductTruck() {
       ...(showDestinationWarehouse ? ["คลังปลายทาง"] : []),
       "วันที่ขึ้นรถ",
     ],
-    [showDestinationWarehouse, showRoute],
+    [showDestinationWarehouse, showRoute, showTruckCode],
   );
   const tableDefaultWidths = useMemo(
     () =>
       Object.fromEntries(
-        [56, 210, 250, 250, 190, 130, 250, 120, ...(showRoute ? [190] : []), 190, ...(showDestinationWarehouse ? [190] : []), 165].map(
+        [56, ...(showTruckCode ? [180] : []), 210, 250, 250, 190, 130, 250, 120, ...(showRoute ? [190] : []), 190, ...(showDestinationWarehouse ? [190] : []), 165].map(
           (width, index) => [index, width],
         ),
       ),
-    [showDestinationWarehouse, showRoute],
+    [showDestinationWarehouse, showRoute, showTruckCode],
   );
   const tableMinWidths = useMemo(
     () =>
       Object.fromEntries(
-        [56, 150, 180, 160, 140, 100, 170, 100, ...(showRoute ? [150] : []), 150, ...(showDestinationWarehouse ? [150] : []), 140].map(
+        [56, ...(showTruckCode ? [150] : []), 150, 180, 160, 140, 100, 170, 100, ...(showRoute ? [150] : []), 150, ...(showDestinationWarehouse ? [150] : []), 140].map(
           (width, index) => [index, width],
         ),
       ),
-    [showDestinationWarehouse, showRoute],
+    [showDestinationWarehouse, showRoute, showTruckCode],
   );
 
   const loadProducts = useCallback(async () => {
@@ -140,7 +143,7 @@ export default function ProductTruck() {
           page: page + 1,
           limit: rowsPerPage,
           search: debouncedSearch || undefined,
-          truck_type: truckType,
+          scope: truckScope,
         },
       });
       setRows(Array.isArray(response.data?.data) ? response.data.data : []);
@@ -152,7 +155,7 @@ export default function ProductTruck() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, page, rowsPerPage, truckType]);
+  }, [debouncedSearch, page, rowsPerPage, truckScope]);
 
   useEffect(() => {
     if (searchPending) return;
@@ -174,9 +177,14 @@ export default function ProductTruck() {
 
     try {
       const response = await AxiosInstance.get<ProductTruckResponse>("/product-trucks", {
-        params: { search: search.trim() || undefined, truck_type: truckType, export: 1 },
+        params: {
+          search: search.trim() || undefined,
+          scope: truckScope,
+          export: 1,
+        },
       });
       const exportRows = (response.data?.data || []).map((row) => ({
+        ...(showTruckCode ? { "ใบปิดบรรทุก": row.truck_code || "" } : {}),
         เลขที่บิล: row.receive_code || "",
         "Serial No": row.serial_no,
         เจ้าของงาน: row.customer_name || "",
@@ -242,15 +250,15 @@ export default function ProductTruck() {
       <section className="mb-2 shrink-0 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex w-full gap-1 overflow-x-auto sm:w-auto">
-            {truckTypeTabs.map((tab) => (
+            {truckScopeTabs.map((tab) => (
               <button
                 key={tab.value}
                 type="button"
                 onClick={() => {
-                  setTruckType(tab.value);
+                  setTruckScope(tab.value);
                   setPage(0);
                 }}
-                className={`h-8 whitespace-nowrap rounded-md px-3 text-xs font-semibold transition ${truckType === tab.value ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                className={`h-8 whitespace-nowrap rounded-md px-3 text-xs font-semibold transition ${truckScope === tab.value ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
               >
                 {tab.label}
               </button>
@@ -279,7 +287,7 @@ export default function ProductTruck() {
           <table className="w-full min-w-[1740px] table-fixed border-collapse text-left text-xs">
             <ResizableColumns
               headers={tableHeaders}
-              pageKey={`product-truck-${truckType}`}
+              pageKey={`product-truck-${truckScope}`}
               defaultWidths={tableDefaultWidths}
               minWidths={tableMinWidths}
               headerClassName="sticky top-0 z-0 bg-slate-100 text-[11px] font-semibold uppercase tracking-wide text-slate-600"
@@ -288,13 +296,13 @@ export default function ProductTruck() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={(showRoute ? 1 : 0) + (showDestinationWarehouse ? 11 : 10)} className="px-3 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={(showTruckCode ? 1 : 0) + (showRoute ? 1 : 0) + (showDestinationWarehouse ? 11 : 10)} className="px-3 py-12 text-center text-sm text-slate-500">
                     กำลังโหลดข้อมูล...
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={(showRoute ? 1 : 0) + (showDestinationWarehouse ? 11 : 10)} className="px-3 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={(showTruckCode ? 1 : 0) + (showRoute ? 1 : 0) + (showDestinationWarehouse ? 11 : 10)} className="px-3 py-12 text-center text-sm text-slate-500">
                     ไม่พบสินค้าบนรถ
                   </td>
                 </tr>
@@ -302,6 +310,7 @@ export default function ProductTruck() {
                 rows.map((row, index) => (
                   <tr key={row.product_truck_id} className={index % 2 === 0 ? "bg-white hover:bg-blue-100" : "bg-slate-50 hover:bg-blue-100"}>
                     <td className="border-b border-slate-100 px-3 py-2 text-center font-semibold text-slate-500">{formatThaiNumber(page * rowsPerPage + index + 1)}</td>
+                    {showTruckCode && <td className="border-b border-slate-100 px-3 py-2 font-medium text-slate-700">{row.truck_code || "-"}</td>}
                     <td className="border-b border-slate-100 px-3 py-2 text-slate-700">{row.receive_code || ""}</td>
                     <td className="border-b border-slate-100 px-3 py-2 font-mono font-semibold text-blue-700">{row.serial_no || "-"}</td>
                     <td className="truncate border-b border-slate-100 px-3 py-2 text-slate-700" title={row.customer_name || ""}>

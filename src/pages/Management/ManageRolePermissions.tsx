@@ -98,20 +98,27 @@ export default function ManageRolePermissions() {
             <ShieldCheck size={25} />
           </span>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">สิทธิ์ตั้งต้นตาม role</h1>
-            <p className="mt-1 text-sm text-slate-500">เลือกเมนูและหน้าที่แต่ละ role สามารถเข้าถึงได้</p>
+            <h1 className="text-xl font-bold text-slate-900">สิทธิ์ตั้งต้นตาม Role</h1>
+            <p className="mt-1 text-sm text-slate-500">เลือกเมนูและหน้าที่แต่ละ Role สามารถเข้าถึงได้</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-        <Select value={String(roleId)} onChange={(next) => setRoleId(next)} options={[{ value: "", label: "เลือก role" }, ...roles.map((role) => ({ value: String(role.id), label: role.name }))]} disabled={loading || saving} className="min-w-0 sm:min-w-64" aria-label="เลือก role" />
-        <button
-          type="button"
-          onClick={() => setConfirmOpen(true)}
-          disabled={!roleId || loading || !loaded || saving || permissions.length === 0}
-          className="whitespace-nowrap rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
-        >
-          {saving ? "กำลังบันทึก..." : "บันทึกสิทธิ์"}
-        </button>
+          <Select
+            value={String(roleId)}
+            onChange={(next) => setRoleId(next)}
+            options={[{ value: "", label: "เลือก Role" }, ...roles.map((role) => ({ value: String(role.id), label: role.name }))]}
+            disabled={loading || saving}
+            className="min-w-0 sm:min-w-64"
+            aria-label="เลือก Role"
+          />
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            disabled={!roleId || loading || !loaded || saving || permissions.length === 0}
+            className="whitespace-nowrap rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? "กำลังบันทึก..." : "บันทึกสิทธิ์"}
+          </button>
         </div>
       </div>
       {message && (
@@ -119,7 +126,14 @@ export default function ManageRolePermissions() {
           {message}
         </p>
       )}
-      <ConfirmModal open={confirmOpen} title="ยืนยันบันทึกสิทธิ์" description={`ต้องการบันทึกสิทธิ์ของ role ${roles.find((role) => String(role.id) === roleId)?.name || "ที่เลือก"} ใช่ไหม?`} loading={saving} onClose={() => setConfirmOpen(false)} onConfirm={() => void save()} />
+      <ConfirmModal
+        open={confirmOpen}
+        title="ยืนยันบันทึกสิทธิ์"
+        description={`ต้องการบันทึกสิทธิ์ของ role ${roles.find((role) => String(role.id) === roleId)?.name || "ที่เลือก"} ใช่ไหม?`}
+        loading={saving}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => void save()}
+      />
       {roleId && (
         <div className="flex items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
           <div>
@@ -151,7 +165,9 @@ export default function ManageRolePermissions() {
                 .map((item) => item.permission_code),
             },
           ].map((group) => {
-            const items = permissions.filter((item) => group.codes.includes(item.permission_code));
+            const items = permissions
+              .filter((item) => group.codes.includes(item.permission_code))
+              .sort((a, b) => group.codes.indexOf(a.permission_code) - group.codes.indexOf(b.permission_code));
             if (!items.length) return null;
             const count = items.filter((item) => selected.includes(item.id)).length;
             return (

@@ -60,11 +60,11 @@ const navItems: NavItem[] = [
     name: "คลังสินค้าและขนส่ง",
     subItems: [
       { name: "ยิงรับเข้าคลังต้นทาง", path: "/wh-receive", icon: <File size={20} /> },
+      { name: "ยิงรับเข้าคลังปลายทาง", path: "/dc-receive", icon: <File size={20} /> },
       { name: "สินค้าในคลัง", path: "/product-warehouse", icon: <File size={20} /> },
       { name: "สินค้าบนรถ", path: "/product-truck", icon: <File size={20} /> },
-      { name: "ใบปิดบรรทุก", path: "/truck-create", icon: <File size={20} /> },
+      { name: "ใบรถขนย้าย", path: "/truck-create", icon: <File size={20} /> },
       { name: "ใบรถกระจายสินค้า", path: "/delivery-truck-create", icon: <File size={20} /> },
-      { name: "ยิงรับเข้าคลังปลายทาง", path: "/dc-receive", icon: <File size={20} /> },
     ],
   },
   {

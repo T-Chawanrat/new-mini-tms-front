@@ -19,6 +19,9 @@ const genderFromTitle = (titleName: string) => {
   return "";
 };
 
+const ROLES_WITHOUT_WAREHOUSE_SELECTION = [1, 2, 4, 9, 10, 11];
+const DEFAULT_WAREHOUSE_ROLE_IDS = [1, 4, 9, 10, 11];
+
 export default function ManageUsers() {
   const [rows, setRows] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -232,7 +235,7 @@ export default function ManageUsers() {
         return;
       }
 
-      if (![1, 2, 4, 6, 9, 10].includes(role)) {
+      if (!ROLES_WITHOUT_WAREHOUSE_SELECTION.includes(role)) {
         if (!form.warehouse_id) {
           setError("กรุณาเลือกสังกัดคลัง");
           return;
@@ -268,7 +271,7 @@ export default function ManageUsers() {
 
       if (role === 2) {
         payload.warehouse_id = null;
-      } else if ([1, 4, 6, 9, 10].includes(role)) {
+      } else if (DEFAULT_WAREHOUSE_ROLE_IDS.includes(role)) {
         payload.warehouse_id = 15;
       } else {
         payload.warehouse_id = form.warehouse_id ? Number(form.warehouse_id) : null;
@@ -583,7 +586,7 @@ export default function ManageUsers() {
           </div>
 
           <div className="flex items-center gap-2">
-          <button type="button" onClick={() => navigate("/manage/role-permissions")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"><ShieldCheck size={17} className="text-blue-600" /> สิทธิ์ตาม role</button>
+          <button type="button" onClick={() => navigate("/manage/role-permissions")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"><ShieldCheck size={17} className="text-blue-600" /> สิทธิ์ตาม Role</button>
           <button
             type="button"
             onClick={() => {
@@ -610,7 +613,7 @@ export default function ManageUsers() {
             }}
           />
 
-          <SearchableSelect value={filterRole} onChange={setFilterRole} placeholder="ทุก role" className="!w-[180px]" options={[{ value: "", label: "ทุก role" }, ...roles.map((r) => ({ value: String(r.id), label: r.name }))]} />
+          <SearchableSelect value={filterRole} onChange={setFilterRole} placeholder="ทุก Role" className="!w-[180px]" options={[{ value: "", label: "ทุก Role" }, ...roles.map((r) => ({ value: String(r.id), label: r.name }))]} />
 
           <button type="button" onClick={fetchData} className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
             ค้นหา
@@ -732,7 +735,7 @@ export default function ManageUsers() {
                   <SearchableSelect portal value={form.role_id} onChange={(value) => handleChange("role_id", value)} placeholder="เลือกตำแหน่ง" options={roles.map((r) => ({ value: String(r.id), label: r.name }))} />
                 </div>
 
-                {![1, 2, 4, 6, 9, 10].includes(Number(form.role_id)) && (
+                {!ROLES_WITHOUT_WAREHOUSE_SELECTION.includes(Number(form.role_id)) && (
                   <div>
                     <RequiredLabel required>สังกัดคลัง</RequiredLabel>
                     <SearchableSelect portal value={form.warehouse_id} onChange={(value) => handleChange("warehouse_id", value)} placeholder="เลือกสังกัดคลัง" options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))} />
