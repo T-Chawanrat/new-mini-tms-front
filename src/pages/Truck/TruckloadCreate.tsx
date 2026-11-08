@@ -502,9 +502,10 @@ export default function TruckLoadCreate() {
           <div className="flex h-full w-full items-center justify-center gap-1.5">
             <button
               type="button"
-              title="เข้าสู่ใบปิดบรรทุก"
+              title={params.row.is_arrived === "Y" ? "ใบปิดบรรทุกถึงคลังปลายทางแล้ว" : "เข้าสู่ใบปิดบรรทุก"}
               onClick={() => navigate(`/truck-scan/${params.row.truck_load_id}`)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100"
+              disabled={params.row.is_arrived === "Y"}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
             >
               <FolderOpen size={16} />
             </button>

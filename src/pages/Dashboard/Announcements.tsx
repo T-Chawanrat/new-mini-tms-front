@@ -35,17 +35,8 @@ function FuelLabel({ product }: { product: string }) {
   if (!label) return <span className="font-medium text-slate-800">{product}</span>;
 
   return (
-    <span
-      className="block w-[121px] overflow-hidden rounded-sm"
-      style={{ height: label.height }}
-      title={product}
-    >
-      <img
-        src={fuelLabelImage}
-        alt={product}
-        className="block max-w-none"
-        style={{ transform: `translateY(${label.offset}px)` }}
-      />
+    <span className="block w-[121px] overflow-hidden rounded-sm" style={{ height: label.height }} title={product}>
+      <img src={fuelLabelImage} alt={product} className="block max-w-none" style={{ transform: `translateY(${label.offset}px)` }} />
     </span>
   );
 }
@@ -87,7 +78,9 @@ export default function Announcements() {
       .finally(() => {
         if (isCurrent) setIsAnnouncementsLoading(false);
       });
-    return () => { isCurrent = false; };
+    return () => {
+      isCurrent = false;
+    };
   }, [announcementSearch]);
 
   return (
@@ -102,28 +95,107 @@ export default function Announcements() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-        <div className="border-b border-slate-100 pb-4"><h2 className="text-2xl font-bold text-slate-900">ราคาน้ำมันวันนี้</h2></div>
-        {isOilLoading ? <div className="space-y-3 py-5">{[1, 2, 3, 4].map((item) => <div key={item} className="h-11 animate-pulse rounded-lg bg-slate-100" />)}</div> : null}
+        <div className="border-b border-slate-100 pb-4">
+          <h2 className="text-2xl font-bold text-slate-900">ราคาน้ำมันวันนี้</h2>
+        </div>
+        {isOilLoading ? (
+          <div className="space-y-3 py-5">
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className="h-11 animate-pulse rounded-lg bg-slate-100" />
+            ))}
+          </div>
+        ) : null}
         {oilError ? <p className="py-5 text-sm text-rose-600">{oilError}</p> : null}
-        {!isOilLoading && !oilError ? <div className="mt-4 overflow-x-auto"><table className="min-w-[1260px] border-separate border-spacing-0 text-sm"><thead><tr><th className="min-w-44 bg-sky-50 px-4 py-3 text-center font-bold text-blue-950">ปรับราคาเมื่อ</th>{oilPrices.map((oil) => <th key={oil.product} className="bg-white p-0"><FuelLabel product={oil.product} /></th>)}</tr></thead><tbody><tr><td className="px-4 py-4 text-center font-semibold text-slate-900">{formatOilTableDate(oilUpdatedAt)}</td>{oilPrices.map((oil) => <td key={oil.product} className="px-4 py-4 text-center text-base font-bold text-slate-900">{formatPrice(oil.price)}</td>)}</tr></tbody></table>{!oilPrices.length ? <p className="py-5 text-center text-sm text-slate-500">ไม่พบข้อมูลราคาน้ำมัน</p> : null}</div> : null}
+        {!isOilLoading && !oilError ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-[1260px] border-separate border-spacing-0 text-sm">
+              <thead>
+                <tr>
+                  <th className="min-w-44 bg-sky-50 px-4 py-3 text-center font-bold text-blue-950">ปรับราคาเมื่อ</th>
+                  {oilPrices.map((oil) => (
+                    <th key={oil.product} className="bg-white p-0">
+                      <FuelLabel product={oil.product} />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="px-4 py-4 text-center font-semibold text-slate-900">{formatOilTableDate(oilUpdatedAt)}</td>
+                  {oilPrices.map((oil) => (
+                    <td key={oil.product} className="px-4 py-4 text-center text-base font-bold text-slate-900">
+                      {formatPrice(oil.price)}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+            {!oilPrices.length ? <p className="py-5 text-center text-sm text-slate-500">ไม่พบข้อมูลราคาน้ำมัน</p> : null}
+          </div>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><h2 className="text-2xl font-bold text-slate-900">ประกาศล่าสุด</h2><label className="relative block w-full md:w-[480px]"><Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input value={announcementSearch} onChange={(event) => setAnnouncementSearch(event.target.value)} placeholder="ค้นหาประกาศ" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></label></div>
+        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h2 className="text-2xl font-bold text-slate-900">ประกาศล่าสุด</h2>
+          <label className="relative block w-full md:w-[480px]">
+            <Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={announcementSearch}
+              onChange={(event) => setAnnouncementSearch(event.target.value)}
+              placeholder="ค้นหาประกาศ"
+              className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+            />
+          </label>
+        </div>
         <div className="space-y-3">
-          {isAnnouncementsLoading ? <div className="space-y-3">{[1, 2].map((item) => <div key={item} className="h-52 animate-pulse rounded-2xl bg-slate-100" />)}</div> : null}
+          {isAnnouncementsLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map((item) => (
+                <div key={item} className="h-52 animate-pulse rounded-2xl bg-slate-100" />
+              ))}
+            </div>
+          ) : null}
           {announcementsError ? <p className="py-6 text-center text-sm text-rose-600">{announcementsError}</p> : null}
-          {!isAnnouncementsLoading && !announcementsError ? announcements.map((announcement) => (
-            <article key={announcement.id} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2"><h3 className="text-lg font-bold text-slate-900">{announcement.title}</h3><span className="inline-flex shrink-0 items-center gap-1 text-sm text-slate-500"><CalendarDays size={15} /> {announcement.createdDate}</span></div>
-                {announcement.isPinned ? <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-300 px-2.5 py-1 text-xs font-bold text-amber-950"><Pin size={13} fill="currentColor" /> ปักหมุด</span> : null}
-              </div>
-              {announcement.imageUrls.length ? <div className="mt-5 flex snap-x gap-3 overflow-x-auto pb-2">{announcement.imageUrls.map((url) => { const imageUrl = getUploadUrl(url); return <a key={url} href={imageUrl} target="_blank" rel="noreferrer" className="shrink-0 snap-start"><img src={imageUrl} alt={`รูปประกอบ ${announcement.title}`} className="h-64 w-auto max-w-full rounded-xl bg-slate-50 object-contain transition hover:opacity-90" /></a>; })}</div> : null}
-              <p className="mt-5 whitespace-pre-line text-sm leading-7 text-slate-600">{announcement.content}</p>
-            </article>
-          )) : null}
-          {!isAnnouncementsLoading && !announcementsError && !announcements.length ? <p className="py-6 text-center text-sm text-slate-500">ไม่พบประกาศที่ค้นหา</p> : null}
+          {!isAnnouncementsLoading && !announcementsError
+            ? announcements.map((announcement) => (
+                <article key={announcement.id} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                      <h3 className="text-lg font-bold text-slate-900">{announcement.title}</h3>
+                      <span className="inline-flex shrink-0 items-center gap-1 text-sm text-slate-500">
+                        <CalendarDays size={15} /> {announcement.createdDate}
+                      </span>
+                    </div>
+                    {announcement.isPinned ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-300 px-2.5 py-1 text-xs font-bold text-amber-950">
+                        <Pin size={13} fill="currentColor" /> ปักหมุด
+                      </span>
+                    ) : null}
+                  </div>
+                  {announcement.imageUrls.length ? (
+                    <div className="mt-5 flex snap-x gap-3 overflow-x-auto pb-2">
+                      {announcement.imageUrls.map((url) => {
+                        const imageUrl = getUploadUrl(url);
+                        return (
+                          <a key={url} href={imageUrl} target="_blank" rel="noreferrer" className="shrink-0 snap-start">
+                            <img
+                              src={imageUrl}
+                              alt={`รูปประกอบ ${announcement.title}`}
+                              className="h-64 w-auto max-w-full rounded-xl bg-slate-50 object-contain transition hover:opacity-90"
+                            />
+                          </a>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                  <p className="mt-5 whitespace-pre-line text-sm leading-7 text-slate-600">{announcement.content}</p>
+                </article>
+              ))
+            : null}
+          {!isAnnouncementsLoading && !announcementsError && !announcements.length ? (
+            <p className="py-6 text-center text-sm text-slate-500">ไม่พบประกาศที่ค้นหา</p>
+          ) : null}
         </div>
       </section>
     </div>

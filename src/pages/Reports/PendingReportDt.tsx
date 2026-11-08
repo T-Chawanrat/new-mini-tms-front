@@ -24,6 +24,8 @@ type DeliveryDtRow = {
   license_plate_province?: string;
   total_sn?: number;
   delivered_sn?: number;
+  returned_sn?: number;
+  pending_sn?: number;
   created_date?: string;
 };
 
@@ -75,7 +77,16 @@ export default function PendingReportDt() {
     () => ({
       trucks: rows.length,
       serials: rows.reduce((sum, row) => sum + Number(row.total_sn || 0), 0),
-      pending: rows.reduce((sum, row) => sum + Math.max(Number(row.total_sn || 0) - Number(row.delivered_sn || 0), 0), 0),
+      delivered: rows.reduce((sum, row) => sum + Number(row.delivered_sn || 0), 0),
+      returned: rows.reduce((sum, row) => sum + Number(row.returned_sn || 0), 0),
+      pending: rows.reduce(
+        (sum, row) =>
+          sum +
+          Number(
+            row.pending_sn ?? Math.max(Number(row.total_sn || 0) - Number(row.delivered_sn || 0) - Number(row.returned_sn || 0), 0),
+          ),
+        0,
+      ),
     }),
     [rows],
   );
@@ -102,12 +113,22 @@ export default function PendingReportDt() {
       { field: "username", headerName: "Username", width: 145, valueGetter: (value) => value || "-" },
       {
         field: "total_sn",
-        headerName: "จำนวน SN",
-        width: 95,
+        headerName: "ทั้งหมด",
+        width: 85,
+        align: "right",
+        headerAlign: "right",
+        valueGetter: (value) => (value == null ? "-" : formatThaiNumber(value)),
+      },
+      { field: "delivered_sn", headerName: "ส่งสำเร็จ", width: 95, align: "right", headerAlign: "right", valueGetter: (value) => formatThaiNumber(value || 0) },
+      { field: "returned_sn", headerName: "คืนคลัง", width: 85, align: "right", headerAlign: "right", valueGetter: (value) => formatThaiNumber(value || 0) },
+      {
+        field: "pending_sn",
+        headerName: "ค้างส่ง",
+        width: 85,
         align: "right",
         headerAlign: "right",
         valueGetter: (_value, row) =>
-          row.total_sn == null ? "-" : `${formatThaiNumber(row.delivered_sn || 0)}/${formatThaiNumber(row.total_sn)}`,
+          formatThaiNumber(row.pending_sn ?? Math.max(Number(row.total_sn || 0) - Number(row.delivered_sn || 0) - Number(row.returned_sn || 0), 0)),
       },
       { field: "created_date", headerName: "วันที่สร้าง", width: 155, valueFormatter: (value) => formatReportDateTime(value) },
     ],
@@ -124,7 +145,10 @@ export default function PendingReportDt() {
         คนขับ: row.driver_name || "",
         ทะเบียนรถ: [row.license_plate, row.license_plate_province].filter(Boolean).join(" "),
         Username: row.username || "",
-        จำนวนSN: `${row.delivered_sn || 0}/${row.total_sn || 0}`,
+        "จำนวน SN ทั้งหมด": row.total_sn || 0,
+        "ส่งสำเร็จ": row.delivered_sn || 0,
+        "คืนคลัง": row.returned_sn || 0,
+        "ค้างส่ง": row.pending_sn ?? Math.max(Number(row.total_sn || 0) - Number(row.delivered_sn || 0) - Number(row.returned_sn || 0), 0),
         วันที่สร้าง: formatReportDateTime(row.created_date),
       })),
     );
@@ -135,10 +159,12 @@ export default function PendingReportDt() {
 
   return (
     <div className="flex h-[calc(100vh-61px)] w-full flex-col overflow-hidden bg-slate-50 px-1 py-2 text-slate-800">
-      <section className="mb-3 grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-3">
+      <section className="mb-3 grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-5">
         {[
           ["ใบรถกระจาย", summary.trucks],
           ["จำนวน SN", summary.serials],
+          ["ส่งสำเร็จ", summary.delivered],
+          ["คืนคลัง", summary.returned],
           ["SN ค้างส่ง", summary.pending],
         ].map(([label, value]) => (
           <div key={String(label)} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
@@ -169,7 +195,7 @@ export default function PendingReportDt() {
           </label>
           <label className="block text-xs font-medium text-slate-600">
             สถานะจัดส่ง
-            <Select value={String(deliveryStatus)} onChange={(next) => setDeliveryStatus(next)} options={[{ value: "ALL", label: "ทั้งหมด" }, { value: "PENDING", label: "ค้างส่ง" }, { value: "DELIVERED", label: "จัดส่งสำเร็จ" }]} className="mt-1 !h-9 rounded-md" />
+            <Select value={String(deliveryStatus)} onChange={(next) => setDeliveryStatus(next)} options={[{ value: "ALL", label: "ทั้งหมด" }, { value: "PENDING", label: "ค้างส่ง" }, { value: "DELIVERED", label: "สำเร็จ / คืนคลัง" }]} className="mt-1 !h-9 rounded-md" />
           </label>
           <DatePicker
             label="วันที่จัดส่ง ตั้งแต่"

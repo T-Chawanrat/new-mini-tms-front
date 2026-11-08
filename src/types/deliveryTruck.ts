@@ -11,6 +11,7 @@ export type DeliveryTruckRow = {
   status: string;
   is_close?: string | null;
   is_go?: string | null;
+  is_completed?: string | null;
   route_code?: string | null;
   route_name?: string | null;
 };

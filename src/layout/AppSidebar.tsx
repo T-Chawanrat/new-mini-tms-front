@@ -60,10 +60,8 @@ const navItems: NavItem[] = [
     name: "คลังสินค้าและขนส่ง",
     subItems: [
       { name: "ยิงรับเข้าคลังต้นทาง", path: "/wh-receive", icon: <File size={20} /> },
-      { name: "ยิงรับเข้าคลังปลายทาง", path: "/dc-receive", icon: <File size={20} /> },
-      { name: "สินค้าในคลัง", path: "/product-warehouse", icon: <File size={20} /> },
-      { name: "สินค้าบนรถ", path: "/product-truck", icon: <File size={20} /> },
       { name: "ใบรถขนย้าย", path: "/truck-create", icon: <File size={20} /> },
+      { name: "ยิงรับเข้าคลังปลายทาง", path: "/dc-receive", icon: <File size={20} /> },
       { name: "ใบรถกระจายสินค้า", path: "/delivery-truck-create", icon: <File size={20} /> },
     ],
   },
@@ -71,6 +69,8 @@ const navItems: NavItem[] = [
     icon: <GridIcon />,
     name: "รายงาน",
     subItems: [
+      { name: "สินค้าในคลัง", path: "/product-warehouse", icon: <File size={20} /> },
+      { name: "สินค้าบนรถ", path: "/product-truck", icon: <File size={20} /> },
       { name: "ตามเลขที่บิล", path: "/pending-report/receive", icon: <File size={20} /> },
       { name: "ตาม S/N", path: "/pending-report/sn", icon: <File size={20} /> },
       { name: "ตามใบรถกระจาย", path: "/pending-report/dt", icon: <File size={20} /> },
@@ -91,9 +91,7 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "แผนที่",
-    subItems: [
-    { name: "แผนที่", path: "/map", icon: <File size={20} /> },
-    ],
+    subItems: [{ name: "แผนที่", path: "/map", icon: <File size={20} /> }],
   },
 ];
 

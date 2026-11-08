@@ -201,8 +201,9 @@ export default function TruckDeliveryCreate() {
             <button
               type="button"
               onClick={() => navigate(`/delivery-truck-scan/${params.row.id}`)}
-              title="จัดสินค้าขึ้นรถ"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100"
+              title={params.row.is_completed === "Y" ? "ใบรถกระจายส่งครบแล้ว" : "จัดสินค้าขึ้นรถ"}
+              disabled={params.row.is_completed === "Y"}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
             >
               <FolderOpen size={16} />
             </button>
