@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ConfirmModal from "../../components/tms/modal/ConfirmModal";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import alertSound from "../../../assets/sounds/alert.mp3";
@@ -410,9 +411,20 @@ export default function TruckloadScan() {
     >
       <header className="mb-3 flex shrink-0 items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold text-slate-900">ขนของขึ้นรถ</h1>
-
-          <p className="mt-0.5 text-xs text-slate-500">ยิง Barcode เพื่อตรวจสอบและนำพัสดุขึ้นรถตามใบปิดบรรทุกที่เลือกไว้</p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/truck-create")}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+              title="กลับรายการใบปิดบรรทุก"
+            >
+              <ArrowLeft size={17} />
+            </button>
+            <div>
+              <h1 className="text-lg font-bold text-slate-900">ขนของขึ้นรถ</h1>
+              <p className="mt-0.5 text-xs text-slate-500">ยิง Barcode เพื่อตรวจสอบและนำพัสดุขึ้นรถตามใบปิดบรรทุกที่เลือกไว้</p>
+            </div>
+          </div>
         </div>
 
         <button

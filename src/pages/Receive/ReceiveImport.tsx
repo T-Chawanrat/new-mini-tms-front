@@ -492,7 +492,7 @@ export default function ReceiveImport() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-700">คลัง</label>
+            <label className="mb-1 block text-xs font-semibold text-slate-700">คลังต้นทาง</label>
             <div className={saving ? "pointer-events-none opacity-70" : ""}>
               <SearchableSelect
                 value={assignedWarehouseId}
@@ -502,7 +502,7 @@ export default function ReceiveImport() {
                   setError(null);
                   setSuccess(null);
                 }}
-                placeholder="เลือกคลัง"
+                placeholder="เลือกคลังต้นทาง"
                 compact
               />
             </div>

@@ -14,6 +14,7 @@ type SearchableSelectProps = {
   compact?: boolean;
   disabled?: boolean;
   portal?: boolean;
+  autoWidthDropdown?: boolean;
 };
 
 const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -26,6 +27,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   compact = false,
   disabled = false,
   portal = false,
+  autoWidthDropdown = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -78,9 +80,9 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   };
 
   const dropdown = isDropdownOpen && !disabled && (
-    <ul ref={listRef} style={portal ? position : undefined} className={`${portal ? "" : "absolute left-0 z-30 mt-1 max-h-56 w-full"} overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg`}>
+    <ul ref={listRef} style={portal ? position : undefined} className={`${portal ? "" : `absolute left-0 z-30 mt-1 max-h-56 ${autoWidthDropdown ? "min-w-full w-max" : "w-full"}`} overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg`}>
       {filteredOptions.length ? filteredOptions.map((option) => (
-        <li key={option.value} className={`cursor-pointer truncate px-3 py-2 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 ${option.value === value ? "bg-blue-50 font-medium text-blue-700" : ""}`} onMouseDown={(event) => event.preventDefault()} onClick={() => handleSelect(option)} title={option.label}>{option.label}</li>
+        <li key={option.value} className={`cursor-pointer ${autoWidthDropdown ? "whitespace-nowrap" : "truncate"} px-3 py-2 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 ${option.value === value ? "bg-blue-50 font-medium text-blue-700" : ""}`} onMouseDown={(event) => event.preventDefault()} onClick={() => handleSelect(option)} title={option.label}>{option.label}</li>
       )) : <li className="px-3 py-2 text-slate-400">ไม่พบข้อมูล</li>}
     </ul>
   );

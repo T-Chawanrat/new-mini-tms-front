@@ -1,6 +1,6 @@
 import Select from "../../components/tms/form/Select";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Printer, RefreshCcw, Search, X } from "lucide-react";
+import { Printer, QrCode, RefreshCcw, Search, X } from "lucide-react";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import AxiosInstance from "../../services/apiClient";
@@ -78,6 +78,56 @@ export default function ReceiveReport() {
     () => [
       { field: "row_number", headerName: "#", width: 60, minWidth: 60, align: "center", headerAlign: "center" },
       {
+        field: "print_delivery_note",
+        headerName: "พิมพ์บิล",
+        width: 88,
+        minWidth: 88,
+        sortable: false,
+        filterable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: ({ row }) => (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!row.receive_business_id) return;
+              navigate(`/receive-report-print/${row.receive_business_id}`);
+            }}
+            disabled={!row.receive_business_id}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title="พิมพ์บิลส่งของ"
+          >
+            <Printer size={16} />
+          </button>
+        ),
+      },
+      {
+        field: "print_labels",
+        headerName: "สติกเกอร์",
+        width: 92,
+        minWidth: 92,
+        sortable: false,
+        filterable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: ({ row }) => (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!row.receive_code) return;
+              navigate(`/label-print?receive_code=${encodeURIComponent(String(row.receive_code))}`);
+            }}
+            disabled={!row.receive_code}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title="พิมพ์สติกเกอร์ทั้งบิล"
+          >
+            <QrCode size={16} />
+          </button>
+        ),
+      },
+      {
         field: "receive_code",
         headerName: "เลขที่บิล",
         width: 210,
@@ -145,56 +195,6 @@ export default function ReceiveReport() {
       { field: "recipient_name", headerName: "ผู้รับ", width: 200, minWidth: 180, valueGetter: (value) => getText(value) },
       { field: "tel", headerName: "เบอร์โทร", width: 140, minWidth: 130, valueGetter: (value) => getText(value) },
       { field: "province_name", headerName: "จังหวัด", width: 150, minWidth: 140, valueGetter: (value) => getText(value) },
-      {
-        field: "print_labels",
-        headerName: "พิมพ์สติกเกอร์",
-        width: 92,
-        minWidth: 92,
-        sortable: false,
-        filterable: false,
-        align: "center",
-        headerAlign: "center",
-        renderCell: ({ row }) => (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              if (!row.receive_code) return;
-              navigate(`/label-print?receive_code=${encodeURIComponent(String(row.receive_code))}`);
-            }}
-            disabled={!row.receive_code}
-            className="inline-flex h-8 items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
-            title="พิมพ์สติกเกอร์ทั้งบิล"
-          >
-            <Printer size={14} /> Print
-          </button>
-        ),
-      },
-      {
-        field: "print_delivery_note",
-        headerName: "พิมพ์บิล",
-        width: 88,
-        minWidth: 88,
-        sortable: false,
-        filterable: false,
-        align: "center",
-        headerAlign: "center",
-        renderCell: ({ row }) => (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              if (!row.receive_business_id) return;
-              navigate(`/receive-report-print/${row.receive_business_id}`);
-            }}
-            disabled={!row.receive_business_id}
-            className="inline-flex h-8 items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
-            title="พิมพ์บิลส่งของ"
-          >
-            <Printer size={14} /> Print
-          </button>
-        ),
-      },
     ],
     [],
   );
@@ -412,7 +412,7 @@ export default function ReceiveReport() {
             value={filters.customer_id}
             options={customers}
             onChange={(value) => updateFilter("customer_id", value)}
-            placeholder={filterLoading ? "กำลังโหลด Customer..." : "Customer ทั้งหมด"}
+            placeholder={filterLoading ? "กำลังโหลดเจ้าของงาน..." : "เจ้าของงานทั้งหมด"}
             showCode
           />
 
@@ -420,7 +420,7 @@ export default function ReceiveReport() {
             value={filters.to_warehouse_id}
             options={warehousesTo}
             onChange={(value) => updateFilter("to_warehouse_id", value)}
-            placeholder={filterLoading ? "กำลังโหลด To Warehouse..." : "To Warehouse ทั้งหมด"}
+            placeholder={filterLoading ? "กำลังโหลดคลังปลายทาง..." : "คลังปลายทางทั้งหมด"}
             showCode
           />
 

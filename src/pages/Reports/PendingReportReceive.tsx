@@ -12,6 +12,7 @@ import { formatReportDate } from "../../utils/dateTime";
 import { formatThaiNumber } from "../../utils/textSanitizer";
 
 type Warehouse = { warehouse_id?: number; id?: number; warehouse_name?: string; name?: string };
+type Customer = { id: number; code?: string; name: string };
 type DeliveryReceiveRow = {
   idx: number;
   receive_business_id: number;
@@ -43,7 +44,9 @@ type DeliveryReceiveRow = {
 export default function PendingReportReceive() {
   const [rows, setRows] = useState<DeliveryReceiveRow[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
+  const [customerId, setCustomerId] = useState("");
   const [toWarehouseId, setToWarehouseId] = useState("");
   const [dateFrom, setDateFrom] = useState<Dayjs | null>(null);
   const [dateTo, setDateTo] = useState<Dayjs | null>(null);
@@ -58,6 +61,12 @@ export default function PendingReportReceive() {
   }, []);
 
   useEffect(() => {
+    void AxiosInstance.get<Customer[]>("/customers")
+      .then((response) => setCustomers(Array.isArray(response.data) ? response.data : []))
+      .catch(() => setCustomers([]));
+  }, []);
+
+  useEffect(() => {
     let active = true;
     const loadReport = async () => {
       try {
@@ -66,6 +75,7 @@ export default function PendingReportReceive() {
         const response = await AxiosInstance.get<{ data?: DeliveryReceiveRow[] }>("/delivery-reports/receive", {
           params: {
             search: search || undefined,
+            customer_id: customerId || undefined,
             to_warehouse_id: toWarehouseId || undefined,
             date_from: dateFrom?.format("YYYY-MM-DD"),
             date_to: dateTo?.format("YYYY-MM-DD"),
@@ -83,7 +93,7 @@ export default function PendingReportReceive() {
     return () => {
       active = false;
     };
-  }, [search, toWarehouseId, dateFrom, dateTo, refreshKey]);
+  }, [search, customerId, toWarehouseId, dateFrom, dateTo, refreshKey]);
 
   const summary = useMemo(
     () => ({
@@ -193,7 +203,7 @@ export default function PendingReportReceive() {
         ))}
       </section>
       <section className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(160px,0.7fr)_180px_170px_170px_auto] lg:items-end">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(160px,0.7fr)_240px_180px_170px_170px_auto] lg:items-end">
           <label className="block text-xs font-medium text-slate-600">
             ค้นหา
             <span className="relative mt-1 block">
@@ -206,6 +216,17 @@ export default function PendingReportReceive() {
               />
             </span>
           </label>
+          <div className="block text-xs font-medium text-slate-600">
+            เจ้าของงาน
+            <SearchableSelect
+              value={customerId}
+              onChange={setCustomerId}
+              placeholder="เลือกเจ้าของงาน"
+              autoWidthDropdown
+              className="mt-1 [&>div]:h-9"
+              options={[{ value: "", label: "ทุกเจ้าของงาน" }, ...customers.map((customer) => ({ value: String(customer.id), label: customer.code ? `${customer.code} - ${customer.name}` : customer.name }))]}
+            />
+          </div>
           <div className="block text-xs font-medium text-slate-600">
             คลังปลายทาง
             <SearchableSelect

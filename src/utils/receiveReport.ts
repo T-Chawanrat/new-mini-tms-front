@@ -1,7 +1,8 @@
+import dayjs from "dayjs";
 import type { Filters } from "../types/receiveReport";
 
 export const defaultReceiveReportFilters: Filters = {
-  receive_date_from: "",
+  receive_date_from: dayjs().format("YYYY-MM-DD"),
   receive_code: "",
   customer_id: "",
   to_warehouse_id: "",

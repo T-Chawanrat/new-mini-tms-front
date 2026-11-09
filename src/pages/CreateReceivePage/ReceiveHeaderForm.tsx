@@ -95,13 +95,13 @@ export default function ReceiveHeaderForm({
 
           <div>
             <RequiredLabel required className={`mb-1 block ${labelClass}`}>
-              คลัง
+              คลังต้นทาง
             </RequiredLabel>
             <SearchableSelect
               value={form.assigned_warehouse_id}
               options={warehouses.map((warehouse) => ({ value: String(warehouse.id), label: warehouse.name }))}
               onChange={(value) => updateForm("assigned_warehouse_id", value)}
-              placeholder="เลือกคลัง"
+              placeholder="เลือกคลังต้นทาง"
               compact
             />
           </div>
@@ -313,8 +313,8 @@ export default function ReceiveHeaderForm({
       </div>
 
       <div className="rounded-md border border-slate-200 bg-slate-50/70 p-2">
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[230px_1fr_200px_370px]">
-          <div className="grid grid-cols-[88px_135px] items-center gap-1.5">
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[345px_1fr_200px_370px]">
+          <div className="grid grid-cols-[88px_250px] items-center gap-1.5">
             <label className={labelClass}>ประเภทการจ่าย</label>
 
             <Select className="!h-9 !rounded-md !text-[13px]" value={String(form.payment_type_id)} onChange={(value) => updateForm("payment_type_id", value)} options={payments.map((item) => ({ value: String(item.id), label: item.name }))} />
