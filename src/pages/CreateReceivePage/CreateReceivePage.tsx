@@ -776,6 +776,7 @@ export default function CreateReceivePage() {
         <ReceiveModals
           customerId={form.customer_id}
           shipperId={form.shipper_id}
+          recipientDetailId={form.recipient_detail_id}
           showCustomerModal={showCustomerModal}
           showShipperModal={showShipperModal}
           showRecipientModal={showRecipientModal}

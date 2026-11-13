@@ -14,6 +14,7 @@ import type { CustomerOption, GroupedPackageOption, GroupedRecipient, PackageOpt
 type ReceiveModalsProps = {
   customerId: string;
   shipperId: string;
+  recipientDetailId: string;
 
   showCustomerModal: boolean;
   showShipperModal: boolean;
@@ -78,6 +79,7 @@ const paginationSx = {
 export default function ReceiveModals({
   customerId,
   shipperId,
+  recipientDetailId,
 
   showCustomerModal,
   showShipperModal,
@@ -318,7 +320,11 @@ export default function ReceiveModals({
 
     try {
       const res = await AxiosInstance.get(`/receives/options/packages/${customerId}`, {
-        params: keyword.trim() ? { search: keyword.trim() } : undefined,
+        params: {
+          shipper_id: shipperId,
+          recipient_detail_id: recipientDetailId,
+          ...(keyword.trim() ? { search: keyword.trim() } : {}),
+        },
       });
 
       const data = Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];
@@ -748,16 +754,18 @@ export default function ReceiveModals({
 
                       return (
                         <Fragment key={recipient_id}>
-                          <tr className="hover:bg-slate-100">
+                          <tr
+                            onClick={() =>
+                              setExpandedRecipientIds((prev) => ({
+                                ...prev,
+                                [String(recipient_id)]: !prev[String(recipient_id)],
+                              }))
+                            }
+                            className="cursor-pointer hover:bg-slate-100"
+                          >
                             <td className="border-b border-slate-200 px-1.5 py-2 text-center">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  setExpandedRecipientIds((prev) => ({
-                                    ...prev,
-                                    [String(recipient_id)]: !prev[String(recipient_id)],
-                                  }))
-                                }
                                 className="flex h-6 w-6 items-center justify-center rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
                               >
                                 {isOpen ? "⌄" : "›"}
