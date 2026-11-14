@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { LogOut, File } from "lucide-react";
-import { ChevronDownIcon, GridIcon, HorizontaLDots } from "../icons";
+import { ChartNoAxesCombined, CircleHelp, ClipboardList, Database, File, History, LayoutDashboard, LogOut, Map, Warehouse } from "lucide-react";
+import { ChevronDownIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "../context/AuthContext";
 import { permissionForPath } from "../routes/permissions";
@@ -19,7 +19,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
+    icon: <LayoutDashboard />,
     name: "ข้อมูลวันนี้",
     subItems: [
       { name: "ประกาศและราคาน้ำมัน", path: "/dashboard", icon: <File size={20} /> },
@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <GridIcon />,
+    icon: <Database />,
     name: "จัดการข้อมูลหลัก",
     subItems: [
       { name: "จัดการผู้ใช้งาน", path: "/manage/users", icon: <File size={20} /> },
@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <GridIcon />,
+    icon: <ClipboardList />,
     name: "จัดการบิล",
     subItems: [
       { name: "สร้างบิล", path: "/create", icon: <File size={20} /> },
@@ -56,7 +56,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <GridIcon />,
+    icon: <Warehouse />,
     name: "คลังสินค้าและขนส่ง",
     subItems: [
       { name: "ยิงรับเข้าคลังต้นทาง", path: "/wh-receive", icon: <File size={20} /> },
@@ -66,7 +66,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <GridIcon />,
+    icon: <ChartNoAxesCombined />,
     name: "รายงาน",
     subItems: [
       { name: "สินค้าในคลัง", path: "/product-warehouse", icon: <File size={20} /> },
@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <GridIcon />,
+    icon: <History />,
     name: "Logs",
     subItems: [
       { name: "ประวัติการพิมพ์ Label", path: "/logs/label-print", icon: <File size={20} /> },
@@ -89,20 +89,29 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <GridIcon />,
+    icon: <Map />,
     name: "แผนที่",
     subItems: [{ name: "แผนที่", path: "/map", icon: <File size={20} /> }],
+  },
+  {
+    icon: <CircleHelp />,
+    name: "ช่วยเหลือระบบ",
+    subItems: [
+      // { name: "แจ้งปัญหาโปรแกรม", path: "/program-issues", icon: <File size={20} /> },
+      // { name: "เวอร์ชันโปรแกรม", path: "/program-versions", icon: <File size={20} /> },
+    ],
   },
 ];
 
 const othersItems: NavItem[] = [];
+const supportPaths = new Set(["/program-issues", "/program-versions"]);
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user, permissions, isSuperAdmin } = useAuth();
-  const canSee = (path: string) => isSuperAdmin || Boolean(permissionForPath(path) && permissions.includes(permissionForPath(path)!));
+  const canSee = (path: string) => supportPaths.has(path) || isSuperAdmin || Boolean(permissionForPath(path) && permissions.includes(permissionForPath(path)!));
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";

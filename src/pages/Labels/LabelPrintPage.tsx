@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { createPortal } from "react-dom";
 
 import { ChevronDown, ChevronRight, Printer, RefreshCcw, Search } from "lucide-react";
 import TablePagination from "@mui/material/TablePagination";
@@ -279,19 +280,6 @@ export default function LabelPrintPage() {
 
   };
 
-  const handleReset = () => {
-    setFilters(defaultLabelFilters);
-
-    setAppliedFilters(defaultLabelFilters);
-
-    setActiveReceiveCode("");
-    setSerialRows([]);
-    setSelectedReceiveCodes([]);
-    setSelectedSerialNos([]);
-
-    setPage(1);
-  };
-
   const handleRefresh = async () => {
     await fetchReceives();
 
@@ -552,7 +540,7 @@ export default function LabelPrintPage() {
             value={filters.to_warehouse_id}
             options={warehousesTo}
             onChange={(value) => updateFilter("to_warehouse_id", value)}
-            placeholder={filterLoading ? "กำลังโหลด To Warehouse..." : "To Warehouse ทั้งหมด"}
+            placeholder={filterLoading ? "กำลังโหลดคลังปลายทาง..." : "คลังปลายทางทั้งหมด"}
             showCode
           />
 
@@ -567,14 +555,6 @@ export default function LabelPrintPage() {
               ค้นหา
             </button>
 
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={receiveLoading}
-              className="inline-flex h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              ล้าง
-            </button>
           </div>
         </div>
       </div>
@@ -666,11 +646,14 @@ export default function LabelPrintPage() {
         />
       </div>
 
-      <div id="label-print-area" className="screen-only-label-print-area">
-        {printItems.map((item) => (
-          <LabelCard key={item.serial_no} item={item} />
-        ))}
-      </div>
+      {createPortal(
+        <div id="label-print-area" className="screen-only-label-print-area">
+          {printItems.map((item) => (
+            <LabelCard key={item.serial_no} item={item} />
+          ))}
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

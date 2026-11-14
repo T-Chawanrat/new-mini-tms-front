@@ -25,6 +25,8 @@ type ReceiveModalsProps = {
   customers: CustomerOption[];
   shippers: ShipperOption[];
   groupedRecipients: GroupedRecipient[];
+  shipperPagination: { page: number; limit: number; total: number };
+  recipientPagination: { page: number; limit: number; total: number };
 
   customerSearch: string;
   shipperSearch: string;
@@ -41,6 +43,8 @@ type ReceiveModalsProps = {
   setRecipientSearch: Dispatch<SetStateAction<string>>;
   setExpandedRecipientIds: Dispatch<SetStateAction<Record<string, boolean>>>;
   setScanBarcode: Dispatch<SetStateAction<string>>;
+  setShipperPagination: Dispatch<SetStateAction<{ page: number; limit: number; total: number }>>;
+  setRecipientPagination: Dispatch<SetStateAction<{ page: number; limit: number; total: number }>>;
 
   updatePackageForm: UpdatePackageForm;
 
@@ -90,6 +94,8 @@ export default function ReceiveModals({
   customers,
   shippers,
   groupedRecipients,
+  shipperPagination,
+  recipientPagination,
 
   customerSearch,
   shipperSearch,
@@ -106,6 +112,8 @@ export default function ReceiveModals({
   setRecipientSearch,
   setExpandedRecipientIds,
   setScanBarcode,
+  setShipperPagination,
+  setRecipientPagination,
 
   updatePackageForm,
 
@@ -125,12 +133,6 @@ export default function ReceiveModals({
   const [customerPage, setCustomerPage] = useState(0);
   const [customerRowsPerPage, setCustomerRowsPerPage] = useState(100);
 
-  const [shipperPage, setShipperPage] = useState(0);
-  const [shipperRowsPerPage, setShipperRowsPerPage] = useState(100);
-
-  const [recipientPage, setRecipientPage] = useState(0);
-  const [recipientRowsPerPage, setRecipientRowsPerPage] = useState(100);
-
   const [showPackageSelectModal, setShowPackageSelectModal] = useState(false);
   const [packageSearch, setPackageSearch] = useState("");
   const [packageOptions, setPackageOptions] = useState<PackageOption[]>([]);
@@ -145,16 +147,6 @@ export default function ReceiveModals({
     const start = customerPage * customerRowsPerPage;
     return customers.slice(start, start + customerRowsPerPage);
   }, [customers, customerPage, customerRowsPerPage]);
-
-  const pagedShippers = useMemo(() => {
-    const start = shipperPage * shipperRowsPerPage;
-    return shippers.slice(start, start + shipperRowsPerPage);
-  }, [shippers, shipperPage, shipperRowsPerPage]);
-
-  const pagedGroupedRecipients = useMemo(() => {
-    const start = recipientPage * recipientRowsPerPage;
-    return groupedRecipients.slice(start, start + recipientRowsPerPage);
-  }, [groupedRecipients, recipientPage, recipientRowsPerPage]);
 
   const packageGroups = useMemo<GroupedPackageOption[]>(() => {
     const map = new Map<string, GroupedPackageOption>();
@@ -487,22 +479,6 @@ export default function ReceiveModals({
   }, [customers.length, customerPage, customerRowsPerPage]);
 
   useEffect(() => {
-    const maxPage = Math.max(Math.ceil(shippers.length / shipperRowsPerPage) - 1, 0);
-
-    if (shipperPage > maxPage) {
-      setShipperPage(maxPage);
-    }
-  }, [shippers.length, shipperPage, shipperRowsPerPage]);
-
-  useEffect(() => {
-    const maxPage = Math.max(Math.ceil(groupedRecipients.length / recipientRowsPerPage) - 1, 0);
-
-    if (recipientPage > maxPage) {
-      setRecipientPage(maxPage);
-    }
-  }, [groupedRecipients.length, recipientPage, recipientRowsPerPage]);
-
-  useEffect(() => {
     if (showScanModal) {
       setModalMode("scan");
     } else if (showPackageModal) {
@@ -635,7 +611,7 @@ export default function ReceiveModals({
                 value={shipperSearch}
                 onChange={(e) => {
                   setShipperSearch(e.target.value);
-                  setShipperPage(0);
+                  setShipperPagination((prev) => ({ ...prev, page: 0 }));
                 }}
                 autoFocus
               />
@@ -652,7 +628,7 @@ export default function ReceiveModals({
                   </thead>
 
                   <tbody>
-                    {pagedShippers.map((item) => {
+                    {shippers.map((item) => {
                       const selected = String(shipperId) === String(item.shipper_id);
 
                       return (
@@ -677,7 +653,7 @@ export default function ReceiveModals({
                       );
                     })}
 
-                    {!pagedShippers.length && (
+                    {!shippers.length && (
                       <tr>
                         <td colSpan={2} className="py-6 text-center text-xs text-slate-400">
                           ไม่พบข้อมูลผู้ส่ง
@@ -690,13 +666,12 @@ export default function ReceiveModals({
 
               <TablePagination
                 component="div"
-                count={shippers.length}
-                page={shipperPage}
-                onPageChange={(_, newPage) => setShipperPage(newPage)}
-                rowsPerPage={shipperRowsPerPage}
+                count={shipperPagination.total}
+                page={shipperPagination.page}
+                onPageChange={(_, newPage) => setShipperPagination((prev) => ({ ...prev, page: newPage }))}
+                rowsPerPage={shipperPagination.limit}
                 onRowsPerPageChange={(e) => {
-                  setShipperRowsPerPage(Number(e.target.value));
-                  setShipperPage(0);
+                  setShipperPagination((prev) => ({ ...prev, limit: Number(e.target.value), page: 0 }));
                 }}
                 rowsPerPageOptions={[10, 25, 50, 100]}
                 labelRowsPerPage="Rows per page:"
@@ -730,7 +705,7 @@ export default function ReceiveModals({
                 value={recipientSearch}
                 onChange={(e) => {
                   setRecipientSearch(e.target.value);
-                  setRecipientPage(0);
+                  setRecipientPagination((prev) => ({ ...prev, page: 0 }));
                 }}
                 autoFocus
               />
@@ -749,7 +724,7 @@ export default function ReceiveModals({
                   </thead>
 
                   <tbody>
-                    {pagedGroupedRecipients.map(({ recipient_id, recipient, details }) => {
+                    {groupedRecipients.map(({ recipient_id, recipient, details }) => {
                       const isOpen = !!expandedRecipientIds[String(recipient_id)];
 
                       return (
@@ -842,7 +817,7 @@ export default function ReceiveModals({
                       );
                     })}
 
-                    {!pagedGroupedRecipients.length && (
+                    {!groupedRecipients.length && (
                       <tr>
                         <td colSpan={4} className="py-6 text-center text-xs text-slate-400">
                           ไม่พบข้อมูลผู้รับ
@@ -855,13 +830,12 @@ export default function ReceiveModals({
 
               <TablePagination
                 component="div"
-                count={groupedRecipients.length}
-                page={recipientPage}
-                onPageChange={(_, newPage) => setRecipientPage(newPage)}
-                rowsPerPage={recipientRowsPerPage}
+                count={recipientPagination.total}
+                page={recipientPagination.page}
+                onPageChange={(_, newPage) => setRecipientPagination((prev) => ({ ...prev, page: newPage }))}
+                rowsPerPage={recipientPagination.limit}
                 onRowsPerPageChange={(e) => {
-                  setRecipientRowsPerPage(Number(e.target.value));
-                  setRecipientPage(0);
+                  setRecipientPagination((prev) => ({ ...prev, limit: Number(e.target.value), page: 0 }));
                 }}
                 rowsPerPageOptions={[10, 25, 50, 100]}
                 labelRowsPerPage="Rows per page:"

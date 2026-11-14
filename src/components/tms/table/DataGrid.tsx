@@ -1,6 +1,7 @@
 import {
   DataGrid as MuiDataGrid,
   type GridColDef,
+  type GridPaginationModel,
   type GridRowsProp,
 } from "@mui/x-data-grid";
 
@@ -17,6 +18,11 @@ type AppDataGridProps = {
   rowHoverColor?: string;
   striped?: boolean;
   headerTextTransform?: "none" | "uppercase";
+  paginationMode?: "client" | "server";
+  rowCount?: number;
+  paginationModel?: GridPaginationModel;
+  onPaginationModelChange?: (model: GridPaginationModel) => void;
+  pageSizeOptions?: number[];
 };
 
 export default function AppDataGrid({
@@ -32,6 +38,11 @@ export default function AppDataGrid({
   rowHoverColor = "#f8fafc",
   striped = false,
   headerTextTransform = "uppercase",
+  paginationMode,
+  rowCount,
+  paginationModel,
+  onPaginationModelChange,
+  pageSizeOptions = [10, 25, 50, 100],
 }: AppDataGridProps) {
   const resolveRowClassName = (params: any) => {
     const customClassName = getRowClassName?.(params) || "";
@@ -56,8 +67,12 @@ export default function AppDataGrid({
           getRowId={getRowId}
           getRowClassName={resolveRowClassName}
           onRowClick={onRowClick}
+          paginationMode={paginationMode}
+          rowCount={rowCount}
+          paginationModel={paginationModel}
+          onPaginationModelChange={onPaginationModelChange}
           disableRowSelectionOnClick
-          pageSizeOptions={[10, 25, 50, 100]}
+          pageSizeOptions={pageSizeOptions}
           initialState={{
             pagination: {
               paginationModel: {

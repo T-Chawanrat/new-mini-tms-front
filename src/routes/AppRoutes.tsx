@@ -40,6 +40,8 @@ const PendingReportSn = lazy(() => import("../pages/Reports/PendingReportSn"));
 const ProductTruck = lazy(() => import("../pages/Warehouse/ProductTruck"));
 const ProductWarehouse = lazy(() => import("../pages/Warehouse/ProductWarehouse"));
 const ProductWarehouseSerial = lazy(() => import("../pages/Warehouse/ProductWarehouseSerial"));
+const ProgramIssueReport = lazy(() => import("../pages/Support/ProgramIssueReport"));
+const ProgramVersions = lazy(() => import("../pages/Support/ProgramVersions"));
 const ReceiveImport = lazy(() => import("../pages/Receive/ReceiveImport"));
 const ReceiveReport = lazy(() => import("../pages/Receive/ReceiveReport"));
 const ReceiveReportPrint = lazy(() => import("../pages/Receive/ReceiveReportPrint"));
@@ -94,6 +96,8 @@ export default function AppRoutes() {
           <Route path="/product-truck" element={<ProductTruck />} />
           <Route path="/product-warehouse" element={<ProductWarehouse />} />
           <Route path="/product-warehouse/serials" element={<ProductWarehouseSerial />} />
+          <Route path="/program-issues" element={<ProgramIssueReport />} />
+          <Route path="/program-versions" element={<ProgramVersions />} />
           <Route path="/import" element={<ReceiveImport />} />
           <Route path="/receive-report" element={<ReceiveReport />} />
           <Route path="/receive-report-print/:receiveBusinessId" element={<ReceiveReportPrint />} />

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { RefreshCw } from "lucide-react";
 import AxiosInstance from "../../services/apiClient";
 
 import ReceiveHeaderForm from "./ReceiveHeaderForm";
@@ -15,6 +16,12 @@ import {
 } from "./createReceiveConfig";
 import type { CustomerOption, GroupedRecipient, PackageRow, PaymentOption, ReceiveForm, RecipientOption, ShipperOption, ShipperROCodeOption, WarehouseOption } from "../../types/receive";
 
+type OptionPagination = {
+  page: number;
+  limit: number;
+  total: number;
+};
+
 export default function CreateReceivePage() {
   const [form, setForm] = useState<ReceiveForm>(emptyReceiveForm);
 
@@ -23,6 +30,8 @@ export default function CreateReceivePage() {
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [shippers, setShippers] = useState<ShipperOption[]>([]);
   const [recipients, setRecipients] = useState<RecipientOption[]>([]);
+  const [shipperPagination, setShipperPagination] = useState<OptionPagination>({ page: 0, limit: 100, total: 0 });
+  const [recipientPagination, setRecipientPagination] = useState<OptionPagination>({ page: 0, limit: 100, total: 0 });
 
   const [roCodes, setRoCodes] = useState<ShipperROCodeOption[]>([]);
   const [loadingROCodes, setLoadingROCodes] = useState(false);
@@ -50,11 +59,15 @@ export default function CreateReceivePage() {
   const [scanBarcode, setScanBarcode] = useState("");
 
   const [loadingCustomers, setLoadingCustomers] = useState(false);
-  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [loadingShippers, setLoadingShippers] = useState(false);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const shipperRequestId = useRef(0);
+  const recipientRequestId = useRef(0);
+  const loadingOptions = loadingShippers || loadingRecipients;
 
   const updateForm = <K extends keyof ReceiveForm>(field: K, value: ReceiveForm[K]) => {
     setForm((prev) => ({
@@ -79,6 +92,8 @@ export default function CreateReceivePage() {
   const resetCustomerRelatedFields = () => {
     setShippers([]);
     setRecipients([]);
+    setShipperPagination({ page: 0, limit: 100, total: 0 });
+    setRecipientPagination({ page: 0, limit: 100, total: 0 });
     setRoCodes([]);
     resetRecipientCalendar();
 
@@ -175,40 +190,67 @@ export default function CreateReceivePage() {
     }
   };
 
-  const loadReceiveOptions = async (customerId: string) => {
+  const loadShippers = async (customerId: string, page: number, limit: number, search: string) => {
     if (!customerId) return;
 
-    setLoadingOptions(true);
+    const requestId = ++shipperRequestId.current;
+    setLoadingShippers(true);
     setError(null);
 
     try {
-      const [shipperRes, recipientRes] = await Promise.all([
-        AxiosInstance.get(`/receives/options/shippers/${customerId}`),
-        AxiosInstance.get(`/receives/options/recipients/${customerId}`),
-      ]);
+      const response = await AxiosInstance.get(`/receives/options/shippers/${customerId}`, {
+        params: { page: page + 1, limit, search: search.trim() || undefined },
+      });
 
-      const shipperData = Array.isArray(shipperRes.data) ? shipperRes.data : Array.isArray(shipperRes.data?.data) ? shipperRes.data.data : [];
+      if (requestId !== shipperRequestId.current) return;
 
-      const recipientData = Array.isArray(recipientRes.data)
-        ? recipientRes.data
-        : Array.isArray(recipientRes.data?.data)
-          ? recipientRes.data.data
-          : [];
-
-      setShippers(shipperData);
-      setRecipients(recipientData);
+      setShippers(Array.isArray(response.data?.data) ? response.data.data : []);
+      setShipperPagination((prev) => ({ ...prev, total: Number(response.data?.pagination?.total || 0) }));
     } catch (err) {
-      console.error("LOAD RECEIVE OPTIONS ERROR:", err);
+      if (requestId !== shipperRequestId.current) return;
+      console.error("LOAD RECEIVE SHIPPERS ERROR:", err);
 
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "โหลดข้อมูลผู้ส่ง/ผู้รับไม่สำเร็จ");
+        setError(err.response?.data?.message || "โหลดข้อมูลผู้ส่งไม่สำเร็จ");
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("โหลดข้อมูลผู้ส่ง/ผู้รับไม่สำเร็จ");
+        setError("โหลดข้อมูลผู้ส่งไม่สำเร็จ");
       }
     } finally {
-      setLoadingOptions(false);
+      if (requestId === shipperRequestId.current) setLoadingShippers(false);
+    }
+  };
+
+  const loadRecipients = async (customerId: string, page: number, limit: number, search: string) => {
+    if (!customerId) return;
+
+    const requestId = ++recipientRequestId.current;
+    setLoadingRecipients(true);
+    setError(null);
+
+    try {
+      const response = await AxiosInstance.get(`/receives/options/recipients/${customerId}`, {
+        params: { page: page + 1, limit, search: search.trim() || undefined },
+      });
+
+      if (requestId !== recipientRequestId.current) return;
+
+      setRecipients(Array.isArray(response.data?.data) ? response.data.data : []);
+      setRecipientPagination((prev) => ({ ...prev, total: Number(response.data?.pagination?.total || 0) }));
+    } catch (err) {
+      if (requestId !== recipientRequestId.current) return;
+      console.error("LOAD RECEIVE RECIPIENTS ERROR:", err);
+
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "โหลดข้อมูลผู้รับไม่สำเร็จ");
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("โหลดข้อมูลผู้รับไม่สำเร็จ");
+      }
+    } finally {
+      if (requestId === recipientRequestId.current) setLoadingRecipients(false);
     }
   };
 
@@ -270,9 +312,22 @@ export default function CreateReceivePage() {
   useEffect(() => {
     if (!form.customer_id) return;
 
-    loadReceiveOptions(form.customer_id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.customer_id]);
+    const timeoutId = window.setTimeout(() => {
+      void loadShippers(form.customer_id, shipperPagination.page, shipperPagination.limit, shipperSearch);
+    }, shipperSearch ? 250 : 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [form.customer_id, shipperPagination.page, shipperPagination.limit, shipperSearch]);
+
+  useEffect(() => {
+    if (!form.customer_id) return;
+
+    const timeoutId = window.setTimeout(() => {
+      void loadRecipients(form.customer_id, recipientPagination.page, recipientPagination.limit, recipientSearch);
+    }, recipientSearch ? 250 : 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [form.customer_id, recipientPagination.page, recipientPagination.limit, recipientSearch]);
 
   const filteredCustomers = useMemo(() => {
     const keyword = customerSearch.trim().toLowerCase();
@@ -284,61 +339,10 @@ export default function CreateReceivePage() {
     });
   }, [customerSearch, customers]);
 
-  const filteredShippers = useMemo(() => {
-    const list = Array.isArray(shippers) ? shippers : [];
-
-    const keyword = shipperSearch.trim().toLowerCase();
-    if (!keyword) return list;
-
-    return list.filter((item) => {
-      const text = [
-        item.shipper_code,
-        item.shipper_name,
-        item.address,
-        item.tel,
-        item.zip_code,
-        item.subdistrict_name,
-        item.district_name,
-        item.province_name,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return text.includes(keyword);
-    });
-  }, [shipperSearch, shippers]);
-
-  const filteredRecipients = useMemo(() => {
-    const list = Array.isArray(recipients) ? recipients : [];
-
-    const keyword = recipientSearch.trim().toLowerCase();
-    if (!keyword) return list;
-
-    return list.filter((item) => {
-      const text = [
-        item.recipient_code,
-        item.recipient_name,
-        item.recipient_detail_name,
-        item.address,
-        item.tel,
-        item.zip_code,
-        item.subdistrict_name,
-        item.district_name,
-        item.province_name,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return text.includes(keyword);
-    });
-  }, [recipientSearch, recipients]);
-
   const groupedRecipients = useMemo<GroupedRecipient[]>(() => {
     const map = new Map<number, RecipientOption[]>();
 
-    filteredRecipients.forEach((item) => {
+    recipients.forEach((item) => {
       if (!map.has(item.recipient_id)) {
         map.set(item.recipient_id, []);
       }
@@ -351,7 +355,7 @@ export default function CreateReceivePage() {
       recipient: details[0],
       details,
     }));
-  }, [filteredRecipients]);
+  }, [recipients]);
 
   const selectCustomer = (selected: CustomerOption) => {
     setForm((prev) => ({
@@ -573,6 +577,10 @@ export default function CreateReceivePage() {
     setSuccess(null);
   };
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   const requestSaveReceive = () => {
     setError(null);
     setSuccess(null);
@@ -688,10 +696,11 @@ export default function CreateReceivePage() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={handleClearForm}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              onClick={handleRefresh}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
             >
-              ล้างฟอร์ม
+              <RefreshCw size={16} />
+              รีเฟรช
             </button>
 
             <button
@@ -783,8 +792,10 @@ export default function CreateReceivePage() {
           showPackageModal={showPackageModal}
           showScanModal={showScanModal}
           customers={filteredCustomers}
-          shippers={filteredShippers}
+          shippers={shippers}
           groupedRecipients={groupedRecipients}
+          shipperPagination={shipperPagination}
+          recipientPagination={recipientPagination}
           customerSearch={customerSearch}
           shipperSearch={shipperSearch}
           recipientSearch={recipientSearch}
@@ -797,6 +808,8 @@ export default function CreateReceivePage() {
           setRecipientSearch={setRecipientSearch}
           setExpandedRecipientIds={setExpandedRecipientIds}
           setScanBarcode={setScanBarcode}
+          setShipperPagination={setShipperPagination}
+          setRecipientPagination={setRecipientPagination}
           updatePackageForm={updatePackageForm}
           selectCustomer={selectCustomer}
           selectShipper={selectShipper}

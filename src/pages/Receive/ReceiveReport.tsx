@@ -1,7 +1,6 @@
-import Select from "../../components/tms/form/Select";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Printer, QrCode, RefreshCcw, Search, X } from "lucide-react";
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridPaginationModel } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import AxiosInstance from "../../services/apiClient";
 import DatePicker from "../../components/tms/form/DatePicker";
@@ -18,8 +17,6 @@ import {
   formatNumber,
   getReturnedText,
   getText,
-  receiveReportHeaders,
-  receiveReportMinWidths,
   receiveSerialHeaders,
   receiveSerialMinWidths,
 } from "../../utils/receiveReport";
@@ -51,7 +48,6 @@ export default function ReceiveReport() {
     totalPages: 1,
   });
 
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [serialMap, setSerialMap] = useState<Record<string, ReceiveSerialRow[]>>({});
   const [serialLoadingMap, setSerialLoadingMap] = useState<Record<string, boolean>>({});
   const [serialDetailTarget, setSerialDetailTarget] = useState<(ReceiveReportRow & { _gridId: string }) | null>(null);
@@ -78,53 +74,44 @@ export default function ReceiveReport() {
     () => [
       { field: "row_number", headerName: "#", width: 60, minWidth: 60, align: "center", headerAlign: "center" },
       {
-        field: "print_delivery_note",
-        headerName: "พิมพ์บิล",
-        width: 88,
-        minWidth: 88,
+        field: "print",
+        headerName: "พิมพ์",
+        width: 116,
+        minWidth: 116,
         sortable: false,
         filterable: false,
         align: "center",
         headerAlign: "center",
         renderCell: ({ row }) => (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              if (!row.receive_business_id) return;
-              navigate(`/receive-report-print/${row.receive_business_id}`);
-            }}
-            disabled={!row.receive_business_id}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
-            title="พิมพ์บิลส่งของ"
-          >
-            <Printer size={16} />
-          </button>
-        ),
-      },
-      {
-        field: "print_labels",
-        headerName: "สติกเกอร์",
-        width: 92,
-        minWidth: 92,
-        sortable: false,
-        filterable: false,
-        align: "center",
-        headerAlign: "center",
-        renderCell: ({ row }) => (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              if (!row.receive_code) return;
-              navigate(`/label-print?receive_code=${encodeURIComponent(String(row.receive_code))}`);
-            }}
-            disabled={!row.receive_code}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
-            title="พิมพ์สติกเกอร์ทั้งบิล"
-          >
-            <QrCode size={16} />
-          </button>
+          <div className="flex h-full items-center justify-center gap-1.5">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (!row.receive_business_id) return;
+                navigate(`/receive-report-print/${row.receive_business_id}`);
+              }}
+              disabled={!row.receive_business_id}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+              title="พิมพ์บิลส่งของ"
+            >
+              <Printer size={16} />
+            </button>
+
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (!row.receive_code) return;
+                navigate(`/label-print?receive_code=${encodeURIComponent(String(row.receive_code))}`);
+              }}
+              disabled={!row.receive_code}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+              title="พิมพ์สติกเกอร์ทั้งบิล"
+            >
+              <QrCode size={16} />
+            </button>
+          </div>
         ),
       },
       {
@@ -206,10 +193,6 @@ export default function ReceiveReport() {
     }));
   };
 
-  const getRowKey = (row: ReceiveReportRow, index: number) => {
-    return String(row.receive_business_id || row.receive_code || index);
-  };
-
   const fetchReceiveSerials = async (row: ReceiveReportRow, rowKey: string) => {
     if (serialMap[rowKey]) return;
 
@@ -250,19 +233,6 @@ export default function ReceiveReport() {
     }
   };
 
-  const toggleRow = async (row: ReceiveReportRow, rowKey: string) => {
-    const nextExpanded = !expandedRows[rowKey];
-
-    setExpandedRows((prev) => ({
-      ...prev,
-      [rowKey]: nextExpanded,
-    }));
-
-    if (nextExpanded) {
-      await fetchReceiveSerials(row, rowKey);
-    }
-  };
-
   useEffect(() => {
     if (!serialDetailTarget) return;
     void fetchReceiveSerials(serialDetailTarget, serialDetailTarget._gridId);
@@ -298,7 +268,6 @@ export default function ReceiveReport() {
       setRows(nextRows);
       setSerialMap({});
       setSerialLoadingMap({});
-      setExpandedRows({});
 
       setPagination(
         res.data?.pagination || {
@@ -337,7 +306,6 @@ export default function ReceiveReport() {
   };
 
   const resetExpandedData = () => {
-    setExpandedRows({});
     setSerialMap({});
     setSerialLoadingMap({});
   };
@@ -346,13 +314,6 @@ export default function ReceiveReport() {
     setPage(1);
     resetExpandedData();
     setAppliedFilters(filters);
-  };
-
-  const handleReset = () => {
-    setFilters(defaultReceiveReportFilters);
-    setAppliedFilters(defaultReceiveReportFilters);
-    resetExpandedData();
-    setPage(1);
   };
 
   const handleRefresh = () => {
@@ -364,6 +325,16 @@ export default function ReceiveReport() {
   const handleLimitChange = (value: string) => {
     setLimit(Number(value));
     setPage(1);
+    resetExpandedData();
+  };
+
+  const handleGridPaginationChange = (model: GridPaginationModel) => {
+    if (model.pageSize !== limit) {
+      handleLimitChange(String(model.pageSize));
+      return;
+    }
+
+    setPage(model.page + 1);
     resetExpandedData();
   };
 
@@ -435,14 +406,6 @@ export default function ReceiveReport() {
               ค้นหา
             </button>
 
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={loading}
-              className="inline-flex h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              ล้าง
-            </button>
           </div>
         </div>
       </div>
@@ -520,190 +483,17 @@ export default function ReceiveReport() {
               loading={loading}
               getRowId={(row: { _gridId: string }) => row._gridId}
               height="100%"
-              pageSize={100}
+              pageSize={limit}
+              paginationMode="server"
+              rowCount={pagination.total}
+              paginationModel={{ page: page - 1, pageSize: limit }}
+              onPaginationModelChange={handleGridPaginationChange}
               striped
               rowHoverColor="#dbeafe"
             />
           )}
         </div>
 
-        <div className="hidden">
-          {error ? (
-            <div className="p-6 text-center text-sm text-red-600">{error}</div>
-          ) : (
-            <div className="h-[calc(100%-82px)] overflow-auto">
-              <table className="min-w-max border-collapse text-left text-xs">
-                <ResizableColumns headers={receiveReportHeaders} pageKey="receive-report-main-v1" minWidths={receiveReportMinWidths} />
-
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={receiveReportHeaders.length} className="px-3 py-10 text-center text-sm text-slate-500">
-                        กำลังโหลดข้อมูล...
-                      </td>
-                    </tr>
-                  ) : rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={receiveReportHeaders.length} className="px-3 py-10 text-center text-sm text-slate-500">
-                        ไม่พบข้อมูล
-                      </td>
-                    </tr>
-                  ) : (
-                    rows.map((row, index) => {
-                      const rowKey = getRowKey(row, index);
-                      const isExpanded = !!expandedRows[rowKey];
-                      const serials = serialMap[rowKey] || [];
-                      const serialLoading = !!serialLoadingMap[rowKey];
-
-                      return (
-                        <Fragment key={rowKey}>
-                          <tr
-                            className={
-                              isExpanded ? "bg-blue-50/70" : index % 2 === 0 ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70 hover:bg-blue-50/40"
-                            }
-                          >
-                            <td className="w-[60px] min-w-[60px] max-w-[60px] whitespace-nowrap border-b border-slate-100 px-2 py-2 text-center font-semibold text-slate-500">
-                              {formatNumber((pagination.page - 1) * pagination.limit + index + 1)}
-                            </td>
-
-                            <td className="sticky left-0 z-10 whitespace-nowrap border-b border-slate-100 bg-inherit px-3 py-2">
-                              <button
-                                type="button"
-                                onClick={() => toggleRow(row, rowKey)}
-                                className="font-semibold text-blue-700 underline-offset-2 hover:underline"
-                                title="กดเพื่อดู Serial No"
-                              >
-                                {getText(row.receive_code)}
-                              </button>
-                            </td>
-
-                            <td
-                              className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-                              title={getText(row.reference_no)}
-                            >
-                              {getText(row.reference_no)}
-                            </td>
-
-                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">
-                              {formatDateTime(row.receive_date)}
-                            </td>
-                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{formatDate(row.delivery_date)}</td>
-                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right font-semibold text-slate-800">
-                              {formatNumber(row.total_serial)}
-                            </td>
-                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">
-                              {formatMoney(row.total_cost)}
-                            </td>
-                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-right text-slate-700">
-                              {formatMoney(row.total_cod)}
-                            </td>
-
-                            <td
-                              className="max-w-[260px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-                              title={getText(row.customer_name || row.customer_id)}
-                            >
-                              {getText(row.customer_name || row.customer_id)}
-                            </td>
-
-                            <td
-                              className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-                              title={getText(row.from_warehouse_name || row.from_warehouse_id)}
-                            >
-                              {getText(row.from_warehouse_name || row.from_warehouse_id)}
-                            </td>
-
-                            <td
-                              className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-                              title={getText(row.to_warehouse_name || row.to_warehouse_id)}
-                            >
-                              {getText(row.to_warehouse_name || row.to_warehouse_id)}
-                            </td>
-
-                            <td
-                              className="max-w-[220px] truncate border-b border-slate-100 px-3 py-2 text-slate-700"
-                              title={getText(row.shipper_name)}
-                            >
-                              {getText(row.shipper_name)}
-                            </td>
-
-                            <td className="max-w-[260px] border-b border-slate-100 px-3 py-2 text-slate-800">
-                              <div className="truncate" title={getText(row.recipient_name)}>
-                                {getText(row.recipient_name)}
-                              </div>
-                              <div className="truncate text-[11px] text-slate-400" title={getText(row.recipient_code)}>
-                                {getText(row.recipient_code)}
-                              </div>
-                            </td>
-
-                            <td className="whitespace-nowrap border-b border-slate-100 px-3 py-2 text-slate-700">{getText(row.tel)}</td>
-
-                            <td className="max-w-[240px] border-b border-slate-100 px-3 py-2 text-slate-700">
-                              <div className="truncate" title={getText(row.province_name)}>
-                                {getText(row.province_name)}
-                              </div>
-                              <div
-                                className="truncate text-[11px] text-slate-400"
-                                title={`${getText(row.district_name)} / ${getText(row.subdistrict_name)}`}
-                              >
-                                {getText(row.district_name)} / {getText(row.subdistrict_name)}
-                              </div>
-                            </td>
-                          </tr>
-
-                          {isExpanded ? (
-                            <tr>
-                              <td colSpan={receiveReportHeaders.length} className="bg-slate-50 px-3 py-3">
-                                <SerialTable loading={serialLoading} serials={serials} />
-                              </td>
-                            </tr>
-                          ) : null}
-                        </Fragment>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        <div className="hidden">
-          <div className="text-[11px] text-slate-500">{null}</div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-slate-500">แสดง</span>
-
-              <Select value={String(limit)} onChange={(next) => handleLimitChange(next)} options={[{ value: "25", label: "25" }, { value: "50", label: "50" }, { value: "100", label: "100" }, { value: "200", label: "200" }, { value: "500", label: "500" }]} className="!h-7 !w-[76px] rounded-md !text-[11px]" />
-
-              <span className="text-[11px] text-slate-500">รายการ</span>
-            </div>
-
-            <div className="h-4 w-px bg-slate-200" />
-
-            <div className="text-[11px] text-slate-500">
-              Page {formatNumber(pagination.page)} / {formatNumber(pagination.totalPages || 1)}
-            </div>
-
-            <button
-              type="button"
-              disabled={loading || page <= 1}
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              className="inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              ก่อนหน้า
-            </button>
-
-            <button
-              type="button"
-              disabled={loading || page >= pagination.totalPages}
-              onClick={() => setPage((prev) => Math.min(prev + 1, pagination.totalPages))}
-              className="inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              ถัดไป
-            </button>
-          </div>
-        </div>
       </div>
 
       {serialDetailTarget && (

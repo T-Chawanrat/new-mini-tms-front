@@ -47,13 +47,13 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
   if (!user) return null;
 
   return (
-    <div className={isOpen ? "relative z-[100]" : "relative"}>
+    <div className="relative">
       <button
         type="button"
         onClick={toggleDropdown}
         className={
           variant === "dots"
-            ? "flex items-center justify-center w-9 h-9 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+            ? "flex h-9 w-9 items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
             : "flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
         }
       >
@@ -106,8 +106,8 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
         onClose={closeDropdown}
         className={
           variant === "dots"
-            ? "absolute z-[9999] right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
-            : "absolute z-[9999] right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+            ? "absolute right-0 z-10 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+            : "absolute right-0 z-10 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
         }
       >
         <div>
@@ -179,7 +179,7 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
       </Dropdown>
 
       {showProfileModal && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}>
           <div role="dialog" aria-modal="true" aria-label="โปรไฟล์ของฉัน" className="relative max-h-[90dvh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-slate-50 shadow-xl" onClick={(event) => event.stopPropagation()}>
             <button type="button" onClick={() => setShowProfileModal(false)} aria-label="ปิดโปรไฟล์" className="absolute right-4 top-4 z-10 rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-200">✕</button>
             <UserProfiles />
@@ -190,7 +190,7 @@ export default function UserDropdown({ variant = "name" }: UserDropdownProps) {
 
       {showChangePasswordModal && createPortal(
         <div
-          className="font-thai fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6"
+          className="font-thai fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6"
           onClick={() => setShowChangePasswordModal(false)}
         >
           <div

@@ -106,7 +106,7 @@ export default function ManageRolePermissions() {
           <Select
             value={String(roleId)}
             onChange={(next) => setRoleId(next)}
-            options={[{ value: "", label: "เลือก Role" }, ...roles.map((role) => ({ value: String(role.id), label: role.name }))]}
+            options={[{ value: "", label: "เลือก Role" }, ...roles.filter((role) => Number(role.id) !== 2).map((role) => ({ value: String(role.id), label: role.name }))]}
             disabled={loading || saving}
             className="min-w-0 sm:min-w-64"
             aria-label="เลือก Role"

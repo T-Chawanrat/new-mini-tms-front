@@ -732,7 +732,7 @@ export default function ManageUsers() {
 
                 <div>
                   <RequiredLabel required>ตำแหน่ง</RequiredLabel>
-                  <SearchableSelect portal value={form.role_id} onChange={(value) => handleChange("role_id", value)} placeholder="เลือกตำแหน่ง" options={roles.map((r) => ({ value: String(r.id), label: r.name }))} />
+                  <SearchableSelect portal value={form.role_id} onChange={(value) => handleChange("role_id", value)} placeholder="เลือกตำแหน่ง" options={roles.filter((r) => Number(r.id) !== 2).map((r) => ({ value: String(r.id), label: r.name }))} />
                 </div>
 
                 {!ROLES_WITHOUT_WAREHOUSE_SELECTION.includes(Number(form.role_id)) && (

@@ -23,6 +23,10 @@ export default function LabelPrintStyle() {
             visibility: hidden !important;
           }
 
+          #root {
+            display: none !important;
+          }
+
           #label-print-area,
           #label-print-area * {
             visibility: visible !important;
@@ -30,8 +34,7 @@ export default function LabelPrintStyle() {
 
           #label-print-area {
             display: block !important;
-            position: absolute;
-            inset: 0 auto auto 0;
+            position: static;
             width: 100mm;
           }
 
@@ -56,13 +59,13 @@ export default function LabelPrintStyle() {
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
 
-            page-break-after: always;
-            break-after: page;
+            page-break-inside: avoid;
+            break-inside: avoid;
           }
 
-          .shipping-label:last-child {
-            page-break-after: auto;
-            break-after: auto;
+          .shipping-label:not(:last-child) {
+            page-break-after: always;
+            break-after: page;
           }
 
           .label-top {
